@@ -27,7 +27,7 @@ class PaginaPrincipal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // sacamo el ancho
+    // sacamo el ancho 
     final anchoPantalla = MediaQuery.of(context).size.width;
     // Definimos si es una pantalla grande (Desktop/Tablet) o pequeña (Teléfono)
     final esPantallaGrande = anchoPantalla > 800;
