@@ -1,3 +1,4 @@
+import 'package:ferros_cerna/utils/nav_rutas.dart';
 import 'package:flutter/material.dart';
 
 // Asegúrate de que los nombres de los archivos coincidan con los tuyos
@@ -25,9 +26,7 @@ class MenuLateral extends StatelessWidget {
                 // pushAndRemoveUntil borra el historial para que Inicio sea la base
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const PaginaPrincipal(),
-                  ),
+                  NavegacionRutas.sinAnimacion(const PaginaPrincipal()),
                   (Route<dynamic> route) => false,
                 );
               }
