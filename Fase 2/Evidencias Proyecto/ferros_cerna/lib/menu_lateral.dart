@@ -44,9 +44,7 @@ class MenuLateral extends StatelessWidget {
               if (activo != 'Clientes') {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const PaginaClientes(),
-                  ),
+                  NavegacionRutas.sinAnimacion(const PaginaClientes()),
                 );
               }
             },
@@ -70,9 +68,7 @@ class MenuLateral extends StatelessWidget {
               if (activo != 'Inventario') {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const PaginaInventario(),
-                  ),
+                  NavegacionRutas.sinAnimacion(const PaginaInventario()),
                 );
               }
             },
