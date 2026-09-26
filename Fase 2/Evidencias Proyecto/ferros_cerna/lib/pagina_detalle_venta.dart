@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:ferros_cerna/data/ventas_repository.dart';
+
 import 'menu_lateral.dart'; // Importa el menú centralizado
 
 // ============================================================================
@@ -7,22 +9,19 @@ import 'menu_lateral.dart'; // Importa el menú centralizado
 class ItemVenta {
   final String idProducto;
   final String nombre;
-  final double precioTotalItem; // Precio unitario * cantidad
-  final int cantidad;
+  final double total;
 
   ItemVenta({
     required this.idProducto,
     required this.nombre,
-    required this.precioTotalItem,
-    required this.cantidad,
+    required this.total,
   });
 
   factory ItemVenta.fromJson(Map<String, dynamic> json) {
     return ItemVenta(
-      idProducto: json['id_producto'].toString(),
-      nombre: json['nombre_producto'],
-      precioTotalItem: double.parse(json['precio_total_item'].toString()),
-      cantidad: json['cantidad'],
+      idProducto: json['codigo']?.toString() ?? '',
+      nombre: json['nombre']?.toString() ?? 'Artículo',
+      total: double.tryParse(json['total']?.toString() ?? '') ?? 0,
     );
   }
 }
@@ -54,24 +53,45 @@ class PaginaDetalleVenta extends StatefulWidget {
 
 class _PaginaDetalleVentaState extends State<PaginaDetalleVenta> {
   // Datos de prueba simulando la consulta a la tabla detalle_venta
-  final List<ItemVenta> _items = [
-    ItemVenta(idProducto: '1', nombre: 'RUEDAS ROTORAS', precioTotalItem: 90000, cantidad: 1),
-    ItemVenta(idProducto: '2', nombre: 'VIDRIO PARA VER', precioTotalItem: 100000, cantidad: 2),
-    ItemVenta(idProducto: '3', nombre: 'CLORO LIMPIAAUTOS', precioTotalItem: 3000, cantidad: 1),
-    ItemVenta(idProducto: '4', nombre: 'COSA ASCELERADORA', precioTotalItem: 7000, cantidad: 3),
-  ];
+  List<ItemVenta> _items = [];
+  bool _cargando = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarDetalles();
+  }
+
+  Future<void> _cargarDetalles() async {
+    try {
+      final venta = await VentaRegistro.obtenerPorId(widget.idVenta);
+      if (!mounted) return;
+      setState(() {
+        _items = venta.items.map(ItemVenta.fromJson).toList();
+        _cargando = false;
+        _error = null;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _cargando = false;
+        _error = error.toString();
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final esPantallaGrande = MediaQuery.of(context).size.width > 800;
-    
+
     // Título dinámico
-    final tituloPagina = widget.desdeHistorial 
+    final tituloPagina = widget.desdeHistorial
         ? 'Venta “${widget.clienteNombre}” del “${widget.fecha}”'
         : 'Venta de “${widget.clienteNombre}” (En Proceso)';
 
-    final textoBotonVolver = widget.desdeHistorial 
-        ? 'VOLVER A HISTORIAL\nDE VENTAS' 
+    final textoBotonVolver = widget.desdeHistorial
+        ? 'VOLVER A HISTORIAL\nDE VENTAS'
         : 'VOLVER A VENTAS';
 
     return Scaffold(
@@ -85,45 +105,79 @@ class _PaginaDetalleVentaState extends State<PaginaDetalleVenta> {
             if (esPantallaGrande)
               Row(
                 children: [
-                  Container(width: 40, height: 40, color: Colors.grey[500], child: const Icon(Icons.settings_input_component, color: Colors.white)),
+                  Container(
+                    width: 40,
+                    height: 40,
+                    color: Colors.grey[500],
+                    child: const Icon(
+                      Icons.settings_input_component,
+                      color: Colors.white,
+                    ),
+                  ),
                   const SizedBox(width: 10),
-                  const Text('Frenos\nCerna', style: TextStyle(color: Colors.black, fontSize: 16)),
+                  const Text(
+                    'Frenos\nCerna',
+                    style: TextStyle(color: Colors.black, fontSize: 16),
+                  ),
                 ],
               ),
             Expanded(
               child: Text(
-                tituloPagina, 
+                tituloPagina,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20),
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
             Row(
               children: [
-                if (esPantallaGrande) const Text('Leonardo', style: TextStyle(color: Colors.black, fontSize: 16)),
+                if (esPantallaGrande)
+                  const Text(
+                    'Leonardo',
+                    style: TextStyle(color: Colors.black, fontSize: 16),
+                  ),
                 const SizedBox(width: 10),
-                CircleAvatar(backgroundColor: Colors.red[800], child: const Icon(Icons.build, color: Colors.black)),
+                CircleAvatar(
+                  backgroundColor: Colors.red[800],
+                  child: const Icon(Icons.build, color: Colors.black),
+                ),
               ],
-            )
+            ),
           ],
         ),
       ),
-      drawer: esPantallaGrande ? null : const Drawer(child: MenuLateral(activo: 'Ventas')),
+      drawer: esPantallaGrande
+          ? null
+          : const Drawer(child: MenuLateral(activo: 'Ventas')),
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (esPantallaGrande) const SizedBox(width: 150, child: MenuLateral(activo: 'Ventas')),
-          
+          if (esPantallaGrande)
+            const SizedBox(width: 150, child: MenuLateral(activo: 'Ventas')),
+
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(30.0),
-              child: esPantallaGrande 
+              child: esPantallaGrande
                   ? Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(flex: 3, child: _construirColumnaIzquierda(context, textoBotonVolver)),
+                        Expanded(
+                          flex: 3,
+                          child: _construirColumnaIzquierda(
+                            context,
+                            textoBotonVolver,
+                          ),
+                        ),
                         const SizedBox(width: 40),
-                        Expanded(flex: 2, child: _construirColumnaDerecha(context)),
+                        Expanded(
+                          flex: 2,
+                          child: _construirColumnaDerecha(context),
+                        ),
                       ],
                     )
                   : Column(
@@ -151,70 +205,90 @@ class _PaginaDetalleVentaState extends State<PaginaDetalleVenta> {
         ElevatedButton.icon(
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.keyboard_return, color: Colors.black),
-          label: Text(textoBoton, textAlign: TextAlign.center, style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
+          label: Text(
+            textoBoton,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.black,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.red[200],
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           ),
         ),
         const SizedBox(height: 40),
-        
+
         // CAJA DE PRECIO TOTAL
         Container(
           color: Colors.red[400],
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           child: Text(
             'PRECIO TOTAL:\$${widget.total.toStringAsFixed(0).replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}',
-            style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         const SizedBox(height: 20),
 
         // TABLA DE PRODUCTOS
-        SizedBox(
-          width: double.infinity,
-          child: DataTable(
-            headingRowColor: MaterialStateProperty.all(Colors.red[400]),
-            border: TableBorder.all(color: Colors.black, width: 2),
-            dataRowMaxHeight: 80,
-            columns: const [
-              DataColumn(label: Text('PRODUCTO', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold))),
-              DataColumn(label: Text('CANTIDAD', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold))),
-              DataColumn(label: Text('VER', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold))),
-            ],
-            rows: _items.asMap().entries.map((entrada) {
-              int indice = entrada.key;
-              ItemVenta item = entrada.value;
-              return DataRow(
-                color: MaterialStateProperty.all(indice % 2 == 0 ? Colors.grey[200] : Colors.grey[300]),
-                cells: [
-                  DataCell(
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(item.nombre, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                        Text(
-                          '\$${item.precioTotalItem.toStringAsFixed(0).replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}',
-                          style: TextStyle(color: Colors.red[400], fontSize: 14, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    )
+        if (_error != null)
+          Text('Error al cargar el detalle: $_error')
+        else if (_cargando)
+          const Center(child: CircularProgressIndicator())
+        else
+          SizedBox(
+            width: double.infinity,
+            child: DataTable(
+              headingRowColor: WidgetStateProperty.all(Colors.red[400]),
+              border: TableBorder.all(color: Colors.black, width: 2),
+              dataRowMaxHeight: 80,
+              columns: const [
+                DataColumn(
+                  label: Text(
+                    'PRODUCTO / SERVICIO',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  DataCell(Text(item.cantidad.toString(), style: const TextStyle(fontSize: 20))),
-                  DataCell(
-                    IconButton(
-                      icon: const Icon(Icons.search, size: 35, color: Colors.black),
-                      onPressed: () {
-                        // Lógica para ver detalle del producto individual
-                      },
-                    )
+                ),
+                DataColumn(
+                  label: Text(
+                    'TOTAL',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ],
-              );
-            }).toList(),
+                ),
+              ],
+              rows: _items.asMap().entries.map((entrada) {
+                final indice = entrada.key;
+                final item = entrada.value;
+                return DataRow(
+                  color: WidgetStateProperty.all(
+                    indice % 2 == 0 ? Colors.grey[200] : Colors.grey[300],
+                  ),
+                  cells: [
+                    DataCell(Text(item.nombre)),
+                    DataCell(
+                      Text(
+                        '\$${item.total.toStringAsFixed(0).replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}',
+                      ),
+                    ),
+                  ],
+                );
+              }).toList(),
+            ),
           ),
-        ),
       ],
     );
   }
@@ -228,13 +302,19 @@ class _PaginaDetalleVentaState extends State<PaginaDetalleVenta> {
         CircleAvatar(
           radius: 70,
           backgroundColor: Colors.red[400],
-          child: const Icon(Icons.person_outline, size: 80, color: Colors.black),
+          child: const Icon(
+            Icons.person_outline,
+            size: 80,
+            color: Colors.black,
+          ),
         ),
         const SizedBox(height: 20),
-        
+
         Container(
           width: double.infinity,
-          decoration: BoxDecoration(border: Border.all(color: Colors.transparent)),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.transparent),
+          ),
           child: Column(
             children: [
               Container(
@@ -244,9 +324,19 @@ class _PaginaDetalleVentaState extends State<PaginaDetalleVenta> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('NOMBRE DE CLIENTE:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                    const Text(
+                      'NOMBRE DE CLIENTE:',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
                     const SizedBox(height: 10),
-                    Text(widget.clienteNombre, style: const TextStyle(fontSize: 22, color: Colors.black)),
+                    Text(
+                      widget.clienteNombre,
+                      style: const TextStyle(fontSize: 22, color: Colors.black),
+                    ),
                   ],
                 ),
               ),
@@ -257,9 +347,19 @@ class _PaginaDetalleVentaState extends State<PaginaDetalleVenta> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('TIPO DE AUTO:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                    const Text(
+                      'TIPO DE AUTO:',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
                     const SizedBox(height: 10),
-                    Text(widget.vehiculoNombre.replaceAll('\n', ' '), style: const TextStyle(fontSize: 22, color: Colors.black)),
+                    Text(
+                      widget.vehiculoNombre.replaceAll('\n', ' '),
+                      style: const TextStyle(fontSize: 22, color: Colors.black),
+                    ),
                   ],
                 ),
               ),
@@ -271,7 +371,14 @@ class _PaginaDetalleVentaState extends State<PaginaDetalleVenta> {
         ElevatedButton.icon(
           onPressed: () {},
           icon: const Icon(Icons.search, color: Colors.black, size: 30),
-          label: const Text('VER CLIENTE', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+          label: const Text(
+            'VER CLIENTE',
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.grey[400],
             padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),

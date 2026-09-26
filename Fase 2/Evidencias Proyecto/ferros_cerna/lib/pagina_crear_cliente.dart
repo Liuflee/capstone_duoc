@@ -1,10 +1,61 @@
+import 'package:ferros_cerna/data/supabase_database.dart';
 import 'package:flutter/material.dart';
 
 import 'pagina_clientes.dart';
 import 'menu_lateral.dart';
 
-class PaginaCrearCliente extends StatelessWidget {
+class PaginaCrearCliente extends StatefulWidget {
   const PaginaCrearCliente({super.key});
+
+  @override
+  State<PaginaCrearCliente> createState() => _PaginaCrearClienteState();
+}
+
+class _PaginaCrearClienteState extends State<PaginaCrearCliente> {
+  final _rutCtrl = TextEditingController();
+  final _nombreCtrl = TextEditingController();
+  final _fonoCtrl = TextEditingController();
+  bool _guardando = false;
+
+  @override
+  void dispose() {
+    _rutCtrl.dispose();
+    _nombreCtrl.dispose();
+    _fonoCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _registrarCliente() async {
+    final rut = int.tryParse(_rutCtrl.text.trim());
+    final fono = int.tryParse(_fonoCtrl.text.trim());
+    final nombre = _nombreCtrl.text.trim();
+    if (rut == null || fono == null || nombre.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Completa RUT, nombre y teléfono válidos.'),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _guardando = true);
+    try {
+      await SupabaseDatabase.client.from(SupabaseTables.clientes).insert({
+        'rut': rut,
+        'nombre': nombre,
+        'fono': fono,
+      });
+      if (!mounted) return;
+      Navigator.pop(context, true);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo registrar el cliente: $error')),
+      );
+    } finally {
+      if (mounted) setState(() => _guardando = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,46 +77,32 @@ class PaginaCrearCliente extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  const SizedBox(height: 20),
                   const Text(
-                    'AÑADIR IMAGEN',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    'RUT DEL CLIENTE:',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.grey[300],
-                    child: const Icon(
-                      Icons.note_add_outlined,
-                      size: 50,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 40),
+                  CampoEditable(controlador: _rutCtrl),
+                  const SizedBox(height: 20),
                   const Text(
                     'NOMBRE DEL CLIENTE NUEVO:',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
-                  const CampoEditable(hint: 'Editar Nombre'),
+                  CampoEditable(controlador: _nombreCtrl, hint: 'Nombre'),
                   const SizedBox(height: 20),
                   const Text(
-                    'NÚMERO DEL CLIENTE NUEVO:',
+                    'TELÉFONO:',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
-                  const CampoEditable(hint: 'Editar Número'),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'VEHÍCULO DEL CLIENTE NUEVO:',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
-                  const CampoEditable(hint: 'Editar Vehículo'),
+                  CampoEditable(controlador: _fonoCtrl, hint: 'Teléfono'),
                   const SizedBox(height: 40),
                   Align(
                     alignment: Alignment.centerRight,
                     child: ElevatedButton.icon(
-                      onPressed: () {},
+                      onPressed: _guardando ? null : _registrarCliente,
                       icon: const Icon(Icons.download, color: Colors.black),
                       label: const Text(
                         'REGISTRAR',

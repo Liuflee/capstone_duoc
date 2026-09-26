@@ -1,12 +1,13 @@
+import 'package:ferros_cerna/data/supabase_database.dart';
 import 'package:ferros_cerna/pagina_edicion_producto.dart';
 import 'package:flutter/material.dart';
 
 import 'menu_lateral.dart';
 
-// 1. MODELO DE DATOS (Preparado para Supabase)
 class Producto {
   final String id;
   final String nombre;
+  final String codigoBarra;
   final String categoria;
   final double precio;
   final int cantidad;
@@ -14,24 +15,29 @@ class Producto {
   Producto({
     required this.id,
     required this.nombre,
+    required this.codigoBarra,
     required this.categoria,
     required this.precio,
     required this.cantidad,
   });
 
-  // Este método servirá luego para convertir la respuesta de Supabase a objetos de Flutter
   factory Producto.fromJson(Map<String, dynamic> json) {
+    final tipo = json['tipo_producto'];
+    final codigo = json['codigo_producto']?.toString() ?? 'sin-codigo';
+    final codigoBarra = json['cod_barra']?.toString() ?? '';
     return Producto(
-      id: json['id'].toString(),
-      nombre: json['nombre'],
-      categoria: json['categoria'],
-      precio: double.parse(json['precio'].toString()),
-      cantidad: json['cantidad'],
+      id: codigo,
+      nombre: codigoBarra.isEmpty ? 'Producto $codigo' : codigoBarra,
+      codigoBarra: codigoBarra,
+      categoria: tipo is Map
+          ? (tipo['nombre_tipo'] ?? 'Sin categoría').toString()
+          : (json['tipo']?.toString() ?? 'Sin categoría'),
+      precio: double.tryParse(json['precio']?.toString() ?? '0') ?? 0,
+      cantidad: int.tryParse(json['stock']?.toString() ?? '0') ?? 0,
     );
   }
 }
 
-// 2. INTERFAZ DE LA PÁGINA
 class PaginaInventario extends StatefulWidget {
   const PaginaInventario({super.key});
 
@@ -40,37 +46,133 @@ class PaginaInventario extends StatefulWidget {
 }
 
 class _PaginaInventarioState extends State<PaginaInventario> {
-  // Lista de prueba (Dummy Data). Luego esto se llenará con: supabase.from('productos').select();
-  List<Producto> productos = [
-    Producto(
-      id: '1',
-      nombre: 'Acelerador vintage',
-      categoria: 'Pieza',
-      precio: 30000,
-      cantidad: 1,
-    ),
-    Producto(
-      id: '2',
-      nombre: 'Alerón Azul',
-      categoria: 'Pieza',
-      precio: 70000,
-      cantidad: 3,
-    ),
-    Producto(
-      id: '3',
-      nombre: 'Rueda Cuadrada',
-      categoria: 'Pieza',
-      precio: 100000,
-      cantidad: 2,
-    ),
-    Producto(
-      id: '4',
-      nombre: 'Ventana #6402',
-      categoria: 'Vidrio',
-      precio: 700000,
-      cantidad: 3,
-    ),
-  ];
+  List<Producto> productos = [];
+  bool _cargando = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarProductos();
+  }
+
+  Future<void> _cargarProductos() async {
+    try {
+      final response = await SupabaseDatabase.client
+          .from(SupabaseTables.productos)
+          .select(
+            'codigo_producto, cod_barra, stock, tipo, precio, tipo_producto(nombre_tipo)',
+          )
+          .order('codigo_producto');
+
+      final data = response as List<dynamic>;
+      setState(() {
+        productos = data
+            .map(
+              (item) =>
+                  Producto.fromJson(Map<String, dynamic>.from(item as Map)),
+            )
+            .toList();
+        _cargando = false;
+        _error = null;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _cargando = false;
+      });
+    }
+  }
+
+  Future<void> _agregarProducto() async {
+    final codigoCtrl = TextEditingController();
+    final barraCtrl = TextEditingController();
+    final stockCtrl = TextEditingController(text: '0');
+    final precioCtrl = TextEditingController();
+    final valores = await showDialog<Map<String, Object?>>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Añadir producto'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: codigoCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Código producto'),
+              ),
+              TextField(
+                controller: barraCtrl,
+                decoration: const InputDecoration(labelText: 'Código de barra'),
+              ),
+              TextField(
+                controller: stockCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Stock inicial'),
+              ),
+              TextField(
+                controller: precioCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Precio entero'),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              final codigo = int.tryParse(codigoCtrl.text.trim());
+              final stock = int.tryParse(stockCtrl.text.trim());
+              final precio = int.tryParse(precioCtrl.text.trim());
+              if (codigo == null ||
+                  stock == null ||
+                  precio == null ||
+                  stock < 0 ||
+                  precio < 0) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Revisa los códigos, stock y precio.'),
+                  ),
+                );
+                return;
+              }
+              Navigator.pop(context, {
+                'codigo_producto': codigo,
+                'cod_barra': barraCtrl.text.trim().isEmpty
+                    ? null
+                    : barraCtrl.text.trim(),
+                'stock': stock,
+                'precio': precio,
+              });
+            },
+            child: const Text('Registrar'),
+          ),
+        ],
+      ),
+    );
+    codigoCtrl.dispose();
+    barraCtrl.dispose();
+    stockCtrl.dispose();
+    precioCtrl.dispose();
+    if (valores == null) return;
+
+    try {
+      await SupabaseDatabase.client
+          .from(SupabaseTables.productos)
+          .insert(valores);
+      await _cargarProductos();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo añadir el producto: $error')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -144,13 +246,10 @@ class _PaginaInventarioState extends State<PaginaInventario> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Botón Añadir Producto
                   Align(
                     alignment: Alignment.centerRight,
                     child: ElevatedButton.icon(
-                      onPressed: () {
-                        // Aquí irá la lógica para abrir un modal o página para crear producto
-                      },
+                      onPressed: _agregarProducto,
                       icon: const Icon(Icons.add, color: Colors.black),
                       label: const Text(
                         'AÑADIR PRODUCTO',
@@ -170,7 +269,6 @@ class _PaginaInventarioState extends State<PaginaInventario> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Buscador
                   Container(
                     color: Colors.grey[200],
                     padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -184,7 +282,6 @@ class _PaginaInventarioState extends State<PaginaInventario> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Filtros
                   Wrap(
                     spacing: 10,
                     runSpacing: 10,
@@ -229,118 +326,121 @@ class _PaginaInventarioState extends State<PaginaInventario> {
                   ),
                   const SizedBox(height: 20),
 
-                  // TABLA DE DATOS
-                  Expanded(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.vertical,
+                  if (_error != null)
+                    Text('Error al cargar inventario: $_error'),
+                  if (_cargando)
+                    const Expanded(
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else
+                    Expanded(
                       child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: DataTable(
-                          headingRowColor: MaterialStateProperty.all(
-                            Colors.red[400],
-                          ),
-                          border: TableBorder.all(
-                            color: Colors.black,
-                            width: 2,
-                          ),
-                          columns: const [
-                            DataColumn(
-                              label: Text(
-                                'PRODUCTO',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
+                        scrollDirection: Axis.vertical,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: DataTable(
+                            headingRowColor: WidgetStateProperty.all(
+                              Colors.red[400],
+                            ),
+                            border: TableBorder.all(
+                              color: Colors.black,
+                              width: 2,
+                            ),
+                            columns: const [
+                              DataColumn(
+                                label: Text(
+                                  'PRODUCTO',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                            ),
-                            DataColumn(
-                              label: Text(
-                                'CATEGORÍA',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
+                              DataColumn(
+                                label: Text(
+                                  'CATEGORÍA',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                            ),
-                            DataColumn(
-                              label: Text(
-                                'PRECIO',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
+                              DataColumn(
+                                label: Text(
+                                  'PRECIO',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                            ),
-                            DataColumn(
-                              label: Text(
-                                'CANTIDAD',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
+                              DataColumn(
+                                label: Text(
+                                  'CANTIDAD',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                            ),
-                            DataColumn(
-                              label: Text(
-                                'VER',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
+                              DataColumn(
+                                label: Text(
+                                  'VER',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                          // Mapeamos la lista de objetos Producto a filas de la tabla
-                          rows: productos.asMap().entries.map((entrada) {
-                            int indice = entrada.key;
-                            Producto producto = entrada.value;
-                            // Alternar colores de las filas para imitar el diseño
-                            Color? colorFila = indice % 2 == 0
-                                ? Colors.grey[200]
-                                : Colors.grey[300];
+                            ],
+                            rows: productos.asMap().entries.map((entrada) {
+                              int indice = entrada.key;
+                              Producto producto = entrada.value;
+                              Color? colorFila = indice % 2 == 0
+                                  ? Colors.grey[200]
+                                  : Colors.grey[300];
 
-                            return DataRow(
-                              color: MaterialStateProperty.all(colorFila),
-                              cells: [
-                                DataCell(
-                                  Text(
-                                    producto.nombre,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
+                              return DataRow(
+                                color: WidgetStateProperty.all(colorFila),
+                                cells: [
+                                  DataCell(
+                                    Text(
+                                      producto.nombre,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                DataCell(Text(producto.categoria)),
-                                DataCell(
-                                  Text(
-                                    '\$${producto.precio.toStringAsFixed(0)}',
+                                  DataCell(Text(producto.categoria)),
+                                  DataCell(
+                                    Text(
+                                      '\$${producto.precio.toStringAsFixed(0)}',
+                                    ),
                                   ),
-                                ), // Formato de moneda
-                                DataCell(Text(producto.cantidad.toString())),
-                                DataCell(
-                                  IconButton(
-                                    icon: const Icon(Icons.search, size: 30),
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          // Aquí pasamos el objeto Producto a la nueva página
-                                          builder: (context) =>
-                                              PaginaEdicionProducto(
-                                                producto: producto,
-                                              ),
-                                        ),
-                                      );
-                                    },
+                                  DataCell(Text(producto.cantidad.toString())),
+                                  DataCell(
+                                    IconButton(
+                                      icon: const Icon(Icons.search, size: 30),
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                PaginaEdicionProducto(
+                                                  producto: producto,
+                                                ),
+                                          ),
+                                        ).then((_) => _cargarProductos());
+                                      },
+                                    ),
                                   ),
-                                ),
-                              ],
-                            );
-                          }).toList(),
+                                ],
+                              );
+                            }).toList(),
+                          ),
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),

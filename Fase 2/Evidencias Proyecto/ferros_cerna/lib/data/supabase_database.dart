@@ -10,15 +10,11 @@ class SupabaseDatabase {
   static bool get isConfigured => _url.isNotEmpty && _publishableKey.isNotEmpty;
 
   static Future<void> initialize() async {
-    if (_url.isEmpty && _publishableKey.isEmpty) {
+    if (_url.isEmpty || _publishableKey.isEmpty) {
       debugPrint(
         'Supabase no está configurado; se inicia la aplicación sin conexión.',
       );
       return;
-    }
-
-    if (!isConfigured) {
-      throw StateError('Configura SUPABASE_URL y SUPABASE_PUBLISHABLE_KEY.');
     }
 
     await Supabase.initialize(url: _url, publishableKey: _publishableKey);
