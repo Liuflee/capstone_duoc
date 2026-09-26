@@ -1,6 +1,7 @@
 import 'package:ferros_cerna/pagina_inventario.dart';
 import 'package:flutter/material.dart';
 import 'menu_lateral.dart';
+import 'pagina_vehiculos.dart';
 
 void main() {
   runApp(const MiAplicacion());
@@ -105,7 +106,15 @@ class PaginaPrincipal extends StatelessWidget {
                       runSpacing: 20,
                       alignment: WrapAlignment.center,
                       children: [
-                        const _ActionCard(icono: Icons.menu_book, texto: 'HISTORIAL\nVEHÍCULOS'),
+                                                InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const PaginaVehiculos()),
+                            );
+                          },
+                          child: const _ActionCard(icono: Icons.menu_book, texto: 'HISTORIAL\nVEHÍCULOS'),
+                        ),
                         InkWell(
                           onTap: () {
                             // Esto hace la navegación a la nueva página
