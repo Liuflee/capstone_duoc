@@ -1,8 +1,14 @@
 import 'package:ferros_cerna/pagina_inventario.dart';
+import 'package:ferros_cerna/data/supabase_database.dart';
 import 'package:flutter/material.dart';
-import 'menu_lateral.dart';
 
-void main() {
+import 'menu_lateral.dart';
+import 'pagina_vehiculos.dart';
+import 'pagina_ventas.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await SupabaseDatabase.initialize();
   runApp(const MiAplicacion());
 }
 
@@ -14,9 +20,7 @@ class MiAplicacion extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Frenos Cerna',
-      theme: ThemeData(
-        fontFamily: 'Courier', 
-      ),
+      theme: ThemeData(fontFamily: 'Courier'),
       home: const PaginaPrincipal(),
     );
   }
@@ -27,7 +31,7 @@ class PaginaPrincipal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // sacamo el ancho 
+    // sacamo el ancho
     final anchoPantalla = MediaQuery.of(context).size.width;
     // Definimos si es una pantalla grande (Desktop/Tablet) o pequeña (Teléfono)
     final esPantallaGrande = anchoPantalla > 800;
@@ -48,33 +52,51 @@ class PaginaPrincipal extends StatelessWidget {
                     width: 40,
                     height: 40,
                     color: Colors.grey[500],
-                    child: const Icon(Icons.settings_input_component, color: Colors.white),
+                    child: const Icon(
+                      Icons.settings_input_component,
+                      color: Colors.white,
+                    ),
                   ),
                   const SizedBox(width: 10),
-                  const Text('Frenos\nCerna', style: TextStyle(color: Colors.black, fontSize: 16)),
+                  const Text(
+                    'Frenos\nCerna',
+                    style: TextStyle(color: Colors.black, fontSize: 16),
+                  ),
                 ],
               ),
-            const Text('Inicio', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 22)),
+            const Text(
+              'Inicio',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 22,
+              ),
+            ),
             Row(
               children: [
                 if (esPantallaGrande) // Ocultamos el nombre en celular para ahorrar espacio
-                  const Text('Leonardo', style: TextStyle(color: Colors.black, fontSize: 16)),
+                  const Text(
+                    'Leonardo',
+                    style: TextStyle(color: Colors.black, fontSize: 16),
+                  ),
                 const SizedBox(width: 10),
                 CircleAvatar(
                   backgroundColor: Colors.red[800],
                   child: const Icon(Icons.build, color: Colors.black),
                 ),
               ],
-            )
+            ),
           ],
         ),
       ),
       // Si es pantalla pequeña, usamos un Drawer (menú hamburguesa)
-      drawer: esPantallaGrande ? null : const Drawer(child: MenuLateral(activo: 'Inicio')),
-        body: Row(
-          children: [
-            if (esPantallaGrande) const ContenedorMenuLateral(activo: 'Inicio'),
-          
+      drawer: esPantallaGrande
+          ? null
+          : const Drawer(child: MenuLateral(activo: 'Inicio')),
+      body: Row(
+        children: [
+          if (esPantallaGrande) const ContenedorMenuLateral(activo: 'Inicio'),
+
           // CONTENIDO PRINCIPAL
           Expanded(
             child: Padding(
@@ -83,7 +105,13 @@ class PaginaPrincipal extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Text('IMPORTANTE', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+                    const Text(
+                      'IMPORTANTE',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 20),
                     // Usamos WRAP en lugar de ROW. Se adaptará a la pantalla.
                     Wrap(
@@ -91,13 +119,31 @@ class PaginaPrincipal extends StatelessWidget {
                       runSpacing: 20, // Espacio vertical cuando saltan de línea
                       alignment: WrapAlignment.center,
                       children: const [
-                        _InfoCard(icono: Icons.people_outline, numero: '2', texto: 'VENTAS DEL\nDÍA'),
-                        _InfoCard(icono: Icons.warning_amber_rounded, numero: '1', texto: 'NOTIFICACIONES'),
-                        _InfoCard(icono: Icons.help_outline, numero: '23', texto: 'PRODUCTOS\nFALTANTES'),
+                        _InfoCard(
+                          icono: Icons.people_outline,
+                          numero: '2',
+                          texto: 'VENTAS DEL\nDÍA',
+                        ),
+                        _InfoCard(
+                          icono: Icons.warning_amber_rounded,
+                          numero: '1',
+                          texto: 'NOTIFICACIONES',
+                        ),
+                        _InfoCard(
+                          icono: Icons.help_outline,
+                          numero: '23',
+                          texto: 'PRODUCTOS\nFALTANTES',
+                        ),
                       ],
                     ),
                     const SizedBox(height: 40),
-                    const Text('TRABAJO', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+                    const Text(
+                      'TRABAJO',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 20),
                     // Usamos WRAP nuevamente
                     Wrap(
@@ -105,19 +151,53 @@ class PaginaPrincipal extends StatelessWidget {
                       runSpacing: 20,
                       alignment: WrapAlignment.center,
                       children: [
-                        const _ActionCard(icono: Icons.menu_book, texto: 'HISTORIAL\nVEHÍCULOS'),
+                        InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const PaginaVehiculos(),
+                              ),
+                            );
+                          },
+                          child: const _ActionCard(
+                            icono: Icons.menu_book,
+                            texto: 'HISTORIAL\nVEHÍCULOS',
+                          ),
+                        ),
                         InkWell(
                           onTap: () {
                             // Esto hace la navegación a la nueva página
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => const PaginaInventario()),
+                              MaterialPageRoute(
+                                builder: (context) => const PaginaInventario(),
+                              ),
                             );
                           },
-                          child: const _ActionCard(icono: Icons.cases_outlined, texto: 'INVENTARIO'),
+                          child: const _ActionCard(
+                            icono: Icons.cases_outlined,
+                            texto: 'INVENTARIO',
+                          ),
                         ),
-                        _ActionCard(icono: Icons.warning_amber_rounded, texto: 'NOTIFICACIONES'),
-                        _ActionCard(icono: Icons.attach_money, texto: 'VENTAS'),
+                        _ActionCard(
+                          icono: Icons.warning_amber_rounded,
+                          texto: 'NOTIFICACIONES',
+                        ),
+                        InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const PaginaVentas(),
+                              ),
+                            );
+                          },
+                          child: const _ActionCard(
+                            icono: Icons.attach_money,
+                            texto: 'VENTAS',
+                          ),
+                        ),
                         _ActionCard(icono: Icons.bar_chart, texto: 'DATOS'),
                       ],
                     ),
@@ -130,7 +210,6 @@ class PaginaPrincipal extends StatelessWidget {
       ),
     );
   }
-
 }
 
 class _InfoCard extends StatelessWidget {
@@ -138,7 +217,11 @@ class _InfoCard extends StatelessWidget {
   final String numero;
   final String texto;
 
-  const _InfoCard({required this.icono, required this.numero, required this.texto});
+  const _InfoCard({
+    required this.icono,
+    required this.numero,
+    required this.texto,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -157,8 +240,15 @@ class _InfoCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [Icon(icono, size: 30)],
           ),
-          Text(numero, style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
-          Text(texto, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12)),
+          Text(
+            numero,
+            style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+          ),
+          Text(
+            texto,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12),
+          ),
         ],
       ),
     );
@@ -185,7 +275,11 @@ class _ActionCard extends StatelessWidget {
         children: [
           Icon(icono, size: 40),
           const SizedBox(width: 10),
-          Text(texto, textAlign: TextAlign.center, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            texto,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
         ],
       ),
     );

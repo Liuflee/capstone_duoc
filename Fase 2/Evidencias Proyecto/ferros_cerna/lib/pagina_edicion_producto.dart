@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ferros_cerna/data/supabase_database.dart';
 
 // Asegúrate de importar el archivo donde definiste la clase Producto
 import 'pagina_inventario.dart';
@@ -19,12 +20,15 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
   late TextEditingController _precioController;
   late String _categoriaSeleccionada;
   late int _cantidadActual;
+  bool _guardando = false;
 
   @override
   void initState() {
     super.initState();
     // Inicializamos los valores con los datos del producto recibido
-    _nombreController = TextEditingController(text: widget.producto.nombre);
+    _nombreController = TextEditingController(
+      text: widget.producto.codigoBarra,
+    );
     _precioController = TextEditingController(
       text: widget.producto.precio.toStringAsFixed(0),
     );
@@ -37,6 +41,57 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
     _nombreController.dispose();
     _precioController.dispose();
     super.dispose();
+  }
+
+  Future<void> _guardarProducto() async {
+    final precio = int.tryParse(_precioController.text.trim());
+    if (precio == null || precio < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ingresa un precio entero válido.')),
+      );
+      return;
+    }
+
+    setState(() => _guardando = true);
+    try {
+      await SupabaseDatabase.client
+          .from(SupabaseTables.productos)
+          .update({
+            'cod_barra': _nombreController.text.trim().isEmpty
+                ? null
+                : _nombreController.text.trim(),
+            'precio': precio,
+            'stock': _cantidadActual,
+          })
+          .eq('codigo_producto', int.parse(widget.producto.id));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Producto actualizado.')));
+      Navigator.pop(context, true);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo actualizar el producto: $error')),
+      );
+    } finally {
+      if (mounted) setState(() => _guardando = false);
+    }
+  }
+
+  Future<void> _borrarProducto() async {
+    try {
+      await SupabaseDatabase.client
+          .from(SupabaseTables.productos)
+          .delete()
+          .eq('codigo_producto', int.parse(widget.producto.id));
+      if (!mounted) return;
+      Navigator.pop(context, true);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo borrar el producto: $error')),
+      );
+    }
   }
 
   @override
@@ -140,9 +195,7 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       ElevatedButton.icon(
-                        onPressed: () {
-                          // Lógica CRUD Update
-                        },
+                        onPressed: _guardando ? null : _guardarProducto,
                         icon: const Icon(Icons.download, color: Colors.black),
                         label: const Text(
                           'GUARDAR',
@@ -160,9 +213,7 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
                         ),
                       ),
                       ElevatedButton.icon(
-                        onPressed: () {
-                          // Lógica CRUD Delete
-                        },
+                        onPressed: _guardando ? null : _borrarProducto,
                         icon: const Icon(
                           Icons.cancel_outlined,
                           color: Colors.white,
@@ -193,13 +244,13 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
                   const SizedBox(height: 30),
 
                   // Formulario de edición
-                  _ConstruirCampoEditable(
-                    'NOMBRE DE PRODUCTO:',
+                  _construirCampoEditable(
+                    'CÓDIGO DE BARRA:',
                     _nombreController,
                     false,
                   ),
                   const SizedBox(height: 20),
-                  _ConstruirCampoEditable(
+                  _construirCampoEditable(
                     'PRECIO DE PRODUCTO:',
                     _precioController,
                     true,
@@ -291,9 +342,7 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: DataTable(
-                      headingRowColor: MaterialStateProperty.all(
-                        Colors.red[400],
-                      ),
+                      headingRowColor: WidgetStateProperty.all(Colors.red[400]),
                       border: TableBorder.all(color: Colors.black, width: 2),
                       columns: const [
                         DataColumn(
@@ -335,7 +384,7 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
                       ],
                       rows: [
                         DataRow(
-                          color: MaterialStateProperty.all(Colors.grey[200]),
+                          color: WidgetStateProperty.all(Colors.grey[200]),
                           cells: [
                             const DataCell(
                               Text(
@@ -354,7 +403,7 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
                           ],
                         ),
                         DataRow(
-                          color: MaterialStateProperty.all(Colors.grey[300]),
+                          color: WidgetStateProperty.all(Colors.grey[300]),
                           cells: [
                             const DataCell(
                               Text(
@@ -385,7 +434,7 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
   }
 
   // Widget para construir los campos de texto grises
-  Widget _ConstruirCampoEditable(
+  Widget _construirCampoEditable(
     String titulo,
     TextEditingController controlador,
     bool esPrecio,

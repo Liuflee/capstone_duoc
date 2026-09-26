@@ -1,10 +1,10 @@
+import 'package:ferros_cerna/data/supabase_database.dart';
 import 'package:flutter/material.dart';
 
 import 'pagina_crear_cliente.dart';
 import 'pagina_editar_cliente.dart';
 import 'menu_lateral.dart';
 
-// Modelo de Datos
 class Cliente {
   final String id;
   final String nombre;
@@ -22,11 +22,11 @@ class Cliente {
 
   factory Cliente.fromJson(Map<String, dynamic> json) {
     return Cliente(
-      id: json['id'].toString(),
-      nombre: json['nombre'],
-      numero: json['numero'],
-      ultimaVenta: json['ultima_venta'],
-      vehiculo: json['vehiculo'] ?? 'Sin registrar',
+      id: json['rut']?.toString() ?? 'sin-rut',
+      nombre: (json['nombre'] ?? 'Sin nombre').toString(),
+      numero: (json['fono'] ?? 'Sin teléfono').toString(),
+      ultimaVenta: 'No disponible',
+      vehiculo: 'Sin registrar',
     );
   }
 }
@@ -39,50 +39,77 @@ class PaginaClientes extends StatefulWidget {
 }
 
 class _PaginaClientesState extends State<PaginaClientes> {
-  List<Cliente> clientes = [
-    Cliente(
-      id: '1',
-      nombre: 'MATÍAS',
-      numero: '+5612341234',
-      ultimaVenta: 'HOY',
-      vehiculo: 'Chevrolet Sail',
-    ),
-    Cliente(
-      id: '2',
-      nombre: 'BASTIAN',
-      numero: '+5612341234',
-      ultimaVenta: 'AYER',
-      vehiculo: 'Nissan V16',
-    ),
-    Cliente(
-      id: '3',
-      nombre: 'PABLO',
-      numero: '+5612341234',
-      ultimaVenta: '2 DÍAS',
-      vehiculo: 'Toyota Yaris',
-    ),
-    Cliente(
-      id: '4',
-      nombre: 'BENJAMÍN',
-      numero: '+5612341234',
-      ultimaVenta: '1 SEMANA',
-      vehiculo: 'Chevroleis evoleits',
-    ),
-    Cliente(
-      id: '5',
-      nombre: 'HÉCTOR',
-      numero: '+5612341234',
-      ultimaVenta: '3 MESES',
-      vehiculo: 'Ford F150',
-    ),
-    Cliente(
-      id: '6',
-      nombre: 'ANETTE',
-      numero: '+5612341234',
-      ultimaVenta: '2 AÑOS',
-      vehiculo: 'Kia Morning',
-    ),
-  ];
+  List<Cliente> clientes = [];
+  bool _cargando = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarClientes();
+  }
+
+  Future<void> _cargarClientes() async {
+    try {
+      final response = await SupabaseDatabase.client
+          .from(SupabaseTables.clientes)
+          .select('rut, nombre, fono')
+          .order('nombre');
+
+      final data = response as List<dynamic>;
+      if (!mounted) return;
+      setState(() {
+        clientes = data
+            .map(
+              (item) =>
+                  Cliente.fromJson(Map<String, dynamic>.from(item as Map)),
+            )
+            .toList();
+        _cargando = false;
+        _error = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _cargando = false;
+      });
+    }
+  }
+
+  Future<void> _borrarCliente(Cliente cliente) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Borrar cliente'),
+        content: Text('¿Borrar a ${cliente.nombre}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Borrar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmar != true || !mounted) return;
+
+    try {
+      await SupabaseDatabase.client
+          .from(SupabaseTables.clientes)
+          .delete()
+          .eq('rut', int.parse(cliente.id));
+      await _cargarClientes();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo borrar el cliente: $error')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,13 +132,14 @@ class _PaginaClientesState extends State<PaginaClientes> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
+                    onPressed: () async {
+                      final actualizado = await Navigator.push<bool>(
                         context,
                         MaterialPageRoute(
                           builder: (context) => const PaginaCrearCliente(),
                         ),
                       );
+                      if (actualizado == true) _cargarClientes();
                     },
                     icon: const Icon(
                       Icons.person_add_alt_1,
@@ -143,115 +171,125 @@ class _PaginaClientesState extends State<PaginaClientes> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.vertical,
+                  if (_error != null) Text('Error al cargar clientes: $_error'),
+                  if (_cargando)
+                    const Expanded(
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else
+                    Expanded(
                       child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: DataTable(
-                          headingRowColor: MaterialStateProperty.all(
-                            Colors.red[400],
-                          ),
-                          border: TableBorder.all(
-                            color: Colors.black,
-                            width: 2,
-                          ),
-                          columns: const [
-                            DataColumn(
-                              label: Text(
-                                'NOMBRE',
-                                style: TextStyle(color: Colors.white),
-                              ),
+                        scrollDirection: Axis.vertical,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: DataTable(
+                            headingRowColor: WidgetStateProperty.all(
+                              Colors.red[400],
                             ),
-                            DataColumn(
-                              label: Text(
-                                'NÚMERO',
-                                style: TextStyle(color: Colors.white),
-                              ),
+                            border: TableBorder.all(
+                              color: Colors.black,
+                              width: 2,
                             ),
-                            DataColumn(
-                              label: Text(
-                                'ULTIMA VENTA',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                            DataColumn(
-                              label: Text(
-                                'CAMBIAR',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                            DataColumn(
-                              label: Text(
-                                'BORRAR',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ],
-                          rows: clientes.asMap().entries.map((entrada) {
-                            Cliente cliente = entrada.value;
-                            return DataRow(
-                              color: MaterialStateProperty.all(
-                                entrada.key % 2 == 0
-                                    ? Colors.grey[200]
-                                    : Colors.grey[300],
-                              ),
-                              cells: [
-                                DataCell(
-                                  Row(
-                                    children: [
-                                      CircleAvatar(
-                                        backgroundColor: Colors.red[300],
-                                        child: const Icon(
-                                          Icons.person,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Text(
-                                        cliente.nombre,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                            columns: const [
+                              DataColumn(
+                                label: Text(
+                                  'NOMBRE',
+                                  style: TextStyle(color: Colors.white),
                                 ),
-                                DataCell(Text(cliente.numero)),
-                                DataCell(Text(cliente.ultimaVenta)),
-                                DataCell(
-                                  IconButton(
-                                    icon: const Icon(Icons.edit, size: 30),
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              PaginaEditarCliente(
-                                                cliente: cliente,
-                                              ),
-                                        ),
-                                      );
-                                    },
-                                  ),
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  'NÚMERO',
+                                  style: TextStyle(color: Colors.white),
                                 ),
-                                DataCell(
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.cancel_outlined,
-                                      color: Colors.red,
-                                      size: 30,
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  'RUT',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  'CAMBIAR',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  'BORRAR',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            ],
+                            rows: clientes.asMap().entries.map((entrada) {
+                              Cliente cliente = entrada.value;
+                              return DataRow(
+                                color: WidgetStateProperty.all(
+                                  entrada.key % 2 == 0
+                                      ? Colors.grey[200]
+                                      : Colors.grey[300],
+                                ),
+                                cells: [
+                                  DataCell(
+                                    Row(
+                                      children: [
+                                        CircleAvatar(
+                                          backgroundColor: Colors.red[300],
+                                          child: const Icon(
+                                            Icons.person,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Text(
+                                          cliente.nombre,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    onPressed: () {},
                                   ),
-                                ),
-                              ],
-                            );
-                          }).toList(),
+                                  DataCell(Text(cliente.numero)),
+                                  DataCell(Text(cliente.id)),
+                                  DataCell(
+                                    IconButton(
+                                      icon: const Icon(Icons.edit, size: 30),
+                                      onPressed: () async {
+                                        final actualizado =
+                                            await Navigator.push<bool>(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    PaginaEditarCliente(
+                                                      cliente: cliente,
+                                                    ),
+                                              ),
+                                            );
+                                        if (actualizado == true) {
+                                          _cargarClientes();
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                  DataCell(
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.cancel_outlined,
+                                        color: Colors.red,
+                                        size: 30,
+                                      ),
+                                      onPressed: () => _borrarCliente(cliente),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }).toList(),
+                          ),
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
