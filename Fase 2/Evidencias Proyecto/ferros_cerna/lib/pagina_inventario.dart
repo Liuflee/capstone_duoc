@@ -19,7 +19,7 @@ class Producto {
     required this.cantidad,
   });
 
-  // Este método te servirá luego para convertir la respuesta de Supabase a objetos de Flutter
+  // Este método servirá luego para convertir la respuesta de Supabase a objetos de Flutter
   factory Producto.fromJson(Map<String, dynamic> json) {
     return Producto(
       id: json['id'].toString(),

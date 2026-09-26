@@ -80,36 +80,36 @@ CREATE TABLE IF NOT EXISTS "detalle_venta_servicio" (
 	PRIMARY KEY("id")
 );
 
-ALTER TABLE "calidad_producto"
-ADD FOREIGN KEY("id") REFERENCES "producto"("calidad")
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE "tipo_producto"
-ADD FOREIGN KEY("id") REFERENCES "producto"("tipo")
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE "cliente"
-ADD FOREIGN KEY("rut") REFERENCES "vehiculo_cliente"("rut_cliente")
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE "modelo_vehiculo"
-ADD FOREIGN KEY("id") REFERENCES "vehiculo_cliente"("id_modelo")
+ALTER TABLE "producto"
+ADD FOREIGN KEY("calidad") REFERENCES "calidad_producto"("id")
 ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE "producto"
-ADD FOREIGN KEY("codigo_producto") REFERENCES "detalle_venta_producto"("codigo_producto")
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE "servicio"
-ADD FOREIGN KEY("id") REFERENCES "detalle_venta_servicio"("id_servicio")
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE "venta"
-ADD FOREIGN KEY("id") REFERENCES "detalle_venta_servicio"("id_venta")
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE "venta"
-ADD FOREIGN KEY("id") REFERENCES "detalle_venta_producto"("id_venta")
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE "cliente"
-ADD FOREIGN KEY("rut") REFERENCES "venta"("rut_cliente")
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE "marca_vehiculo"
-ADD FOREIGN KEY("id") REFERENCES "modelo_vehiculo"("id_marca")
+ADD FOREIGN KEY("tipo") REFERENCES "tipo_producto"("id")
 ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE "vehiculo_cliente"
-ADD FOREIGN KEY("patente") REFERENCES "venta"("patente_vehiculo")
+ADD FOREIGN KEY("rut_cliente") REFERENCES "cliente"("rut")
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE "vehiculo_cliente"
+ADD FOREIGN KEY("id_modelo") REFERENCES "modelo_vehiculo"("id")
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE "detalle_venta_producto"
+ADD FOREIGN KEY("codigo_producto") REFERENCES "producto"("codigo_producto")
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE "detalle_venta_servicio"
+ADD FOREIGN KEY("id_servicio") REFERENCES "servicio"("id")
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE "detalle_venta_servicio"
+ADD FOREIGN KEY("id_venta") REFERENCES "venta"("id")
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE "detalle_venta_producto"
+ADD FOREIGN KEY("id_venta") REFERENCES "venta"("id")
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE "venta"
+ADD FOREIGN KEY("rut_cliente") REFERENCES "cliente"("rut")
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE "modelo_vehiculo"
+ADD FOREIGN KEY("id_marca") REFERENCES "marca_vehiculo"("id")
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE "venta"
+ADD FOREIGN KEY("patente_vehiculo") REFERENCES "vehiculo_cliente"("patente")
 ON UPDATE NO ACTION ON DELETE NO ACTION;
