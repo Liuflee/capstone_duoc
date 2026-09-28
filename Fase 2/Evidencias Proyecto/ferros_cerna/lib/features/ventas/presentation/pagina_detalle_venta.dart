@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:ferros_cerna/data/ventas_repository.dart';
-
-import 'menu_lateral.dart'; // Importa el menú centralizado
+import 'package:ferros_cerna/features/ventas/data/ventas_repository.dart';
+import 'package:ferros_cerna/shared/widgets/menu_lateral.dart';
 
 // ============================================================================
 // MODELO DE DATOS (Preparado para la tabla detalle_venta en Supabase)

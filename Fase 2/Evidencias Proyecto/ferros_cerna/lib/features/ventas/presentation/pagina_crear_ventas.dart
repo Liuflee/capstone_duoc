@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:ferros_cerna/data/supabase_database.dart';
-
-import 'menu_lateral.dart'; // Importa tu menú lateral compartido
+import 'package:ferros_cerna/core/data/supabase_database.dart';
+import 'package:ferros_cerna/shared/widgets/menu_lateral.dart';
 
 // ============================================================================
 // MODELOS DE DATOS (Preparados para Supabase)
@@ -72,9 +71,7 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
   // ==========================================================================
 
   List<ProductoVenta> get _inventarioFiltrado {
-    final texto = _normalizarTexto(
-      _busquedaProductoCtrl.text.trim(),
-    );
+    final texto = _normalizarTexto(_busquedaProductoCtrl.text.trim());
 
     // Si no hay texto de búsqueda, mostrar todo el inventario
     if (texto.isEmpty) {
@@ -163,9 +160,7 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
 
     if (cantidadEnCarrito >= producto.stock) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No hay más unidades disponibles.'),
-        ),
+        const SnackBar(content: Text('No hay más unidades disponibles.')),
       );
       return;
     }
@@ -180,18 +175,14 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
 
     if (rut == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ingresa el RUT numérico del cliente.'),
-        ),
+        const SnackBar(content: Text('Ingresa el RUT numérico del cliente.')),
       );
       return;
     }
 
     if (_carrito.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Agrega al menos un producto.'),
-        ),
+        const SnackBar(content: Text('Agrega al menos un producto.')),
       );
       return;
     }
@@ -229,9 +220,7 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Venta registrada correctamente.'),
-        ),
+        const SnackBar(content: Text('Venta registrada correctamente.')),
       );
 
       Navigator.pop(context, true);
@@ -239,9 +228,7 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('No se pudo registrar la venta: $error'),
-        ),
+        SnackBar(content: Text('No se pudo registrar la venta: $error')),
       );
     } finally {
       if (mounted) {
@@ -278,7 +265,6 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
       // ======================================================================
       // APP BAR
       // ======================================================================
-
       appBar: AppBar(
         backgroundColor: Colors.grey[300],
         elevation: 0,
@@ -300,10 +286,7 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
                   const SizedBox(width: 10),
                   const Text(
                     'Frenos\nCerna',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.black, fontSize: 16),
                   ),
                 ],
               ),
@@ -320,18 +303,12 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
                 if (esPantallaGrande)
                   const Text(
                     'Leonardo',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.black, fontSize: 16),
                   ),
                 const SizedBox(width: 10),
                 CircleAvatar(
                   backgroundColor: Colors.red[800],
-                  child: const Icon(
-                    Icons.build,
-                    color: Colors.black,
-                  ),
+                  child: const Icon(Icons.build, color: Colors.black),
                 ),
               ],
             ),
@@ -342,17 +319,13 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
       // ======================================================================
       // MENÚ LATERAL EN PANTALLAS PEQUEÑAS
       // ======================================================================
-
       drawer: esPantallaGrande
           ? null
-          : const Drawer(
-              child: MenuLateral(activo: 'Ventas'),
-            ),
+          : const Drawer(child: MenuLateral(activo: 'Ventas')),
 
       // ======================================================================
       // CUERPO
       // ======================================================================
-
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -361,126 +334,107 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
           // ====================================================================
 
           if (esPantallaGrande)
-            const SizedBox(
-              width: 150,
-              child: MenuLateral(activo: 'Ventas'),
-            ),
+            const SizedBox(width: 150, child: MenuLateral(activo: 'Ventas')),
 
           // ====================================================================
           // CONTENIDO PRINCIPAL
           // ====================================================================
-
           Expanded(
             child: CustomScrollView(
               slivers: [
                 SliverPadding(
                   padding: const EdgeInsets.all(30.0),
                   sliver: SliverList(
-                    delegate: SliverChildListDelegate(
-                      [
-                        // ======================================================
-                        // SECCIÓN SUPERIOR: FORMULARIO Y CARRITO
-                        // ======================================================
+                    delegate: SliverChildListDelegate([
+                      // ======================================================
+                      // SECCIÓN SUPERIOR: FORMULARIO Y CARRITO
+                      // ======================================================
 
-                        esPantallaGrande
-                            ? Row(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    flex: 1,
-                                    child:
-                                        _construirFormularioCliente(context),
-                                  ),
-                                  const SizedBox(width: 40),
-                                  Expanded(
-                                    flex: 1,
-                                    child: _construirCarritoYTotal(),
-                                  ),
-                                ],
-                              )
-                            : Column(
-                                children: [
-                                  _construirFormularioCliente(context),
-                                  const SizedBox(height: 40),
-                                  _construirCarritoYTotal(),
-                                ],
-                              ),
+                      esPantallaGrande
+                          ? Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  flex: 1,
+                                  child: _construirFormularioCliente(context),
+                                ),
+                                const SizedBox(width: 40),
+                                Expanded(
+                                  flex: 1,
+                                  child: _construirCarritoYTotal(),
+                                ),
+                              ],
+                            )
+                          : Column(
+                              children: [
+                                _construirFormularioCliente(context),
+                                const SizedBox(height: 40),
+                                _construirCarritoYTotal(),
+                              ],
+                            ),
 
-                        const SizedBox(height: 50),
+                      const SizedBox(height: 50),
 
-                        // ======================================================
-                        // SECCIÓN INFERIOR: SELECCIÓN DE PRODUCTOS
-                        // ======================================================
-
-                        const Text(
-                          'SELECCIÓN DE PRODUCTOS',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      // ======================================================
+                      // SECCIÓN INFERIOR: SELECCIÓN DE PRODUCTOS
+                      // ======================================================
+                      const Text(
+                        'SELECCIÓN DE PRODUCTOS',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
                         ),
+                      ),
 
-                        const SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
-                        // ======================================================
-                        // BARRA DE BÚSQUEDA
-                        // ======================================================
+                      // ======================================================
+                      // BARRA DE BÚSQUEDA
+                      // ======================================================
+                      Container(
+                        width: double.infinity,
+                        color: Colors.grey[300],
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: TextField(
+                          controller: _busquedaProductoCtrl,
 
-                        Container(
-                          width: double.infinity,
-                          color: Colors.grey[300],
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                          ),
-                          child: TextField(
-                            controller: _busquedaProductoCtrl,
+                          // Filtrado automático al escribir
+                          onChanged: (_) {
+                            setState(() {});
+                          },
 
-                            // Filtrado automático al escribir
-                            onChanged: (_) {
-                              setState(() {});
-                            },
-
-                            decoration: InputDecoration(
-                              hintText:
-                                  'BUSCAR PRODUCTO POR NOMBRE O CATEGORÍA',
-                              border: InputBorder.none,
-                              suffixIcon: Icon(
-                                Icons.search,
-                                color: Colors.black,
-                                size: 30,
-                              ),
+                          decoration: InputDecoration(
+                            hintText: 'BUSCAR PRODUCTO POR NOMBRE O CATEGORÍA',
+                            border: InputBorder.none,
+                            suffixIcon: Icon(
+                              Icons.search,
+                              color: Colors.black,
+                              size: 30,
                             ),
                           ),
                         ),
+                      ),
 
-                        const SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
-                        // ======================================================
-                        // ESTADO DE CARGA / ERROR
-                        // ======================================================
+                      // ======================================================
+                      // ESTADO DE CARGA / ERROR
+                      // ======================================================
+                      if (_errorInventario != null)
+                        Text('Error al cargar inventario: $_errorInventario'),
 
-                        if (_errorInventario != null)
-                          Text(
-                            'Error al cargar inventario: $_errorInventario',
-                          ),
-
-                        if (_cargandoInventario)
-                          const SizedBox(
-                            height: 100,
-                            child: Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                          ),
-                      ],
-                    ),
+                      if (_cargandoInventario)
+                        const SizedBox(
+                          height: 100,
+                          child: Center(child: CircularProgressIndicator()),
+                        ),
+                    ]),
                   ),
                 ),
 
                 // =================================================================
                 // ENCABEZADO FIJO DE LA TABLA
                 // =================================================================
-
                 if (!_cargandoInventario && _errorInventario == null)
                   SliverPersistentHeader(
                     pinned: true,
@@ -490,7 +444,6 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
                 // =================================================================
                 // FILAS DE LA TABLA
                 // =================================================================
-
                 if (!_cargandoInventario && _errorInventario == null)
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 30.0),
@@ -502,18 +455,13 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
 
                           return Container(
                             width: double.infinity,
-                            constraints: const BoxConstraints(
-                              minHeight: 80,
-                            ),
+                            constraints: const BoxConstraints(minHeight: 80),
                             decoration: BoxDecoration(
                               color: index % 2 == 0
                                   ? Colors.grey[200]
                                   : Colors.grey[300],
                               border: const Border(
-                                left: BorderSide(
-                                  color: Colors.black,
-                                  width: 2,
-                                ),
+                                left: BorderSide(color: Colors.black, width: 2),
                                 right: BorderSide(
                                   color: Colors.black,
                                   width: 2,
@@ -554,7 +502,6 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
                                   // =================================================
                                   // CATEGORÍA
                                   // =================================================
-
                                   Expanded(
                                     flex: 3,
                                     child: Container(
@@ -586,7 +533,6 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
                                   // =================================================
                                   // PRECIO
                                   // =================================================
-
                                   Expanded(
                                     flex: 2,
                                     child: Container(
@@ -618,7 +564,6 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
                                   // =================================================
                                   // AÑADIR
                                   // =================================================
-
                                   Expanded(
                                     flex: 2,
                                     child: Container(
@@ -652,7 +597,6 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
                         // =======================================================
                         // CANTIDAD DE RESULTADOS FILTRADOS
                         // =======================================================
-
                         childCount: _inventarioFiltrado.length,
                       ),
                     ),
@@ -661,10 +605,7 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
                 // ===============================================================
                 // ESPACIO INFERIOR
                 // ===============================================================
-
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: 30),
-                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 30)),
               ],
             ),
           ),
@@ -683,10 +624,7 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
       children: [
         ElevatedButton.icon(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.keyboard_return,
-            color: Colors.black,
-          ),
+          icon: const Icon(Icons.keyboard_return, color: Colors.black),
           label: const Text(
             'VOLVER A VENTAS',
             style: TextStyle(
@@ -697,10 +635,7 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
           ),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.red[200],
-            padding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 15,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           ),
         ),
 
@@ -708,10 +643,7 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
 
         const Text(
           'RUT DEL CLIENTE REGISTRADO:',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
 
         const SizedBox(height: 10),
@@ -725,10 +657,7 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
 
         const Text(
           'PATENTE DEL VEHÍCULO (OPCIONAL):',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
 
         const SizedBox(height: 10),
@@ -756,10 +685,7 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
         Container(
           height: 350,
           decoration: BoxDecoration(
-            border: Border.all(
-              color: Colors.black,
-              width: 2,
-            ),
+            border: Border.all(color: Colors.black, width: 2),
           ),
           child: Column(
             children: [
@@ -801,7 +727,6 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
               // ==================================================================
               // LISTA DE ITEMS EN EL CARRITO
               // ==================================================================
-
               Expanded(
                 child: Container(
                   color: Colors.grey[300],
@@ -822,8 +747,7 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
                           children: [
                             Expanded(
                               child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   Text(
                                     item.nombre,
@@ -859,8 +783,7 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
                                 color: Colors.red,
                                 size: 30,
                               ),
-                              onPressed: () =>
-                                  _removerDelCarrito(index),
+                              onPressed: () => _removerDelCarrito(index),
                             ),
                           ],
                         ),
@@ -873,7 +796,6 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
               // ==================================================================
               // TOTAL
               // ==================================================================
-
               Container(
                 color: Colors.red[400],
                 padding: const EdgeInsets.symmetric(
@@ -904,13 +826,9 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
         // ======================================================================
         // BOTÓN REGISTRAR VENTA
         // ======================================================================
-
         ElevatedButton.icon(
           onPressed: _guardando ? null : _registrarVenta,
-          icon: const Icon(
-            Icons.download,
-            color: Colors.black,
-          ),
+          icon: const Icon(Icons.download, color: Colors.black),
           label: const Text(
             'REGISTRAR VENTA',
             style: TextStyle(
@@ -921,10 +839,7 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
           ),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.grey[400],
-            padding: const EdgeInsets.symmetric(
-              horizontal: 30,
-              vertical: 20,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
           ),
         ),
       ],
@@ -981,17 +896,13 @@ class _EncabezadoTablaDelegate extends SliverPersistentHeaderDelegate {
             // ================================================================
             // CATEGORÍA
             // ================================================================
-
             Expanded(
               flex: 3,
               child: Container(
                 height: double.infinity,
                 decoration: const BoxDecoration(
                   border: Border(
-                    left: BorderSide(
-                      color: Colors.black,
-                      width: 2,
-                    ),
+                    left: BorderSide(color: Colors.black, width: 2),
                   ),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1010,17 +921,13 @@ class _EncabezadoTablaDelegate extends SliverPersistentHeaderDelegate {
             // ================================================================
             // PRECIO
             // ================================================================
-
             Expanded(
               flex: 2,
               child: Container(
                 height: double.infinity,
                 decoration: const BoxDecoration(
                   border: Border(
-                    left: BorderSide(
-                      color: Colors.black,
-                      width: 2,
-                    ),
+                    left: BorderSide(color: Colors.black, width: 2),
                   ),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1039,17 +946,13 @@ class _EncabezadoTablaDelegate extends SliverPersistentHeaderDelegate {
             // ================================================================
             // AÑADIR
             // ================================================================
-
             Expanded(
               flex: 2,
               child: Container(
                 height: double.infinity,
                 decoration: const BoxDecoration(
                   border: Border(
-                    left: BorderSide(
-                      color: Colors.black,
-                      width: 2,
-                    ),
+                    left: BorderSide(color: Colors.black, width: 2),
                   ),
                 ),
                 alignment: Alignment.center,
@@ -1070,9 +973,7 @@ class _EncabezadoTablaDelegate extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  bool shouldRebuild(
-    covariant _EncabezadoTablaDelegate oldDelegate,
-  ) {
+  bool shouldRebuild(covariant _EncabezadoTablaDelegate oldDelegate) {
     return false;
   }
 }
@@ -1085,10 +986,7 @@ class _ConstruirCampoEditable extends StatelessWidget {
   final TextEditingController? controlador;
   final String? hint;
 
-  const _ConstruirCampoEditable({
-    this.controlador,
-    this.hint,
-  });
+  const _ConstruirCampoEditable({this.controlador, this.hint});
 
   @override
   Widget build(BuildContext context) {
@@ -1103,27 +1001,18 @@ class _ConstruirCampoEditable extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: hint,
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 10),
               ),
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
           Container(
             color: Colors.grey[400],
             padding: const EdgeInsets.all(8),
-            child: const Icon(
-              Icons.edit_square,
-              size: 30,
-            ),
+            child: const Icon(Icons.edit_square, size: 30),
           ),
         ],
       ),
     );
   }
 }
-

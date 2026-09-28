@@ -1,10 +1,9 @@
-import 'package:ferros_cerna/utils/nav_rutas.dart';
 import 'package:flutter/material.dart';
+import 'package:ferros_cerna/core/navigation/nav_rutas.dart';
+import 'package:ferros_cerna/features/clientes/pagina_clientes.dart';
+import 'package:ferros_cerna/features/inventario/pagina_inventario.dart';
 
 // Asegúrate de que los nombres de los archivos coincidan con los tuyos
-import 'main.dart';
-import 'pagina_clientes.dart';
-import 'pagina_inventario.dart';
 
 class MenuLateral extends StatelessWidget {
   final String activo;
@@ -17,15 +16,13 @@ class MenuLateral extends StatelessWidget {
       color: Colors.grey[350],
       child: Column(
         children: [
-
           // BOTÓN PÁGINA PRINCIPAL
           InkWell(
             onTap: () {
               if (activo != 'Inicio') {
-                // pushAndRemoveUntil borra el historial para que Inicio sea la base
-                Navigator.pushAndRemoveUntil(
+                Navigator.pushNamedAndRemoveUntil(
                   context,
-                  NavegacionRutas.sinAnimacion(const PaginaPrincipal()),
+                  NavegacionRutas.inicio,
                   (Route<dynamic> route) => false,
                 );
               }
@@ -162,10 +159,7 @@ class _MenuItem extends StatelessWidget {
         children: [
           const SizedBox(width: 10),
 
-          Icon(
-            icono,
-            color: activo ? Colors.black : Colors.white,
-          ),
+          Icon(icono, color: activo ? Colors.black : Colors.white),
 
           const SizedBox(width: 10),
 
@@ -175,8 +169,7 @@ class _MenuItem extends StatelessWidget {
               style: TextStyle(
                 color: activo ? Colors.black : Colors.white,
                 fontSize: 12,
-                fontWeight:
-                    activo ? FontWeight.bold : FontWeight.normal,
+                fontWeight: activo ? FontWeight.bold : FontWeight.normal,
               ),
             ),
           ),
@@ -185,4 +178,3 @@ class _MenuItem extends StatelessWidget {
     );
   }
 }
-

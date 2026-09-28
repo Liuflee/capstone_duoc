@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:ferros_cerna/data/supabase_database.dart';
+import 'package:ferros_cerna/core/data/supabase_database.dart';
 
 // Asegúrate de importar el archivo donde definiste la clase Producto
-import 'pagina_inventario.dart';
-import 'menu_lateral.dart';
+import 'package:ferros_cerna/features/inventario/pagina_inventario.dart';
+import 'package:ferros_cerna/shared/widgets/menu_lateral.dart';
 
 class PaginaEdicionProducto extends StatefulWidget {
   final Producto producto;

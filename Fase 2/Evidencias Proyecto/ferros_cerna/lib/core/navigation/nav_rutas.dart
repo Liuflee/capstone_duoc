@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 
 class NavegacionRutas {
   NavegacionRutas._(); // Constructor privado para evitar instanciación
+
+  static const inicio = '/inicio';
+
   static Route sinAnimacion(Widget pagina) {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) => pagina,
