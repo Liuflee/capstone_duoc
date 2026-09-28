@@ -17,7 +17,6 @@ class MenuLateral extends StatelessWidget {
       color: Colors.grey[350],
       child: Column(
         children: [
-          const SizedBox(height: 20),
 
           // BOTÓN PÁGINA PRINCIPAL
           InkWell(
@@ -140,6 +139,7 @@ class ContenedorMenuLateral extends StatelessWidget {
 }
 
 // Widget interno para el diseño de cada ítem
+
 class _MenuItem extends StatelessWidget {
   final IconData icono;
   final String texto;
@@ -154,20 +154,29 @@ class _MenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: activo ? Colors.red[400] : Colors.transparent,
+      color: activo
+          ? const Color.fromARGB(255, 163, 35, 33)
+          : const Color.fromARGB(255, 114, 25, 25),
       padding: const EdgeInsets.symmetric(vertical: 15),
       child: Row(
         children: [
           const SizedBox(width: 10),
-          Icon(icono, color: activo ? Colors.black : Colors.black54),
+
+          Icon(
+            icono,
+            color: activo ? Colors.black : Colors.white,
+          ),
+
           const SizedBox(width: 10),
+
           Expanded(
             child: Text(
               texto,
               style: TextStyle(
-                color: activo ? Colors.black : Colors.black87,
+                color: activo ? Colors.black : Colors.white,
                 fontSize: 12,
-                fontWeight: activo ? FontWeight.bold : FontWeight.normal,
+                fontWeight:
+                    activo ? FontWeight.bold : FontWeight.normal,
               ),
             ),
           ),
@@ -176,3 +185,4 @@ class _MenuItem extends StatelessWidget {
     );
   }
 }
+
