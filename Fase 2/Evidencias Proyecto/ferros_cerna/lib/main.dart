@@ -22,7 +22,16 @@ class MiAplicacion extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Frenos Cerna',
-      theme: ThemeData(fontFamily: 'Courier'),
+      theme: ThemeData(
+        fontFamily: 'Courier',
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.windows: _SinAnimacionPageTransitionsBuilder(),
+            TargetPlatform.linux: _SinAnimacionPageTransitionsBuilder(),
+            TargetPlatform.macOS: _SinAnimacionPageTransitionsBuilder(),
+          },
+        ),
+      ),
       onGenerateRoute: (settings) {
         if (settings.name == NavegacionRutas.inicio) {
           return NavegacionRutas.sinAnimacion(const PaginaPrincipal());
@@ -31,6 +40,21 @@ class MiAplicacion extends StatelessWidget {
       },
       home: const PaginaPrincipal(),
     );
+  }
+}
+
+class _SinAnimacionPageTransitionsBuilder extends PageTransitionsBuilder {
+  const _SinAnimacionPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return child;
   }
 }
 
