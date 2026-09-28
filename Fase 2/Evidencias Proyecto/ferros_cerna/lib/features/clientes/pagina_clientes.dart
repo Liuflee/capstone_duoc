@@ -1,9 +1,8 @@
-import 'package:ferros_cerna/data/supabase_database.dart';
 import 'package:flutter/material.dart';
-
-import 'pagina_crear_cliente.dart';
-import 'pagina_editar_cliente.dart';
-import 'menu_lateral.dart';
+import 'package:ferros_cerna/core/data/supabase_database.dart';
+import 'package:ferros_cerna/features/clientes/pagina_crear_cliente.dart';
+import 'package:ferros_cerna/features/clientes/pagina_editar_cliente.dart';
+import 'package:ferros_cerna/shared/widgets/menu_lateral.dart';
 
 // ============================================================
 // MODELO CLIENTE
@@ -52,13 +51,11 @@ class _PaginaClientesState extends State<PaginaClientes> {
   // ==========================================================
 
   List<Cliente> clientes = [];
-  List<Cliente> clientesFiltrados = [];
 
   bool _cargando = true;
   String? _error;
 
-  final TextEditingController _busquedaController =
-      TextEditingController();
+  final TextEditingController _busquedaController = TextEditingController();
 
   // ==========================================================
   // INICIALIZACIÓN
@@ -97,15 +94,12 @@ class _PaginaClientesState extends State<PaginaClientes> {
 
       final listaClientes = data
           .map(
-            (item) => Cliente.fromJson(
-              Map<String, dynamic>.from(item as Map),
-            ),
+            (item) => Cliente.fromJson(Map<String, dynamic>.from(item as Map)),
           )
           .toList();
 
       setState(() {
         clientes = listaClientes;
-        clientesFiltrados = List.from(listaClientes);
         _cargando = false;
         _error = null;
       });
@@ -123,163 +117,115 @@ class _PaginaClientesState extends State<PaginaClientes> {
   // BUSCAR CLIENTES
   // ============================================================
 
-  void _buscarClientes() {
-    final texto =
-        _busquedaController.text.trim().toLowerCase();
+  // ============================================================
+  // BORRAR CLIENTE
+  // ============================================================
 
-    setState(() {
-      if (texto.isEmpty) {
-        clientesFiltrados = List.from(clientes);
-      } else {
-        clientesFiltrados = clientes.where((cliente) {
-          final nombre =
-              cliente.nombre.toLowerCase();
+  Future<void> _borrarCliente(Cliente cliente) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.black,
 
-          final rut =
-              cliente.id.toLowerCase();
-
-          final numero =
-              cliente.numero.toLowerCase();
-
-          return nombre.contains(texto) ||
-              rut.contains(texto) ||
-              numero.contains(texto);
-        }).toList();
-      }
-    });
-  }
-
-// ============================================================
-// BORRAR CLIENTE
-// ============================================================
-
-Future<void> _borrarCliente(Cliente cliente) async {
-  final confirmar = await showDialog<bool>(
-    context: context,
-    builder: (context) => AlertDialog(
-      backgroundColor: Colors.black,
-
-      // ========================================================
-      // TÍTULO
-      // ========================================================
-
-      title: const Text(
-        'Borrar cliente',
-        style: TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
+        // ========================================================
+        // TÍTULO
+        // ========================================================
+        title: const Text(
+          'Borrar cliente',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-      ),
 
-      // ========================================================
-      // MENSAJE
-      // ========================================================
+        // ========================================================
+        // MENSAJE
+        // ========================================================
+        content: RichText(
+          text: TextSpan(
+            style: const TextStyle(color: Colors.white, fontSize: 16),
+            children: [
+              const TextSpan(text: '¿Borrar a '),
 
-      content: RichText(
-        text: TextSpan(
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 16,
+              TextSpan(
+                text: cliente.nombre.toUpperCase(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const TextSpan(text: '?'),
+            ],
           ),
-          children: [
-            const TextSpan(
-              text: '¿Borrar a ',
+        ),
+
+        // ========================================================
+        // BOTONES
+        // ========================================================
+        actions: [
+          // ======================================================
+          // BOTÓN CANCELAR
+          // ======================================================
+
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context, false);
+            },
+
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.grey[600],
+              foregroundColor: Colors.white,
             ),
 
-            TextSpan(
-              text: cliente.nombre.toUpperCase(),
-              style: const TextStyle(
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
             ),
-
-            const TextSpan(
-              text: '?',
-            ),
-          ],
-        ),
-      ),
-
-      // ========================================================
-      // BOTONES
-      // ========================================================
-
-      actions: [
-
-        // ======================================================
-        // BOTÓN CANCELAR
-        // ======================================================
-
-        ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context, false);
-          },
-
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.grey[600],
-            foregroundColor: Colors.white,
           ),
 
-          child: const Text(
-            'Cancelar',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
+          // ======================================================
+          // BOTÓN BORRAR
+          // ======================================================
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context, true);
+            },
+
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+
+            child: const Text(
+              'Borrar',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-        ),
-
-        // ======================================================
-        // BOTÓN BORRAR
-        // ======================================================
-
-        ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context, true);
-          },
-
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red,
-            foregroundColor: Colors.white,
-          ),
-
-          child: const Text(
-            'Borrar',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-
-  if (confirmar != true || !mounted) return;
-
-  try {
-    await SupabaseDatabase.client
-        .from(SupabaseTables.clientes)
-        .delete()
-        .eq(
-          'rut',
-          int.parse(cliente.id),
-        );
-
-    await _cargarClientes();
-  } catch (error) {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'No se pudo borrar el cliente: $error',
-        ),
+        ],
       ),
     );
+
+    if (confirmar != true || !mounted) return;
+
+    try {
+      await SupabaseDatabase.client
+          .from(SupabaseTables.clientes)
+          .delete()
+          .eq('rut', int.parse(cliente.id));
+
+      await _cargarClientes();
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo borrar el cliente: $error')),
+      );
+    }
   }
-}
 
   // ============================================================
   // CONSTRUIR PÁGINA
@@ -287,8 +233,15 @@ Future<void> _borrarCliente(Cliente cliente) async {
 
   @override
   Widget build(BuildContext context) {
-    final esPantallaGrande =
-        MediaQuery.of(context).size.width > 800;
+    final esPantallaGrande = MediaQuery.of(context).size.width > 800;
+    final textoBusqueda = _busquedaController.text.trim().toLowerCase();
+    final clientesFiltrados = textoBusqueda.isEmpty
+        ? clientes
+        : clientes.where((cliente) {
+            return cliente.nombre.toLowerCase().contains(textoBusqueda) ||
+                cliente.id.toLowerCase().contains(textoBusqueda) ||
+                cliente.numero.toLowerCase().contains(textoBusqueda);
+          }).toList();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -296,70 +249,48 @@ Future<void> _borrarCliente(Cliente cliente) async {
       // ========================================================
       // APP BAR
       // ========================================================
-
-      appBar: construirAppBar(
-        context,
-        'Clientes',
-        esPantallaGrande,
-      ),
+      appBar: construirAppBar(context, 'Clientes', esPantallaGrande),
 
       // ========================================================
       // MENÚ LATERAL MÓVIL
       // ========================================================
-
       drawer: esPantallaGrande
           ? null
-          : const Drawer(
-              child: MenuLateral(
-                activo: 'Clientes',
-              ),
-            ),
+          : const Drawer(child: MenuLateral(activo: 'Clientes')),
 
       // ========================================================
       // CONTENIDO PRINCIPAL
       // ========================================================
-
       body: Row(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           // ======================================================
           // MENÚ LATERAL ESCRITORIO
           // ======================================================
 
-          if (esPantallaGrande)
-            const ContenedorMenuLateral(
-              activo: 'Clientes',
-            ),
+          if (esPantallaGrande) const ContenedorMenuLateral(activo: 'Clientes'),
 
           // ======================================================
           // ÁREA PRINCIPAL
           // ======================================================
-
           Expanded(
             child: Padding(
-              padding:
-                  const EdgeInsets.all(20.0),
+              padding: const EdgeInsets.all(20.0),
 
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.end,
 
                 children: [
-
                   // ==================================================
                   // BOTÓN AÑADIR CLIENTE
                   // ==================================================
 
                   ElevatedButton.icon(
                     onPressed: () async {
-                      final actualizado =
-                          await Navigator.push<bool>(
+                      final actualizado = await Navigator.push<bool>(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              const PaginaCrearCliente(),
+                          builder: (context) => const PaginaCrearCliente(),
                         ),
                       );
 
@@ -375,18 +306,13 @@ Future<void> _borrarCliente(Cliente cliente) async {
 
                     label: const Text(
                       '+ Añadir cliente',
-                      style: TextStyle(
-                        color: Colors.black,
-                      ),
+                      style: TextStyle(color: Colors.black),
                     ),
 
-                    style:
-                        ElevatedButton.styleFrom(
-                      backgroundColor:
-                          Colors.grey[400],
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey[400],
 
-                      padding:
-                          const EdgeInsets.symmetric(
+                      padding: const EdgeInsets.symmetric(
                         horizontal: 20,
                         vertical: 15,
                       ),
@@ -395,23 +321,17 @@ Future<void> _borrarCliente(Cliente cliente) async {
 
                   const SizedBox(height: 20),
 
-                
-
                   // ==================================================
                   // BUSCADOR
                   // ==================================================
-
                   Container(
                     width: 300,
                     color: Colors.grey[300],
 
-                    padding: const EdgeInsets.only(
-                      left: 10,
-                    ),
+                    padding: const EdgeInsets.only(left: 10),
 
                     child: Row(
                       children: [
-
                         Expanded(
                           child: TextField(
                             controller: _busquedaController,
@@ -424,24 +344,17 @@ Future<void> _borrarCliente(Cliente cliente) async {
                             // ==================================================
                             // BÚSQUEDA AUTOMÁTICA
                             // ==================================================
-
-                            onChanged: (_) {
-                              _buscarClientes();
-                            },
+                            onChanged: (_) => setState(() {}),
                           ),
                         ),
 
                         // ==================================================
                         // BOTÓN DECORATIVO
                         // ==================================================
-
                         IconButton(
                           onPressed: null,
 
-                          icon: const Icon(
-                            Icons.search,
-                            color: Colors.black,
-                          ),
+                          icon: const Icon(Icons.search, color: Colors.black),
                         ),
                       ],
                     ),
@@ -450,57 +363,31 @@ Future<void> _borrarCliente(Cliente cliente) async {
                   // ==================================================
                   // SEPARACIÓN ENTRE BUSCADOR Y TABLA
                   // ==================================================
-
                   const SizedBox(height: 20),
 
                   // ==================================================
                   // MENSAJE DE ERROR
                   // ==================================================
-
-                  if (_error != null)
-                    Text(
-                      'Error al cargar clientes: $_error',
-                    ),
-
-
-
-                  // ==================================================
-                  // MENSAJE DE ERROR
-                  // ==================================================
-
-                  if (_error != null)
-                    Text(
-                      'Error al cargar clientes: $_error',
-                    ),
+                  if (_error != null) Text('Error al cargar clientes: $_error'),
 
                   // ==================================================
                   // CARGANDO / TABLA
                   // ==================================================
-
                   if (_cargando)
                     const Expanded(
-                      child: Center(
-                        child:
-                            CircularProgressIndicator(),
-                      ),
+                      child: Center(child: CircularProgressIndicator()),
                     )
                   else
                     Expanded(
-                      child:
-                          _ConstruirTablaClientes(
-                        clientes:
-                            clientesFiltrados,
+                      child: _ConstruirTablaClientes(
+                        clientes: clientesFiltrados,
 
-                        onEditar:
-                            (cliente) async {
-                          final actualizado =
-                              await Navigator.push<bool>(
+                        onEditar: (cliente) async {
+                          final actualizado = await Navigator.push<bool>(
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
-                                  PaginaEditarCliente(
-                                cliente: cliente,
-                              ),
+                                  PaginaEditarCliente(cliente: cliente),
                             ),
                           );
 
@@ -509,8 +396,7 @@ Future<void> _borrarCliente(Cliente cliente) async {
                           }
                         },
 
-                        onBorrar:
-                            _borrarCliente,
+                        onBorrar: _borrarCliente,
                       ),
                     ),
                 ],
@@ -527,15 +413,12 @@ Future<void> _borrarCliente(Cliente cliente) async {
 // TABLA DE CLIENTES
 // ============================================================
 
-class _ConstruirTablaClientes
-    extends StatelessWidget {
+class _ConstruirTablaClientes extends StatelessWidget {
   final List<Cliente> clientes;
 
-  final Future<void> Function(Cliente)
-      onEditar;
+  final Future<void> Function(Cliente) onEditar;
 
-  final Future<void> Function(Cliente)
-      onBorrar;
+  final Future<void> Function(Cliente) onBorrar;
 
   const _ConstruirTablaClientes({
     required this.clientes,
@@ -550,22 +433,16 @@ class _ConstruirTablaClientes
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
-      builder: (
-        BuildContext context,
-        BoxConstraints constraints,
-      ) {
-
+      builder: (BuildContext context, BoxConstraints constraints) {
         // ========================================================
         // ANCHO DE LA TABLA
         // ========================================================
 
         const double anchoMinimoTabla = 850;
 
-        final double anchoTabla =
-            constraints.maxWidth >
-                    anchoMinimoTabla
-                ? constraints.maxWidth
-                : anchoMinimoTabla;
+        final double anchoTabla = constraints.maxWidth > anchoMinimoTabla
+            ? constraints.maxWidth
+            : anchoMinimoTabla;
 
         // ========================================================
         // ANCHO DE COLUMNAS FIJAS
@@ -578,23 +455,20 @@ class _ConstruirTablaClientes
         // TOTAL = 590
         // ========================================================
 
-        final double anchoNombre =
-            anchoTabla - 590;
+        final double anchoNombre = anchoTabla - 590;
 
         // ========================================================
         // SCROLL HORIZONTAL
         // ========================================================
 
         return SingleChildScrollView(
-          scrollDirection:
-              Axis.horizontal,
+          scrollDirection: Axis.horizontal,
 
           child: SizedBox(
             width: anchoTabla,
 
             child: CustomScrollView(
               slivers: [
-
                 // ==================================================
                 // ENCABEZADO FIJO
                 // ==================================================
@@ -602,38 +476,20 @@ class _ConstruirTablaClientes
                 SliverPersistentHeader(
                   pinned: true,
 
-                  delegate:
-                      _EncabezadoTablaDelegate(
-                    child:
-                        _crearEncabezado(
-                      anchoNombre,
-                    ),
+                  delegate: _EncabezadoTablaDelegate(
+                    child: _crearEncabezado(anchoNombre),
                   ),
                 ),
 
                 // ==================================================
                 // FILAS
                 // ==================================================
-
                 SliverList(
-                  delegate:
-                      SliverChildBuilderDelegate(
-                    (context, index) {
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final cliente = clientes[index];
 
-                      final cliente =
-                          clientes[index];
-
-                      return _crearFila(
-                        context,
-                        cliente,
-                        index,
-                        anchoNombre,
-                      );
-                    },
-
-                    childCount:
-                        clientes.length,
-                  ),
+                    return _crearFila(context, cliente, index, anchoNombre);
+                  }, childCount: clientes.length),
                 ),
               ],
             ),
@@ -647,15 +503,12 @@ class _ConstruirTablaClientes
   // ENCABEZADO DE LA TABLA
   // ============================================================
 
-  Widget _crearEncabezado(
-    double anchoNombre,
-  ) {
+  Widget _crearEncabezado(double anchoNombre) {
     return Container(
       color: Colors.red[400],
 
       child: Row(
         children: [
-
           // ======================================================
           // COLUMNA NOMBRE
           // ======================================================
@@ -666,39 +519,24 @@ class _ConstruirTablaClientes
             child: Container(
               height: 56,
 
-              decoration:
-                  const BoxDecoration(
+              decoration: const BoxDecoration(
                 border: Border(
-                  left: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  top: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  bottom: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
+                  left: BorderSide(color: Colors.black, width: 2),
+                  top: BorderSide(color: Colors.black, width: 2),
+                  bottom: BorderSide(color: Colors.black, width: 2),
                 ),
               ),
 
-              alignment:
-                  Alignment.centerLeft,
+              alignment: Alignment.centerLeft,
 
-              padding:
-                  const EdgeInsets.symmetric(
-                horizontal: 12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
 
               child: const Text(
                 'NOMBRE',
 
                 style: TextStyle(
                   color: Colors.white,
-                  fontWeight:
-                      FontWeight.bold,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
@@ -707,41 +545,28 @@ class _ConstruirTablaClientes
           // ======================================================
           // COLUMNA NÚMERO
           // ======================================================
-
           SizedBox(
             width: 150,
 
             child: Container(
               height: 56,
 
-              decoration:
-                  const BoxDecoration(
+              decoration: const BoxDecoration(
                 border: Border(
-                  left: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  top: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  bottom: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
+                  left: BorderSide(color: Colors.black, width: 2),
+                  top: BorderSide(color: Colors.black, width: 2),
+                  bottom: BorderSide(color: Colors.black, width: 2),
                 ),
               ),
 
-              alignment:
-                  Alignment.center,
+              alignment: Alignment.center,
 
               child: const Text(
                 'NÚMERO',
 
                 style: TextStyle(
                   color: Colors.white,
-                  fontWeight:
-                      FontWeight.bold,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
@@ -750,41 +575,28 @@ class _ConstruirTablaClientes
           // ======================================================
           // COLUMNA RUT
           // ======================================================
-
           SizedBox(
             width: 150,
 
             child: Container(
               height: 56,
 
-              decoration:
-                  const BoxDecoration(
+              decoration: const BoxDecoration(
                 border: Border(
-                  left: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  top: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  bottom: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
+                  left: BorderSide(color: Colors.black, width: 2),
+                  top: BorderSide(color: Colors.black, width: 2),
+                  bottom: BorderSide(color: Colors.black, width: 2),
                 ),
               ),
 
-              alignment:
-                  Alignment.center,
+              alignment: Alignment.center,
 
               child: const Text(
                 'RUT',
 
                 style: TextStyle(
                   color: Colors.white,
-                  fontWeight:
-                      FontWeight.bold,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
@@ -793,41 +605,28 @@ class _ConstruirTablaClientes
           // ======================================================
           // COLUMNA CAMBIAR
           // ======================================================
-
           SizedBox(
             width: 145,
 
             child: Container(
               height: 56,
 
-              decoration:
-                  const BoxDecoration(
+              decoration: const BoxDecoration(
                 border: Border(
-                  left: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  top: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  bottom: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
+                  left: BorderSide(color: Colors.black, width: 2),
+                  top: BorderSide(color: Colors.black, width: 2),
+                  bottom: BorderSide(color: Colors.black, width: 2),
                 ),
               ),
 
-              alignment:
-                  Alignment.center,
+              alignment: Alignment.center,
 
               child: const Text(
                 'CAMBIAR',
 
                 style: TextStyle(
                   color: Colors.white,
-                  fontWeight:
-                      FontWeight.bold,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
@@ -836,45 +635,29 @@ class _ConstruirTablaClientes
           // ======================================================
           // COLUMNA BORRAR
           // ======================================================
-
           SizedBox(
             width: 145,
 
             child: Container(
               height: 56,
 
-              decoration:
-                  const BoxDecoration(
+              decoration: const BoxDecoration(
                 border: Border(
-                  left: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  right: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  top: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  bottom: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
+                  left: BorderSide(color: Colors.black, width: 2),
+                  right: BorderSide(color: Colors.black, width: 2),
+                  top: BorderSide(color: Colors.black, width: 2),
+                  bottom: BorderSide(color: Colors.black, width: 2),
                 ),
               ),
 
-              alignment:
-                  Alignment.center,
+              alignment: Alignment.center,
 
               child: const Text(
                 'BORRAR',
 
                 style: TextStyle(
                   color: Colors.white,
-                  fontWeight:
-                      FontWeight.bold,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
@@ -894,15 +677,11 @@ class _ConstruirTablaClientes
     int index,
     double anchoNombre,
   ) {
-
     // ==========================================================
     // COLOR ALTERNADO DE LAS FILAS
     // ==========================================================
 
-    final color =
-        index % 2 == 0
-            ? Colors.grey[200]
-            : Colors.grey[300];
+    final color = index % 2 == 0 ? Colors.grey[200] : Colors.grey[300];
 
     return Container(
       height: 70,
@@ -910,7 +689,6 @@ class _ConstruirTablaClientes
 
       child: Row(
         children: [
-
           // ======================================================
           // COLUMNA NOMBRE
           // ======================================================
@@ -921,40 +699,25 @@ class _ConstruirTablaClientes
             child: Container(
               height: 70,
 
-              decoration:
-                  const BoxDecoration(
+              decoration: const BoxDecoration(
                 border: Border(
-                  left: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  bottom: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
+                  left: BorderSide(color: Colors.black, width: 2),
+                  bottom: BorderSide(color: Colors.black, width: 2),
                 ),
               ),
 
-              padding:
-                  const EdgeInsets.symmetric(
-                horizontal: 10,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
 
               child: Row(
                 children: [
-
                   // ------------------------------------------------
                   // ICONO DEL CLIENTE
                   // ------------------------------------------------
 
                   CircleAvatar(
-                    backgroundColor:
-                        Colors.red[300],
+                    backgroundColor: Colors.red[300],
 
-                    child: const Icon(
-                      Icons.person,
-                      color: Colors.black,
-                    ),
+                    child: const Icon(Icons.person, color: Colors.black),
                   ),
 
                   const SizedBox(width: 10),
@@ -962,19 +725,13 @@ class _ConstruirTablaClientes
                   // ------------------------------------------------
                   // NOMBRE DEL CLIENTE
                   // ------------------------------------------------
-
                   Expanded(
                     child: Text(
                       cliente.nombre,
 
-                      overflow:
-                          TextOverflow.ellipsis,
+                      overflow: TextOverflow.ellipsis,
 
-                      style:
-                          const TextStyle(
-                        fontWeight:
-                            FontWeight.bold,
-                      ),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
@@ -985,107 +742,67 @@ class _ConstruirTablaClientes
           // ======================================================
           // COLUMNA NÚMERO
           // ======================================================
-
           SizedBox(
             width: 150,
 
             child: Container(
               height: 70,
 
-              decoration:
-                  const BoxDecoration(
+              decoration: const BoxDecoration(
                 border: Border(
-                  left: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  bottom: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
+                  left: BorderSide(color: Colors.black, width: 2),
+                  bottom: BorderSide(color: Colors.black, width: 2),
                 ),
               ),
 
-              alignment:
-                  Alignment.center,
+              alignment: Alignment.center,
 
-              child: Text(
-                cliente.numero,
-
-                overflow:
-                    TextOverflow.ellipsis,
-              ),
+              child: Text(cliente.numero, overflow: TextOverflow.ellipsis),
             ),
           ),
 
           // ======================================================
           // COLUMNA RUT
           // ======================================================
-
           SizedBox(
             width: 150,
 
             child: Container(
               height: 70,
 
-              decoration:
-                  const BoxDecoration(
+              decoration: const BoxDecoration(
                 border: Border(
-                  left: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  bottom: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
+                  left: BorderSide(color: Colors.black, width: 2),
+                  bottom: BorderSide(color: Colors.black, width: 2),
                 ),
               ),
 
-              alignment:
-                  Alignment.center,
+              alignment: Alignment.center,
 
-              child: Text(
-                cliente.id,
-
-                overflow:
-                    TextOverflow.ellipsis,
-              ),
+              child: Text(cliente.id, overflow: TextOverflow.ellipsis),
             ),
           ),
 
           // ======================================================
           // COLUMNA CAMBIAR
           // ======================================================
-
           SizedBox(
             width: 145,
 
             child: Container(
               height: 70,
 
-              decoration:
-                  const BoxDecoration(
+              decoration: const BoxDecoration(
                 border: Border(
-                  left: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  bottom: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
+                  left: BorderSide(color: Colors.black, width: 2),
+                  bottom: BorderSide(color: Colors.black, width: 2),
                 ),
               ),
 
-              alignment:
-                  Alignment.center,
+              alignment: Alignment.center,
 
               child: IconButton(
-                icon: const Icon(
-                  Icons.edit,
-                  size: 30,
-                ),
+                icon: const Icon(Icons.edit, size: 30),
 
                 onPressed: () {
                   onEditar(cliente);
@@ -1097,33 +814,21 @@ class _ConstruirTablaClientes
           // ======================================================
           // COLUMNA BORRAR
           // ======================================================
-
           SizedBox(
             width: 145,
 
             child: Container(
               height: 70,
 
-              decoration:
-                  const BoxDecoration(
+              decoration: const BoxDecoration(
                 border: Border(
-                  left: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  right: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  bottom: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
+                  left: BorderSide(color: Colors.black, width: 2),
+                  right: BorderSide(color: Colors.black, width: 2),
+                  bottom: BorderSide(color: Colors.black, width: 2),
                 ),
               ),
 
-              alignment:
-                  Alignment.center,
+              alignment: Alignment.center,
 
               child: IconButton(
                 icon: const Icon(
@@ -1148,13 +853,10 @@ class _ConstruirTablaClientes
 // ENCABEZADO FIJO DE LA TABLA
 // ============================================================
 
-class _EncabezadoTablaDelegate
-    extends SliverPersistentHeaderDelegate {
+class _EncabezadoTablaDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;
 
-  _EncabezadoTablaDelegate({
-    required this.child,
-  });
+  _EncabezadoTablaDelegate({required this.child});
 
   @override
   double get minExtent => 56;
@@ -1172,9 +874,7 @@ class _EncabezadoTablaDelegate
   }
 
   @override
-  bool shouldRebuild(
-    covariant _EncabezadoTablaDelegate oldDelegate,
-  ) {
+  bool shouldRebuild(covariant _EncabezadoTablaDelegate oldDelegate) {
     return oldDelegate.child != child;
   }
 }
@@ -1193,11 +893,9 @@ PreferredSizeWidget construirAppBar(
     elevation: 0,
 
     title: Row(
-      mainAxisAlignment:
-          MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
 
       children: [
-
         // ======================================================
         // LOGO Y NOMBRE DE LA EMPRESA
         // ======================================================
@@ -1205,7 +903,6 @@ PreferredSizeWidget construirAppBar(
         if (esPantallaGrande)
           Row(
             children: [
-
               Container(
                 width: 40,
                 height: 40,
@@ -1223,10 +920,7 @@ PreferredSizeWidget construirAppBar(
               const Text(
                 'Frenos\nCerna',
 
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 16,
-                ),
+                style: TextStyle(color: Colors.black, fontSize: 16),
               ),
             ],
           ),
@@ -1234,7 +928,6 @@ PreferredSizeWidget construirAppBar(
         // ======================================================
         // TÍTULO DE LA PÁGINA
         // ======================================================
-
         Text(
           titulo,
 
@@ -1248,30 +941,21 @@ PreferredSizeWidget construirAppBar(
         // ======================================================
         // USUARIO
         // ======================================================
-
         Row(
           children: [
-
             if (esPantallaGrande)
               const Text(
                 'Leonardo',
 
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 16,
-                ),
+                style: TextStyle(color: Colors.black, fontSize: 16),
               ),
 
             const SizedBox(width: 10),
 
             CircleAvatar(
-              backgroundColor:
-                  Colors.red[800],
+              backgroundColor: Colors.red[800],
 
-              child: const Icon(
-                Icons.build,
-                color: Colors.black,
-              ),
+              child: const Icon(Icons.build, color: Colors.black),
             ),
           ],
         ),
@@ -1284,16 +968,11 @@ PreferredSizeWidget construirAppBar(
 // CAMPO EDITABLE
 // ============================================================
 
-class CampoEditable
-    extends StatelessWidget {
+class CampoEditable extends StatelessWidget {
   final TextEditingController? controlador;
   final String? hint;
 
-  const CampoEditable({
-    super.key,
-    this.controlador,
-    this.hint,
-  });
+  const CampoEditable({super.key, this.controlador, this.hint});
 
   @override
   Widget build(BuildContext context) {
@@ -1303,7 +982,6 @@ class CampoEditable
 
       child: Row(
         children: [
-
           // ====================================================
           // CAMPO DE TEXTO
           // ====================================================
@@ -1312,38 +990,26 @@ class CampoEditable
             child: TextField(
               controller: controlador,
 
-              decoration:
-                  InputDecoration(
+              decoration: InputDecoration(
                 hintText: hint,
-                border:
-                    InputBorder.none,
+                border: InputBorder.none,
 
-                contentPadding:
-                    const EdgeInsets.symmetric(
-                  horizontal: 10,
-                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 10),
               ),
 
-              style: const TextStyle(
-                fontSize: 18,
-              ),
+              style: const TextStyle(fontSize: 18),
             ),
           ),
 
           // ====================================================
           // ICONO EDITAR
           // ====================================================
-
           Container(
             color: Colors.grey[400],
 
-            padding:
-                const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(8),
 
-            child: const Icon(
-              Icons.edit_square,
-              size: 30,
-            ),
+            child: const Icon(Icons.edit_square, size: 30),
           ),
         ],
       ),

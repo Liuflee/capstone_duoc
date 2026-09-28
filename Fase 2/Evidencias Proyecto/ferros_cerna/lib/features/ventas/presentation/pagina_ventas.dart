@@ -1,10 +1,9 @@
-import 'package:ferros_cerna/data/ventas_repository.dart';
 import 'package:flutter/material.dart';
-
-import 'menu_lateral.dart';
-import 'pagina_crear_ventas.dart';
-import 'pagina_detalle_venta.dart';
-import 'pagina_historial_ventas.dart';
+import 'package:ferros_cerna/features/ventas/data/ventas_repository.dart';
+import 'package:ferros_cerna/features/ventas/presentation/pagina_crear_ventas.dart';
+import 'package:ferros_cerna/features/ventas/presentation/pagina_detalle_venta.dart';
+import 'package:ferros_cerna/features/ventas/presentation/pagina_historial_ventas.dart';
+import 'package:ferros_cerna/shared/widgets/menu_lateral.dart';
 
 typedef VentaEnProceso = VentaRegistro;
 
@@ -45,8 +44,7 @@ class _PaginaVentasState extends State<PaginaVentas> {
 
   @override
   Widget build(BuildContext context) {
-    final esPantallaGrande =
-        MediaQuery.of(context).size.width > 800;
+    final esPantallaGrande = MediaQuery.of(context).size.width > 800;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -54,17 +52,14 @@ class _PaginaVentasState extends State<PaginaVentas> {
       // ============================================================
       // APP BAR
       // ============================================================
-
       appBar: AppBar(
         backgroundColor: Colors.grey[300],
         elevation: 0,
 
         title: Row(
-          mainAxisAlignment:
-              MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
 
           children: [
-
             // ======================================================
             // LOGO Y NOMBRE
             // ======================================================
@@ -72,7 +67,6 @@ class _PaginaVentasState extends State<PaginaVentas> {
             if (esPantallaGrande)
               Row(
                 children: [
-
                   Container(
                     width: 40,
                     height: 40,
@@ -89,10 +83,7 @@ class _PaginaVentasState extends State<PaginaVentas> {
                   const Text(
                     'Frenos\nCerna',
 
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.black, fontSize: 16),
                   ),
                 ],
               ),
@@ -100,7 +91,6 @@ class _PaginaVentasState extends State<PaginaVentas> {
             // ======================================================
             // TÍTULO
             // ======================================================
-
             const Text(
               'Ventas',
 
@@ -114,18 +104,13 @@ class _PaginaVentasState extends State<PaginaVentas> {
             // ======================================================
             // USUARIO
             // ======================================================
-
             Row(
               children: [
-
                 if (esPantallaGrande)
                   const Text(
                     'Leonardo',
 
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.black, fontSize: 16),
                   ),
 
                 const SizedBox(width: 10),
@@ -133,10 +118,7 @@ class _PaginaVentasState extends State<PaginaVentas> {
                 CircleAvatar(
                   backgroundColor: Colors.red[800],
 
-                  child: const Icon(
-                    Icons.build,
-                    color: Colors.black,
-                  ),
+                  child: const Icon(Icons.build, color: Colors.black),
                 ),
               ],
             ),
@@ -147,52 +129,35 @@ class _PaginaVentasState extends State<PaginaVentas> {
       // ============================================================
       // MENÚ LATERAL MÓVIL
       // ============================================================
-
       drawer: esPantallaGrande
           ? null
-          : const Drawer(
-              child: MenuLateral(
-                activo: 'Ventas',
-              ),
-            ),
+          : const Drawer(child: MenuLateral(activo: 'Ventas')),
 
       // ============================================================
       // CUERPO
       // ============================================================
-
       body: Row(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
 
         children: [
-
           // ========================================================
           // MENÚ LATERAL ESCRITORIO
           // ========================================================
 
           if (esPantallaGrande)
-            const SizedBox(
-              width: 150,
-              child: MenuLateral(
-                activo: 'Ventas',
-              ),
-            ),
+            const SizedBox(width: 150, child: MenuLateral(activo: 'Ventas')),
 
           // ========================================================
           // CONTENIDO PRINCIPAL
           // ========================================================
-
           Expanded(
             child: Padding(
-              padding:
-                  const EdgeInsets.all(30.0),
+              padding: const EdgeInsets.all(30.0),
 
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
 
                 children: [
-
                   // ==================================================
                   // BOTONES SUPERIORES
                   // ==================================================
@@ -200,25 +165,20 @@ class _PaginaVentasState extends State<PaginaVentas> {
                   Wrap(
                     spacing: 40,
                     runSpacing: 20,
-                    alignment:
-                        WrapAlignment.center,
+                    alignment: WrapAlignment.center,
 
                     children: [
-
                       // ==============================================
                       // REGISTRAR VENTA
                       // ==============================================
 
                       InkWell(
                         onTap: () async {
-
-                          final registrada =
-                              await Navigator.push<bool>(
+                          final registrada = await Navigator.push<bool>(
                             context,
 
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  const PaginaCrearVenta(),
+                              builder: (context) => const PaginaCrearVenta(),
                             ),
                           );
 
@@ -231,19 +191,15 @@ class _PaginaVentasState extends State<PaginaVentas> {
                           width: 350,
                           height: 120,
 
-                          decoration:
-                              BoxDecoration(
+                          decoration: BoxDecoration(
                             color: Colors.red[400],
-                            borderRadius:
-                                BorderRadius.circular(15),
+                            borderRadius: BorderRadius.circular(15),
                           ),
 
-                          padding:
-                              const EdgeInsets.all(20),
+                          padding: const EdgeInsets.all(20),
 
                           child: const Row(
                             children: [
-
                               Icon(
                                 Icons.attach_money,
                                 size: 70,
@@ -259,8 +215,7 @@ class _PaginaVentasState extends State<PaginaVentas> {
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 22,
-                                    fontWeight:
-                                        FontWeight.bold,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ),
@@ -272,10 +227,8 @@ class _PaginaVentasState extends State<PaginaVentas> {
                       // ==============================================
                       // HISTORIAL
                       // ==============================================
-
                       InkWell(
                         onTap: () {
-
                           Navigator.push(
                             context,
 
@@ -290,19 +243,15 @@ class _PaginaVentasState extends State<PaginaVentas> {
                           width: 350,
                           height: 120,
 
-                          decoration:
-                              BoxDecoration(
+                          decoration: BoxDecoration(
                             color: Colors.grey[300],
-                            borderRadius:
-                                BorderRadius.circular(15),
+                            borderRadius: BorderRadius.circular(15),
                           ),
 
-                          padding:
-                              const EdgeInsets.all(20),
+                          padding: const EdgeInsets.all(20),
 
                           child: const Row(
                             children: [
-
                               Icon(
                                 Icons.menu_book,
                                 size: 70,
@@ -318,8 +267,7 @@ class _PaginaVentasState extends State<PaginaVentas> {
                                   style: TextStyle(
                                     color: Colors.black,
                                     fontSize: 22,
-                                    fontWeight:
-                                        FontWeight.bold,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ),
@@ -335,14 +283,10 @@ class _PaginaVentasState extends State<PaginaVentas> {
                   // ==================================================
                   // TÍTULO
                   // ==================================================
-
                   const Text(
                     'VENTAS EN PROCESO',
 
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
 
                   const SizedBox(height: 20),
@@ -350,52 +294,32 @@ class _PaginaVentasState extends State<PaginaVentas> {
                   // ==================================================
                   // ERROR
                   // ==================================================
-
-                  if (_error != null)
-                    Text(
-                      'Error al cargar ventas: $_error',
-                    ),
+                  if (_error != null) Text('Error al cargar ventas: $_error'),
 
                   // ==================================================
                   // CARGANDO
                   // ==================================================
-
                   if (_cargando)
-
                     const Expanded(
-                      child: Center(
-                        child:
-                            CircularProgressIndicator(),
-                      ),
+                      child: Center(child: CircularProgressIndicator()),
                     )
-
                   // ==================================================
                   // TABLA
                   // ==================================================
-
                   else
-
                     Expanded(
                       child: LayoutBuilder(
-                        builder:
-                            (
-                          context,
-                          constraints,
-                        ) {
-
-                          const double anchoTabla =
-                              900;
+                        builder: (context, constraints) {
+                          const double anchoTabla = 900;
 
                           return SingleChildScrollView(
-                            scrollDirection:
-                                Axis.horizontal,
+                            scrollDirection: Axis.horizontal,
 
                             child: SizedBox(
                               width: anchoTabla,
 
                               child: CustomScrollView(
                                 slivers: [
-
                                   // ==================================
                                   // ENCABEZADO FIJO
                                   // ==================================
@@ -403,38 +327,23 @@ class _PaginaVentasState extends State<PaginaVentas> {
                                   SliverPersistentHeader(
                                     pinned: true,
 
-                                    delegate:
-                                        _EncabezadoVentasDelegate(
-                                      child:
-                                          _crearEncabezado(),
+                                    delegate: _EncabezadoVentasDelegate(
+                                      child: _crearEncabezado(),
                                     ),
                                   ),
 
                                   // ==================================
                                   // FILAS
                                   // ==================================
-
                                   SliverList(
-                                    delegate:
-                                        SliverChildBuilderDelegate(
-                                      (
-                                        context,
-                                        indice,
-                                      ) {
+                                    delegate: SliverChildBuilderDelegate((
+                                      context,
+                                      indice,
+                                    ) {
+                                      final venta = ventasActivas[indice];
 
-                                        final venta =
-                                            ventasActivas[indice];
-
-                                        return _crearFila(
-                                          context,
-                                          venta,
-                                          indice,
-                                        );
-                                      },
-
-                                      childCount:
-                                          ventasActivas.length,
-                                    ),
+                                      return _crearFila(context, venta, indice);
+                                    }, childCount: ventasActivas.length),
                                   ),
                                 ],
                               ),
@@ -463,7 +372,6 @@ class _PaginaVentasState extends State<PaginaVentas> {
 
       child: Row(
         children: [
-
           // ========================================================
           // CLIENTE
           // ========================================================
@@ -473,34 +381,20 @@ class _PaginaVentasState extends State<PaginaVentas> {
             height: 56,
 
             child: Container(
-              alignment:
-                  Alignment.center,
+              alignment: Alignment.center,
 
-              decoration:
-                  const BoxDecoration(
+              decoration: const BoxDecoration(
                 border: Border(
-                  left: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  top: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  bottom: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
+                  left: BorderSide(color: Colors.black, width: 2),
+                  top: BorderSide(color: Colors.black, width: 2),
+                  bottom: BorderSide(color: Colors.black, width: 2),
                 ),
               ),
 
               child: const Text(
                 'CLIENTE',
 
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                ),
+                style: TextStyle(color: Colors.white, fontSize: 18),
               ),
             ),
           ),
@@ -508,40 +402,25 @@ class _PaginaVentasState extends State<PaginaVentas> {
           // ========================================================
           // VEHÍCULO
           // ========================================================
-
           SizedBox(
             width: 200,
             height: 56,
 
             child: Container(
-              alignment:
-                  Alignment.center,
+              alignment: Alignment.center,
 
-              decoration:
-                  const BoxDecoration(
+              decoration: const BoxDecoration(
                 border: Border(
-                  left: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  top: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  bottom: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
+                  left: BorderSide(color: Colors.black, width: 2),
+                  top: BorderSide(color: Colors.black, width: 2),
+                  bottom: BorderSide(color: Colors.black, width: 2),
                 ),
               ),
 
               child: const Text(
                 'VEHÍCULO',
 
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                ),
+                style: TextStyle(color: Colors.white, fontSize: 18),
               ),
             ),
           ),
@@ -549,40 +428,25 @@ class _PaginaVentasState extends State<PaginaVentas> {
           // ========================================================
           // PRODUCTOS
           // ========================================================
-
           SizedBox(
             width: 400,
             height: 56,
 
             child: Container(
-              alignment:
-                  Alignment.center,
+              alignment: Alignment.center,
 
-              decoration:
-                  const BoxDecoration(
+              decoration: const BoxDecoration(
                 border: Border(
-                  left: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  top: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  bottom: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
+                  left: BorderSide(color: Colors.black, width: 2),
+                  top: BorderSide(color: Colors.black, width: 2),
+                  bottom: BorderSide(color: Colors.black, width: 2),
                 ),
               ),
 
               child: const Text(
                 'PRODUCTOS',
 
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                ),
+                style: TextStyle(color: Colors.white, fontSize: 18),
               ),
             ),
           ),
@@ -590,44 +454,26 @@ class _PaginaVentasState extends State<PaginaVentas> {
           // ========================================================
           // VER
           // ========================================================
-
           SizedBox(
             width: 100,
             height: 56,
 
             child: Container(
-              alignment:
-                  Alignment.center,
+              alignment: Alignment.center,
 
-              decoration:
-                  const BoxDecoration(
+              decoration: const BoxDecoration(
                 border: Border(
-                  left: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  right: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  top: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  bottom: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
+                  left: BorderSide(color: Colors.black, width: 2),
+                  right: BorderSide(color: Colors.black, width: 2),
+                  top: BorderSide(color: Colors.black, width: 2),
+                  bottom: BorderSide(color: Colors.black, width: 2),
                 ),
               ),
 
               child: const Text(
                 'VER',
 
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                ),
+                style: TextStyle(color: Colors.white, fontSize: 18),
               ),
             ),
           ),
@@ -640,16 +486,8 @@ class _PaginaVentasState extends State<PaginaVentas> {
   // FILA DE VENTA
   // ============================================================
 
-  Widget _crearFila(
-    BuildContext context,
-    VentaEnProceso venta,
-    int indice,
-  ) {
-
-    final color =
-        indice % 2 == 0
-            ? Colors.grey[200]
-            : Colors.grey[300];
+  Widget _crearFila(BuildContext context, VentaEnProceso venta, int indice) {
+    final color = indice % 2 == 0 ? Colors.grey[200] : Colors.grey[300];
 
     return Container(
       height: 120,
@@ -657,7 +495,6 @@ class _PaginaVentasState extends State<PaginaVentas> {
 
       child: Row(
         children: [
-
           // ========================================================
           // CLIENTE
           // ========================================================
@@ -667,36 +504,23 @@ class _PaginaVentasState extends State<PaginaVentas> {
             height: 120,
 
             child: Container(
-              decoration:
-                  const BoxDecoration(
+              decoration: const BoxDecoration(
                 border: Border(
-                  left: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  bottom: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
+                  left: BorderSide(color: Colors.black, width: 2),
+                  bottom: BorderSide(color: Colors.black, width: 2),
                 ),
               ),
 
-              alignment:
-                  Alignment.centerLeft,
+              alignment: Alignment.centerLeft,
 
-              padding:
-                  const EdgeInsets.symmetric(
-                horizontal: 10,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
 
               child: Row(
                 children: [
-
                   CircleAvatar(
                     radius: 20,
 
-                    backgroundColor:
-                        Colors.red[300],
+                    backgroundColor: Colors.red[300],
 
                     child: const Icon(
                       Icons.person_outline,
@@ -711,13 +535,10 @@ class _PaginaVentasState extends State<PaginaVentas> {
                     child: Text(
                       venta.clienteNombre,
 
-                      overflow:
-                          TextOverflow.ellipsis,
+                      overflow: TextOverflow.ellipsis,
 
-                      style:
-                          const TextStyle(
-                        fontWeight:
-                            FontWeight.bold,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
                         fontSize: 18,
                       ),
                     ),
@@ -730,36 +551,24 @@ class _PaginaVentasState extends State<PaginaVentas> {
           // ========================================================
           // VEHÍCULO
           // ========================================================
-
           SizedBox(
             width: 200,
             height: 120,
 
             child: Container(
-              decoration:
-                  const BoxDecoration(
+              decoration: const BoxDecoration(
                 border: Border(
-                  left: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  bottom: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
+                  left: BorderSide(color: Colors.black, width: 2),
+                  bottom: BorderSide(color: Colors.black, width: 2),
                 ),
               ),
 
-              alignment:
-                  Alignment.center,
+              alignment: Alignment.center,
 
               child: Text(
                 venta.vehiculoNombre,
 
-                style:
-                    const TextStyle(
-                  fontSize: 18,
-                ),
+                style: const TextStyle(fontSize: 18),
               ),
             ),
           ),
@@ -767,42 +576,26 @@ class _PaginaVentasState extends State<PaginaVentas> {
           // ========================================================
           // PRODUCTOS
           // ========================================================
-
           SizedBox(
             width: 400,
             height: 120,
 
             child: Container(
-              decoration:
-                  const BoxDecoration(
+              decoration: const BoxDecoration(
                 border: Border(
-                  left: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  bottom: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
+                  left: BorderSide(color: Colors.black, width: 2),
+                  bottom: BorderSide(color: Colors.black, width: 2),
                 ),
               ),
 
-              alignment:
-                  Alignment.center,
+              alignment: Alignment.center,
 
-              padding:
-                  const EdgeInsets.symmetric(
-                vertical: 10,
-                horizontal: 10,
-              ),
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
 
               child: Text(
                 venta.productosResumen,
 
-                style:
-                    const TextStyle(
-                  fontSize: 16,
-                ),
+                style: const TextStyle(fontSize: 16),
               ),
             ),
           ),
@@ -810,59 +603,38 @@ class _PaginaVentasState extends State<PaginaVentas> {
           // ========================================================
           // VER
           // ========================================================
-
           SizedBox(
             width: 100,
             height: 120,
 
             child: Container(
-              decoration:
-                  const BoxDecoration(
+              decoration: const BoxDecoration(
                 border: Border(
-                  left: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  right: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
-                  bottom: BorderSide(
-                    color: Colors.black,
-                    width: 2,
-                  ),
+                  left: BorderSide(color: Colors.black, width: 2),
+                  right: BorderSide(color: Colors.black, width: 2),
+                  bottom: BorderSide(color: Colors.black, width: 2),
                 ),
               ),
 
-              alignment:
-                  Alignment.center,
+              alignment: Alignment.center,
 
               child: IconButton(
-                icon: const Icon(
-                  Icons.search,
-                  size: 40,
-                  color: Colors.black,
-                ),
+                icon: const Icon(Icons.search, size: 40, color: Colors.black),
 
                 onPressed: () {
-
                   Navigator.push(
                     context,
 
                     MaterialPageRoute(
-                      builder: (context) =>
-                          PaginaDetalleVenta(
+                      builder: (context) => PaginaDetalleVenta(
                         idVenta: venta.id,
 
-                        clienteNombre:
-                            venta.clienteNombre
-                                .replaceAll(
+                        clienteNombre: venta.clienteNombre.replaceAll(
                           '\n',
                           ' ',
                         ),
 
-                        vehiculoNombre:
-                            venta.vehiculoNombre,
+                        vehiculoNombre: venta.vehiculoNombre,
 
                         total: venta.total,
 
@@ -884,14 +656,10 @@ class _PaginaVentasState extends State<PaginaVentas> {
 // ENCABEZADO FIJO DE LA TABLA DE VENTAS
 // ============================================================
 
-class _EncabezadoVentasDelegate
-    extends SliverPersistentHeaderDelegate {
-
+class _EncabezadoVentasDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;
 
-  _EncabezadoVentasDelegate({
-    required this.child,
-  });
+  _EncabezadoVentasDelegate({required this.child});
 
   @override
   double get minExtent => 56;
@@ -909,9 +677,7 @@ class _EncabezadoVentasDelegate
   }
 
   @override
-  bool shouldRebuild(
-    covariant _EncabezadoVentasDelegate oldDelegate,
-  ) {
+  bool shouldRebuild(covariant _EncabezadoVentasDelegate oldDelegate) {
     return oldDelegate.child != child;
   }
 }

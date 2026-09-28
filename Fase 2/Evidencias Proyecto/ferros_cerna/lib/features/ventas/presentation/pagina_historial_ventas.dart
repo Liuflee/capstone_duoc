@@ -1,8 +1,7 @@
-import 'package:ferros_cerna/data/ventas_repository.dart';
 import 'package:flutter/material.dart';
-
-import 'menu_lateral.dart';
-import 'pagina_detalle_venta.dart';
+import 'package:ferros_cerna/features/ventas/data/ventas_repository.dart';
+import 'package:ferros_cerna/features/ventas/presentation/pagina_detalle_venta.dart';
+import 'package:ferros_cerna/shared/widgets/menu_lateral.dart';
 
 typedef VentaHistorica = VentaRegistro;
 
@@ -10,25 +9,20 @@ class PaginaHistorialVentas extends StatefulWidget {
   const PaginaHistorialVentas({super.key});
 
   @override
-  State<PaginaHistorialVentas> createState() =>
-      _PaginaHistorialVentasState();
+  State<PaginaHistorialVentas> createState() => _PaginaHistorialVentasState();
 }
 
-class _PaginaHistorialVentasState
-    extends State<PaginaHistorialVentas> {
+class _PaginaHistorialVentasState extends State<PaginaHistorialVentas> {
   List<VentaHistorica> _historial = [];
-  List<VentaHistorica> _historialFiltrado = [];
 
   bool _cargando = true;
   String? _error;
 
   // Controlador horizontal compartido
-  final ScrollController _scrollHorizontal =
-      ScrollController();
+  final ScrollController _scrollHorizontal = ScrollController();
 
   // Controlador de búsqueda
-  final TextEditingController _busquedaController =
-      TextEditingController();
+  final TextEditingController _busquedaController = TextEditingController();
 
   // ============================================================
   // ANCHOS FIJOS DE LAS COLUMNAS
@@ -68,7 +62,6 @@ class _PaginaHistorialVentasState
 
       setState(() {
         _historial = data;
-        _historialFiltrado = data;
         _cargando = false;
         _error = null;
       });
@@ -84,31 +77,20 @@ class _PaginaHistorialVentasState
   // FILTRO DE BÚSQUEDA
   // ============================================================
 
-  void _filtrarHistorial() {
-    final texto = _busquedaController.text
-        .trim()
-        .toLowerCase();
+  List<VentaHistorica> get _historialFiltrado {
+    final texto = _busquedaController.text.trim().toLowerCase();
 
-    if (texto.isEmpty) {
-      setState(() {
-        _historialFiltrado = _historial;
-      });
-      return;
-    }
+    if (texto.isEmpty) return _historial;
 
-    setState(() {
-      _historialFiltrado = _historial.where((venta) {
-        final cliente =
-            venta.clienteNombre.toLowerCase();
+    return _historial.where((venta) {
+      final cliente = venta.clienteNombre.toLowerCase();
+      final fecha = venta.fecha.toLowerCase();
 
-        final fecha =
-            venta.fecha.toLowerCase();
-
-        return cliente.contains(texto) ||
-            fecha.contains(texto);
-      }).toList();
-    });
+      return cliente.contains(texto) || fecha.contains(texto);
+    }).toList();
   }
+
+  void _filtrarHistorial() => setState(() {});
 
   // ============================================================
   // COLUMNAS DE LA TABLA
@@ -121,10 +103,7 @@ class _PaginaHistorialVentasState
           width: _anchoCliente,
           child: Text(
             'CLIENTE',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-            ),
+            style: TextStyle(color: Colors.white, fontSize: 18),
           ),
         ),
       ),
@@ -132,15 +111,10 @@ class _PaginaHistorialVentasState
         label: SizedBox(
           width: _anchoProducto,
           child: Padding(
-            padding: EdgeInsets.only(
-              left: _paddingColumnas,
-            ),
+            padding: EdgeInsets.only(left: _paddingColumnas),
             child: Text(
               'PRODUCTO',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-              ),
+              style: TextStyle(color: Colors.white, fontSize: 18),
             ),
           ),
         ),
@@ -149,15 +123,10 @@ class _PaginaHistorialVentasState
         label: SizedBox(
           width: _anchoTotal,
           child: Padding(
-            padding: EdgeInsets.only(
-              left: _paddingColumnas,
-            ),
+            padding: EdgeInsets.only(left: _paddingColumnas),
             child: Text(
               'TOTAL',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-              ),
+              style: TextStyle(color: Colors.white, fontSize: 18),
             ),
           ),
         ),
@@ -166,15 +135,10 @@ class _PaginaHistorialVentasState
         label: SizedBox(
           width: _anchoFecha,
           child: Padding(
-            padding: EdgeInsets.only(
-              left: _paddingColumnas,
-            ),
+            padding: EdgeInsets.only(left: _paddingColumnas),
             child: Text(
               'FECHA',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-              ),
+              style: TextStyle(color: Colors.white, fontSize: 18),
             ),
           ),
         ),
@@ -184,10 +148,7 @@ class _PaginaHistorialVentasState
           width: _anchoVer,
           child: Text(
             'VER',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-            ),
+            style: TextStyle(color: Colors.white, fontSize: 18),
           ),
         ),
       ),
@@ -199,18 +160,13 @@ class _PaginaHistorialVentasState
   // ============================================================
 
   List<DataRow> _crearFilas() {
-    return _historialFiltrado
-        .asMap()
-        .entries
-        .map((entrada) {
+    return _historialFiltrado.asMap().entries.map((entrada) {
       int indice = entrada.key;
       VentaHistorica venta = entrada.value;
 
       return DataRow(
         color: WidgetStateProperty.all(
-          indice % 2 == 0
-              ? Colors.grey[200]
-              : Colors.grey[300],
+          indice % 2 == 0 ? Colors.grey[200] : Colors.grey[300],
         ),
         cells: [
           DataCell(
@@ -237,9 +193,7 @@ class _PaginaHistorialVentasState
                 ),
                 child: Text(
                   venta.productosResumen,
-                  style: const TextStyle(
-                    fontSize: 16,
-                  ),
+                  style: const TextStyle(fontSize: 16),
                 ),
               ),
             ),
@@ -249,9 +203,7 @@ class _PaginaHistorialVentasState
             SizedBox(
               width: _anchoTotal,
               child: Padding(
-                padding: const EdgeInsets.only(
-                  left: _paddingColumnas,
-                ),
+                padding: const EdgeInsets.only(left: _paddingColumnas),
                 child: Text(
                   '\$${venta.total.toStringAsFixed(0).replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}',
                   style: const TextStyle(
@@ -267,15 +219,8 @@ class _PaginaHistorialVentasState
             SizedBox(
               width: _anchoFecha,
               child: Padding(
-                padding: const EdgeInsets.only(
-                  left: _paddingColumnas,
-                ),
-                child: Text(
-                  venta.fecha,
-                  style: const TextStyle(
-                    fontSize: 18,
-                  ),
-                ),
+                padding: const EdgeInsets.only(left: _paddingColumnas),
+                child: Text(venta.fecha, style: const TextStyle(fontSize: 18)),
               ),
             ),
           ),
@@ -284,22 +229,15 @@ class _PaginaHistorialVentasState
             SizedBox(
               width: _anchoVer,
               child: IconButton(
-                icon: const Icon(
-                  Icons.search,
-                  size: 40,
-                  color: Colors.black,
-                ),
+                icon: const Icon(Icons.search, size: 40, color: Colors.black),
                 onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          PaginaDetalleVenta(
+                      builder: (context) => PaginaDetalleVenta(
                         idVenta: venta.id,
-                        clienteNombre:
-                            venta.clienteNombre,
-                        vehiculoNombre:
-                            'Vehículo Registrado',
+                        clienteNombre: venta.clienteNombre,
+                        vehiculoNombre: 'Vehículo Registrado',
                         total: venta.total,
                         fecha: venta.fecha,
                         desdeHistorial: true,
@@ -319,46 +257,21 @@ class _PaginaHistorialVentasState
   // TABLA
   // ============================================================
 
-  Widget _crearTabla({
-    bool ocultarEncabezado = false,
-  }) {
+  Widget _crearTabla({bool ocultarEncabezado = false}) {
     return DataTable(
       headingRowColor: ocultarEncabezado
-          ? WidgetStateProperty.all(
-              Colors.transparent,
-            )
-          : WidgetStateProperty.all(
-              Colors.red[400],
-            ),
-      headingRowHeight:
-          ocultarEncabezado ? 0 : null,
+          ? WidgetStateProperty.all(Colors.transparent)
+          : WidgetStateProperty.all(Colors.red[400]),
+      headingRowHeight: ocultarEncabezado ? 0 : null,
       border: ocultarEncabezado
           ? const TableBorder(
-              left: BorderSide(
-                color: Colors.black,
-                width: 2,
-              ),
-              right: BorderSide(
-                color: Colors.black,
-                width: 2,
-              ),
-              bottom: BorderSide(
-                color: Colors.black,
-                width: 2,
-              ),
-              horizontalInside: BorderSide(
-                color: Colors.black,
-                width: 2,
-              ),
-              verticalInside: BorderSide(
-                color: Colors.black,
-                width: 2,
-              ),
+              left: BorderSide(color: Colors.black, width: 2),
+              right: BorderSide(color: Colors.black, width: 2),
+              bottom: BorderSide(color: Colors.black, width: 2),
+              horizontalInside: BorderSide(color: Colors.black, width: 2),
+              verticalInside: BorderSide(color: Colors.black, width: 2),
             )
-          : TableBorder.all(
-              color: Colors.black,
-              width: 2,
-            ),
+          : TableBorder.all(color: Colors.black, width: 2),
       dataRowMaxHeight: 100,
 
       // Mantiene las mismas dimensiones de columnas.
@@ -384,38 +297,21 @@ class _PaginaHistorialVentasState
           child: SingleChildScrollView(
             controller: _scrollHorizontal,
             scrollDirection: Axis.horizontal,
-            physics:
-                const NeverScrollableScrollPhysics(),
+            physics: const NeverScrollableScrollPhysics(),
             child: ClipRect(
               child: SizedBox(
                 height: 56,
                 child: Align(
                   alignment: Alignment.topLeft,
                   child: DataTable(
-                    headingRowColor:
-                        WidgetStateProperty.all(
-                      Colors.red[400],
-                    ),
+                    headingRowColor: WidgetStateProperty.all(Colors.red[400]),
                     headingRowHeight: 56,
                     border: const TableBorder(
-                      top: BorderSide(
-                        color: Colors.black,
-                        width: 2,
-                      ),
-                      left: BorderSide(
-                        color: Colors.black,
-                        width: 2,
-                      ),
-                      right: BorderSide(
-                        color: Colors.black,
-                        width: 2,
-                      ),
-                      verticalInside: BorderSide(
-                        color: Colors.black,
-                        width: 2,
-                      ),
-                      horizontalInside:
-                          BorderSide(
+                      top: BorderSide(color: Colors.black, width: 2),
+                      left: BorderSide(color: Colors.black, width: 2),
+                      right: BorderSide(color: Colors.black, width: 2),
+                      verticalInside: BorderSide(color: Colors.black, width: 2),
+                      horizontalInside: BorderSide(
                         color: Colors.transparent,
                         width: 0,
                       ),
@@ -447,8 +343,7 @@ class _PaginaHistorialVentasState
 
   @override
   Widget build(BuildContext context) {
-    final esPantallaGrande =
-        MediaQuery.of(context).size.width > 800;
+    final esPantallaGrande = MediaQuery.of(context).size.width > 800;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -456,13 +351,11 @@ class _PaginaHistorialVentasState
       // ============================================================
       // APP BAR
       // ============================================================
-
       appBar: AppBar(
         backgroundColor: Colors.grey[300],
         elevation: 0,
         title: Row(
-          mainAxisAlignment:
-              MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             if (esPantallaGrande)
               Row(
@@ -479,10 +372,7 @@ class _PaginaHistorialVentasState
                   const SizedBox(width: 10),
                   const Text(
                     'Frenos\nCerna',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.black, fontSize: 16),
                   ),
                 ],
               ),
@@ -501,19 +391,12 @@ class _PaginaHistorialVentasState
                 if (esPantallaGrande)
                   const Text(
                     'Leonardo',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.black, fontSize: 16),
                   ),
                 const SizedBox(width: 10),
                 CircleAvatar(
-                  backgroundColor:
-                      Colors.red[800],
-                  child: const Icon(
-                    Icons.build,
-                    color: Colors.black,
-                  ),
+                  backgroundColor: Colors.red[800],
+                  child: const Icon(Icons.build, color: Colors.black),
                 ),
               ],
             ),
@@ -523,43 +406,29 @@ class _PaginaHistorialVentasState
 
       drawer: esPantallaGrande
           ? null
-          : const Drawer(
-              child: MenuLateral(
-                activo: 'Ventas',
-              ),
-            ),
+          : const Drawer(child: MenuLateral(activo: 'Ventas')),
 
       // ============================================================
       // CUERPO
       // ============================================================
-
       body: Row(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (esPantallaGrande)
-            const SizedBox(
-              width: 150,
-              child: MenuLateral(
-                activo: 'Ventas',
-              ),
-            ),
+            const SizedBox(width: 150, child: MenuLateral(activo: 'Ventas')),
 
           Expanded(
             child: Padding(
-              padding:
-                  const EdgeInsets.all(30.0),
+              padding: const EdgeInsets.all(30.0),
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // ============================================================
                   // BOTÓN VOLVER
                   // ============================================================
 
                   ElevatedButton.icon(
-                    onPressed: () =>
-                        Navigator.pop(context),
+                    onPressed: () => Navigator.pop(context),
                     icon: const Icon(
                       Icons.keyboard_return,
                       color: Colors.black,
@@ -572,12 +441,9 @@ class _PaginaHistorialVentasState
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    style:
-                        ElevatedButton.styleFrom(
-                      backgroundColor:
-                          Colors.red[200],
-                      padding:
-                          const EdgeInsets.symmetric(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red[200],
+                      padding: const EdgeInsets.symmetric(
                         horizontal: 20,
                         vertical: 15,
                       ),
@@ -589,26 +455,17 @@ class _PaginaHistorialVentasState
                   // ============================================================
                   // BUSCADOR
                   // ============================================================
-
                   Align(
-                    alignment:
-                        Alignment.centerRight,
+                    alignment: Alignment.centerRight,
                     child: Container(
                       width: 350,
                       color: Colors.grey[300],
-                      padding:
-                          const EdgeInsets.symmetric(
-                        horizontal: 10,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
                       child: TextField(
-                        controller:
-                            _busquedaController,
-                        decoration:
-                            const InputDecoration(
-                          hintText:
-                              'BUSCAR FECHA O CLIENTE',
-                          border:
-                              InputBorder.none,
+                        controller: _busquedaController,
+                        decoration: const InputDecoration(
+                          hintText: 'BUSCAR FECHA O CLIENTE',
+                          border: InputBorder.none,
                           suffixIcon: Icon(
                             Icons.search,
                             color: Colors.black,
@@ -617,8 +474,7 @@ class _PaginaHistorialVentasState
                         ),
                         style: const TextStyle(
                           fontSize: 18,
-                          fontWeight:
-                              FontWeight.bold,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
@@ -629,22 +485,15 @@ class _PaginaHistorialVentasState
                   // ============================================================
                   // ERROR
                   // ============================================================
-
                   if (_error != null)
-                    Text(
-                      'Error al cargar historial: $_error',
-                    ),
+                    Text('Error al cargar historial: $_error'),
 
                   // ============================================================
                   // TABLA
                   // ============================================================
-
                   if (_cargando)
                     const Expanded(
-                      child: Center(
-                        child:
-                            CircularProgressIndicator(),
-                      ),
+                      child: Center(child: CircularProgressIndicator()),
                     )
                   else
                     Expanded(
@@ -655,29 +504,18 @@ class _PaginaHistorialVentasState
                           // ============================================================
 
                           SingleChildScrollView(
-                            scrollDirection:
-                                Axis.vertical,
-                            padding:
-                                const EdgeInsets.only(
-                              top: 56,
-                            ),
-                            child:
-                                SingleChildScrollView(
-                              controller:
-                                  _scrollHorizontal,
-                              scrollDirection:
-                                  Axis.horizontal,
-                              child: _crearTabla(
-                                ocultarEncabezado:
-                                    true,
-                              ),
+                            scrollDirection: Axis.vertical,
+                            padding: const EdgeInsets.only(top: 56),
+                            child: SingleChildScrollView(
+                              controller: _scrollHorizontal,
+                              scrollDirection: Axis.horizontal,
+                              child: _crearTabla(ocultarEncabezado: true),
                             ),
                           ),
 
                           // ============================================================
                           // ENCABEZADO FIJO
                           // ============================================================
-
                           _crearEncabezadoFijo(),
                         ],
                       ),

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:ferros_cerna/data/ventas_repository.dart';
-
-import 'menu_lateral.dart';
-import 'pagina_detalle_venta.dart';
-import 'pagina_vehiculos.dart'; // Importamos para acceder al modelo HistorialVehiculo
+import 'package:ferros_cerna/features/ventas/data/ventas_repository.dart';
+import 'package:ferros_cerna/features/ventas/presentation/pagina_detalle_venta.dart';
+import 'package:ferros_cerna/features/vehiculos/pagina_vehiculos.dart';
+import 'package:ferros_cerna/shared/widgets/menu_lateral.dart';
 
 // ============================================================================
 // INTERFAZ DE LA PÁGINA

@@ -1,10 +1,12 @@
-import 'package:ferros_cerna/pagina_inventario.dart';
-import 'package:ferros_cerna/data/supabase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:ferros_cerna/core/navigation/nav_rutas.dart';
+import 'package:ferros_cerna/core/data/supabase_database.dart';
+import 'package:ferros_cerna/features/inventario/pagina_inventario.dart';
+import 'package:ferros_cerna/features/notificaciones/pagina_notificaciones.dart';
+import 'package:ferros_cerna/features/vehiculos/pagina_vehiculos.dart';
+import 'package:ferros_cerna/features/ventas/presentation/pagina_ventas.dart';
 
-import 'menu_lateral.dart';
-import 'pagina_vehiculos.dart';
-import 'pagina_ventas.dart';
+import 'package:ferros_cerna/shared/widgets/menu_lateral.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,9 +22,39 @@ class MiAplicacion extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Frenos Cerna',
-      theme: ThemeData(fontFamily: 'Courier'),
+      theme: ThemeData(
+        fontFamily: 'Courier',
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.windows: _SinAnimacionPageTransitionsBuilder(),
+            TargetPlatform.linux: _SinAnimacionPageTransitionsBuilder(),
+            TargetPlatform.macOS: _SinAnimacionPageTransitionsBuilder(),
+          },
+        ),
+      ),
+      onGenerateRoute: (settings) {
+        if (settings.name == NavegacionRutas.inicio) {
+          return NavegacionRutas.sinAnimacion(const PaginaPrincipal());
+        }
+        return null;
+      },
       home: const PaginaPrincipal(),
     );
+  }
+}
+
+class _SinAnimacionPageTransitionsBuilder extends PageTransitionsBuilder {
+  const _SinAnimacionPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return child;
   }
 }
 
@@ -180,9 +212,20 @@ class PaginaPrincipal extends StatelessWidget {
                             texto: 'INVENTARIO',
                           ),
                         ),
-                        _ActionCard(
-                          icono: Icons.warning_amber_rounded,
-                          texto: 'NOTIFICACIONES',
+                        InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const PaginaNotificaciones(),
+                              ),
+                            );
+                          },
+                          child: const _ActionCard(
+                            icono: Icons.warning_amber_rounded,
+                            texto: 'NOTIFICACIONES',
+                          ),
                         ),
                         InkWell(
                           onTap: () {
@@ -285,4 +328,3 @@ class _ActionCard extends StatelessWidget {
     );
   }
 }
- 

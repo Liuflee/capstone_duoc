@@ -1,8 +1,7 @@
-import 'package:ferros_cerna/data/supabase_database.dart';
 import 'package:flutter/material.dart';
-
-import 'menu_lateral.dart';
-import 'pagina_detalle_vehiculo.dart';
+import 'package:ferros_cerna/core/data/supabase_database.dart';
+import 'package:ferros_cerna/features/vehiculos/pagina_detalle_vehiculo.dart';
+import 'package:ferros_cerna/shared/widgets/menu_lateral.dart';
 
 class HistorialVehiculo {
   final String id;
@@ -22,8 +21,7 @@ class HistorialVehiculo {
   factory HistorialVehiculo.fromJson(Map<String, dynamic> json) {
     final clienteMap = json['cliente'];
     final modeloMap = json['modelo_vehiculo'];
-    final marcaMap =
-        modeloMap is Map ? modeloMap['marca_vehiculo'] : null;
+    final marcaMap = modeloMap is Map ? modeloMap['marca_vehiculo'] : null;
 
     final nombreCliente = clienteMap is Map
         ? (clienteMap['nombre'] ?? 'Sin cliente')
@@ -32,9 +30,7 @@ class HistorialVehiculo {
     final partesVehiculo = [
       if (marcaMap is Map) marcaMap['marca'],
       if (modeloMap is Map) modeloMap['modelo'],
-    ].where(
-      (parte) => parte != null && parte.toString().isNotEmpty,
-    );
+    ].where((parte) => parte != null && parte.toString().isNotEmpty);
 
     final patente = json['patente']?.toString() ?? 'Sin patente';
 
@@ -44,10 +40,7 @@ class HistorialVehiculo {
       vehiculoNombre: partesVehiculo.isEmpty
           ? patente
           : '${partesVehiculo.join(' ')} ($patente)',
-      total: double.tryParse(
-            json['kilometraje']?.toString() ?? '0',
-          ) ??
-          0,
+      total: double.tryParse(json['kilometraje']?.toString() ?? '0') ?? 0,
       fecha: patente,
     );
   }
@@ -112,14 +105,11 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
     final busqueda = _busqueda.trim().toLowerCase();
 
     return historial.where((registro) {
-      final cliente =
-          registro.clienteNombre.toLowerCase();
+      final cliente = registro.clienteNombre.toLowerCase();
 
-      final vehiculo =
-          registro.vehiculoNombre.toLowerCase();
+      final vehiculo = registro.vehiculoNombre.toLowerCase();
 
-      final patente =
-          registro.fecha.toLowerCase();
+      final patente = registro.fecha.toLowerCase();
 
       return cliente.contains(busqueda) ||
           vehiculo.contains(busqueda) ||
@@ -129,8 +119,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
 
   @override
   Widget build(BuildContext context) {
-    final esPantallaGrande =
-        MediaQuery.of(context).size.width > 800;
+    final esPantallaGrande = MediaQuery.of(context).size.width > 800;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -155,10 +144,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                   const SizedBox(width: 10),
                   const Text(
                     'Frenos\nCerna',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.black, fontSize: 16),
                   ),
                 ],
               ),
@@ -175,18 +161,12 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                 if (esPantallaGrande)
                   const Text(
                     'Leonardo',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.black, fontSize: 16),
                   ),
                 const SizedBox(width: 10),
                 CircleAvatar(
                   backgroundColor: Colors.red[800],
-                  child: const Icon(
-                    Icons.build,
-                    color: Colors.black,
-                  ),
+                  child: const Icon(Icons.build, color: Colors.black),
                 ),
               ],
             ),
@@ -195,17 +175,12 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
       ),
       drawer: esPantallaGrande
           ? null
-          : const Drawer(
-              child: MenuLateral(activo: 'Vehiculos'),
-            ),
+          : const Drawer(child: MenuLateral(activo: 'Vehiculos')),
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (esPantallaGrande)
-            const SizedBox(
-              width: 150,
-              child: MenuLateral(activo: 'Vehiculos'),
-            ),
+            const SizedBox(width: 150, child: MenuLateral(activo: 'Vehiculos')),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(20.0),
@@ -215,9 +190,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                   Container(
                     width: 350,
                     color: Colors.grey[300],
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
                     child: TextField(
                       onChanged: (valor) {
                         setState(() {
@@ -225,8 +198,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                         });
                       },
                       decoration: const InputDecoration(
-                        hintText:
-                            'BUSCAR CLIENTE, VEHÍCULO O PATENTE',
+                        hintText: 'BUSCAR CLIENTE, VEHÍCULO O PATENTE',
                         border: InputBorder.none,
                         suffixIcon: Icon(
                           Icons.search,
@@ -238,14 +210,10 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                   ),
                   const SizedBox(height: 20),
                   if (_error != null)
-                    Text(
-                      'Error al cargar vehículos: $_error',
-                    ),
+                    Text('Error al cargar vehículos: $_error'),
                   if (_cargando)
                     const Expanded(
-                      child: Center(
-                        child: CircularProgressIndicator(),
-                      ),
+                      child: Center(child: CircularProgressIndicator()),
                     )
                   else
                     Expanded(
@@ -256,9 +224,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
-                                  PaginaDetalleVehiculo(
-                                vehiculo: registro,
-                              ),
+                                  PaginaDetalleVehiculo(vehiculo: registro),
                             ),
                           );
                         },
@@ -278,10 +244,7 @@ class _TablaVehiculos extends StatelessWidget {
   final List<HistorialVehiculo> historial;
   final void Function(HistorialVehiculo) onRevisar;
 
-  const _TablaVehiculos({
-    required this.historial,
-    required this.onRevisar,
-  });
+  const _TablaVehiculos({required this.historial, required this.onRevisar});
 
   @override
   Widget build(BuildContext context) {
@@ -289,17 +252,17 @@ class _TablaVehiculos extends StatelessWidget {
       builder: (context, constraints) {
         const double anchoMinimoTabla = 850;
 
-        final double anchoTabla =
-            constraints.maxWidth > anchoMinimoTabla
-                ? constraints.maxWidth
-                : anchoMinimoTabla;
+        final double anchoTabla = constraints.maxWidth > anchoMinimoTabla
+            ? constraints.maxWidth
+            : anchoMinimoTabla;
 
         const double anchoVehiculo = 230;
         const double anchoKilometraje = 150;
         const double anchoPatente = 150;
         const double anchoRevisar = 120;
 
-        final double anchoCliente = anchoTabla -
+        final double anchoCliente =
+            anchoTabla -
             anchoVehiculo -
             anchoKilometraje -
             anchoPatente -
@@ -314,8 +277,7 @@ class _TablaVehiculos extends StatelessWidget {
               slivers: [
                 SliverPersistentHeader(
                   pinned: true,
-                  delegate:
-                      _EncabezadoTablaVehiculosDelegate(
+                  delegate: _EncabezadoTablaVehiculosDelegate(
                     child: _crearEncabezado(
                       anchoCliente,
                       anchoVehiculo,
@@ -326,22 +288,19 @@ class _TablaVehiculos extends StatelessWidget {
                   ),
                 ),
                 SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final registro = historial[index];
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final registro = historial[index];
 
-                      return _crearFila(
-                        registro,
-                        index,
-                        anchoCliente,
-                        anchoVehiculo,
-                        anchoKilometraje,
-                        anchoPatente,
-                        anchoRevisar,
-                      );
-                    },
-                    childCount: historial.length,
-                  ),
+                    return _crearFila(
+                      registro,
+                      index,
+                      anchoCliente,
+                      anchoVehiculo,
+                      anchoKilometraje,
+                      anchoPatente,
+                      anchoRevisar,
+                    );
+                  }, childCount: historial.length),
                 ),
               ],
             ),
@@ -362,38 +321,19 @@ class _TablaVehiculos extends StatelessWidget {
       height: 56,
       decoration: BoxDecoration(
         color: Colors.red[400],
-        border: Border.all(
-          color: Colors.black,
-          width: 2,
-        ),
+        border: Border.all(color: Colors.black, width: 2),
       ),
       child: Row(
         children: [
-          _celdaEncabezado(
-            'CLIENTE',
-            anchoCliente,
-            tieneBordeDerecho: true,
-          ),
-          _celdaEncabezado(
-            'VEHÍCULO',
-            anchoVehiculo,
-            tieneBordeDerecho: true,
-          ),
+          _celdaEncabezado('CLIENTE', anchoCliente, tieneBordeDerecho: true),
+          _celdaEncabezado('VEHÍCULO', anchoVehiculo, tieneBordeDerecho: true),
           _celdaEncabezado(
             'KILOMETRAJE',
             anchoKilometraje,
             tieneBordeDerecho: true,
           ),
-          _celdaEncabezado(
-            'PATENTE',
-            anchoPatente,
-            tieneBordeDerecho: true,
-          ),
-          _celdaEncabezado(
-            'REVISAR',
-            anchoRevisar,
-            tieneBordeDerecho: false,
-          ),
+          _celdaEncabezado('PATENTE', anchoPatente, tieneBordeDerecho: true),
+          _celdaEncabezado('REVISAR', anchoRevisar, tieneBordeDerecho: false),
         ],
       ),
     );
@@ -410,12 +350,7 @@ class _TablaVehiculos extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         border: tieneBordeDerecho
-            ? const Border(
-                right: BorderSide(
-                  color: Colors.black,
-                  width: 2,
-                ),
-              )
+            ? const Border(right: BorderSide(color: Colors.black, width: 2))
             : null,
       ),
       child: Text(
@@ -439,28 +374,18 @@ class _TablaVehiculos extends StatelessWidget {
     double anchoPatente,
     double anchoRevisar,
   ) {
-    final Color colorFila =
-        indice % 2 == 0
-            ? Colors.grey[200]!
-            : Colors.grey[300]!;
+    final Color colorFila = indice % 2 == 0
+        ? Colors.grey[200]!
+        : Colors.grey[300]!;
 
     return Container(
       height: 70,
       decoration: BoxDecoration(
         color: colorFila,
         border: const Border(
-          left: BorderSide(
-            color: Colors.black,
-            width: 2,
-          ),
-          right: BorderSide(
-            color: Colors.black,
-            width: 2,
-          ),
-          bottom: BorderSide(
-            color: Colors.black,
-            width: 2,
-          ),
+          left: BorderSide(color: Colors.black, width: 2),
+          right: BorderSide(color: Colors.black, width: 2),
+          bottom: BorderSide(color: Colors.black, width: 2),
         ),
       ),
       child: Row(
@@ -468,25 +393,15 @@ class _TablaVehiculos extends StatelessWidget {
           Container(
             width: anchoCliente,
             height: double.infinity,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             decoration: const BoxDecoration(
-              border: Border(
-                right: BorderSide(
-                  color: Colors.black,
-                  width: 2,
-                ),
-              ),
+              border: Border(right: BorderSide(color: Colors.black, width: 2)),
             ),
             child: Row(
               children: [
                 CircleAvatar(
                   backgroundColor: Colors.red[300],
-                  child: const Icon(
-                    Icons.person_outline,
-                    color: Colors.black,
-                  ),
+                  child: const Icon(Icons.person_outline, color: Colors.black),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -506,23 +421,14 @@ class _TablaVehiculos extends StatelessWidget {
             width: anchoVehiculo,
             height: double.infinity,
             alignment: Alignment.centerLeft,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             decoration: const BoxDecoration(
-              border: Border(
-                right: BorderSide(
-                  color: Colors.black,
-                  width: 2,
-                ),
-              ),
+              border: Border(right: BorderSide(color: Colors.black, width: 2)),
             ),
             child: Text(
               registro.vehiculoNombre,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 16,
-              ),
+              style: const TextStyle(fontSize: 16),
             ),
           ),
           Container(
@@ -530,18 +436,11 @@ class _TablaVehiculos extends StatelessWidget {
             height: double.infinity,
             alignment: Alignment.center,
             decoration: const BoxDecoration(
-              border: Border(
-                right: BorderSide(
-                  color: Colors.black,
-                  width: 2,
-                ),
-              ),
+              border: Border(right: BorderSide(color: Colors.black, width: 2)),
             ),
             child: Text(
               registro.total.toStringAsFixed(0),
-              style: const TextStyle(
-                fontSize: 16,
-              ),
+              style: const TextStyle(fontSize: 16),
             ),
           ),
           Container(
@@ -549,30 +448,16 @@ class _TablaVehiculos extends StatelessWidget {
             height: double.infinity,
             alignment: Alignment.center,
             decoration: const BoxDecoration(
-              border: Border(
-                right: BorderSide(
-                  color: Colors.black,
-                  width: 2,
-                ),
-              ),
+              border: Border(right: BorderSide(color: Colors.black, width: 2)),
             ),
-            child: Text(
-              registro.fecha,
-              style: const TextStyle(
-                fontSize: 16,
-              ),
-            ),
+            child: Text(registro.fecha, style: const TextStyle(fontSize: 16)),
           ),
           SizedBox(
             width: anchoRevisar,
             height: double.infinity,
             child: Center(
               child: IconButton(
-                icon: const Icon(
-                  Icons.search,
-                  size: 35,
-                  color: Colors.black,
-                ),
+                icon: const Icon(Icons.search, size: 35, color: Colors.black),
                 onPressed: () => onRevisar(registro),
               ),
             ),
@@ -583,13 +468,10 @@ class _TablaVehiculos extends StatelessWidget {
   }
 }
 
-class _EncabezadoTablaVehiculosDelegate
-    extends SliverPersistentHeaderDelegate {
+class _EncabezadoTablaVehiculosDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;
 
-  _EncabezadoTablaVehiculosDelegate({
-    required this.child,
-  });
+  _EncabezadoTablaVehiculosDelegate({required this.child});
 
   @override
   double get minExtent => 56;
@@ -607,9 +489,7 @@ class _EncabezadoTablaVehiculosDelegate
   }
 
   @override
-  bool shouldRebuild(
-    covariant _EncabezadoTablaVehiculosDelegate oldDelegate,
-  ) {
+  bool shouldRebuild(covariant _EncabezadoTablaVehiculosDelegate oldDelegate) {
     return false;
   }
 }
