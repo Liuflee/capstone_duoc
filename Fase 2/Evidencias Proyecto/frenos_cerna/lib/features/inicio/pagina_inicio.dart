@@ -1,5 +1,6 @@
 // importaciones
 import 'package:flutter/material.dart';
+import 'package:frenos_cerna/shared/widgets/barra_superior.dart';
 
 // creamos la clase PaginaInicio que extiende StatelessWidget
 
@@ -38,10 +39,13 @@ class PaginaInicio extends StatelessWidget {
                     width: 2,
                   )
                 ),
-                child: Text('HEADER'),
+                child: const BarraSuperior( // se llama el widget de barra superior
+                  tituloPagina: 'Página Principal',
+                ),
               ),
 
               // ZONA DE WINDGETS
+
               Expanded( // ocupa el espacio restante
                 child: Row( // le da la orientacion a los elementos
                   children: [
