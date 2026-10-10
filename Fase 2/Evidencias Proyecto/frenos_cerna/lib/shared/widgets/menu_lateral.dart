@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frenos_cerna/core/navigation/nav_rutas.dart';
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart';
 import 'package:frenos_cerna/features/inventario/pagina_inventario.dart';
-
+import 'package:frenos_cerna/features/inicio/pagina_inicio.dart';
 // Asegúrate de que los nombres de los archivos coincidan con los tuyos
 
 class MenuLateral extends StatelessWidget {
@@ -75,6 +75,22 @@ class MenuLateral extends StatelessWidget {
             ),
           ),
 
+          // BOTÓN PAGINAS DE PRUEBA
+          InkWell(
+            onTap: () {
+              if (activo != 'Pruebas') {
+                Navigator.pushReplacement(
+                  context,
+                  NavegacionRutas.sinAnimacion(const PaginaInicio()),
+                );
+              }
+            },
+            child: _MenuItem(
+              icono: Icons.science_outlined,
+              texto: 'Pruebas',
+              activo: activo == 'Pruebas',
+            ),
+          ),
           const Spacer(),
 
           // BOTÓN CERRAR APLICACIÓN
