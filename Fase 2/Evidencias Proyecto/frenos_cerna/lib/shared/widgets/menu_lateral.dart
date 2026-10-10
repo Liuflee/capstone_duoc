@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:ferros_cerna/core/navigation/nav_rutas.dart';
-import 'package:ferros_cerna/features/clientes/pagina_clientes.dart';
-import 'package:ferros_cerna/features/inventario/pagina_inventario.dart';
+import 'package:frenos_cerna/core/navigation/nav_rutas.dart';
+import 'package:frenos_cerna/features/clientes/pagina_clientes.dart';
+import 'package:frenos_cerna/features/inventario/pagina_inventario.dart';
 
 // Asegúrate de que los nombres de los archivos coincidan con los tuyos
 

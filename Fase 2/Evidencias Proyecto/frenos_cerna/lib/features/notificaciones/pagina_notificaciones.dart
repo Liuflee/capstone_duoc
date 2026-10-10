@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ferros_cerna/shared/widgets/menu_lateral.dart';
+import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
 
 class _ProductoProveedor {
   final String nombre;

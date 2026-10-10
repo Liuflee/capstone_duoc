@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:ferros_cerna/core/data/supabase_database.dart';
-import 'package:ferros_cerna/features/vehiculos/pagina_detalle_vehiculo.dart';
-import 'package:ferros_cerna/shared/widgets/menu_lateral.dart';
+import 'package:frenos_cerna/core/data/supabase_database.dart';
+import 'package:frenos_cerna/features/vehiculos/pagina_detalle_vehiculo.dart';
+import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
 
 class HistorialVehiculo {
   final String id;

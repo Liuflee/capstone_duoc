@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:ferros_cerna/features/ventas/data/ventas_repository.dart';
-import 'package:ferros_cerna/features/ventas/presentation/pagina_detalle_venta.dart';
-import 'package:ferros_cerna/shared/widgets/menu_lateral.dart';
+import 'package:frenos_cerna/features/ventas/data/ventas_repository.dart';
+import 'package:frenos_cerna/features/ventas/presentation/pagina_detalle_venta.dart';
+import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
 
 typedef VentaHistorica = VentaRegistro;
 

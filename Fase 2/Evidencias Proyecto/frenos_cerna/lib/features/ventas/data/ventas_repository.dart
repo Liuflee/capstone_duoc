@@ -1,4 +1,4 @@
-import 'package:ferros_cerna/core/data/supabase_database.dart';
+import 'package:frenos_cerna/core/data/supabase_database.dart';
 
 class VentaRegistro {
   static const _select =

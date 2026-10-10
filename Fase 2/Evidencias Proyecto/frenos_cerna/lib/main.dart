@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:ferros_cerna/core/navigation/nav_rutas.dart';
-import 'package:ferros_cerna/core/data/supabase_database.dart';
-import 'package:ferros_cerna/features/inventario/pagina_inventario.dart';
-import 'package:ferros_cerna/features/notificaciones/pagina_notificaciones.dart';
-import 'package:ferros_cerna/features/vehiculos/pagina_vehiculos.dart';
-import 'package:ferros_cerna/features/ventas/presentation/pagina_ventas.dart';
+import 'package:frenos_cerna/core/navigation/nav_rutas.dart';
+import 'package:frenos_cerna/core/data/supabase_database.dart';
+import 'package:frenos_cerna/features/inventario/pagina_inventario.dart';
+import 'package:frenos_cerna/features/notificaciones/pagina_notificaciones.dart';
+import 'package:frenos_cerna/features/vehiculos/pagina_vehiculos.dart';
+import 'package:frenos_cerna/features/ventas/presentation/pagina_ventas.dart';
 
-import 'package:ferros_cerna/shared/widgets/menu_lateral.dart';
+import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

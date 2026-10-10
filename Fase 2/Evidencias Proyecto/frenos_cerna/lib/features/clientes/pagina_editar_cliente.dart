@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:ferros_cerna/core/data/supabase_database.dart';
-import 'package:ferros_cerna/features/clientes/pagina_clientes.dart';
-import 'package:ferros_cerna/shared/widgets/menu_lateral.dart';
+import 'package:frenos_cerna/core/data/supabase_database.dart';
+import 'package:frenos_cerna/features/clientes/pagina_clientes.dart';
+import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
 
 class PaginaEditarCliente extends StatefulWidget {
   final Cliente cliente;
