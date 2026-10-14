@@ -1,97 +1,143 @@
-// importaciones
 
 import 'package:flutter/material.dart';
 
-// se crea la clase  barra superior
+// Se crea la clase barra superior
+class BarraSuperior extends StatelessWidget {
 
-class BarraSuperior extends StatelessWidget  {
+  final String tituloPagina; // Nombre de la página actual
+  final String nombreUsuario; // Nombre del usuario
 
-  final String tituloPagina; // recuperamos el nombre de la pagina donde esta siendo usada la barra superior
-  final String nombreUsuario; // posiblecambio de logica
-
-  // se crea el contructor de la clase
+  // Constructor de la clase
   const BarraSuperior({
     super.key,
     required this.tituloPagina,
-    this.nombreUsuario = 'Leonardo'
-    });
+    this.nombreUsuario = 'Leonardo',
+  });
 
   @override
   Widget build(BuildContext context) {
-    
+
+    // Verifica si la pantalla tiene espacio suficiente
+    final bool esPantallaGrande =
+        MediaQuery.sizeOf(context).width >= 700;
+
     return Container(
-      // estilos del contenedor
-      width: double.infinity, // le asigna todo el ancho del contenedor padre
-      padding: const EdgeInsets.symmetric(horizontal: 24), // hace que los elementos tengan un padding horizontal
+      // Estilos del contenedor principal
+      width: double.infinity,
+      height: 64,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+
       decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.red,
-          width: 2,
-        )
+        color: Colors.grey[300],
       ),
 
-
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center, // esto centra el contenido
+        crossAxisAlignment: CrossAxisAlignment.center,
 
         children: [
 
-          // logo y nombre empresa
+          // Logo y nombre de la empresa
           Expanded(
             flex: 3,
             child: Row(
               children: [
-                const Icon(Icons.car_repair,size: 40,),
-                const SizedBox(width: 12,),
-                const Flexible(
-                  child: Text(
-                    'Frenos Cerna',
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold
+
+                if (esPantallaGrande) ...[
+
+                  // Contenedor del logo
+                  SizedBox(
+                    width: 50,
+                    height: 50,
+                    child: Image.asset(
+                      'assets/images/logo_frenos_cerna.png',
+                      fit: BoxFit.contain,
                     ),
+                  ),
+
+                  const SizedBox(width: 10),
+
+                  // Nombre de la empresa
+                  const Flexible(
+                    child: Text(
+                      'Frenos\nCerna',
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 16,
+                      ),
                     ),
-                )
+                  ),
+
+                ] else
+
+                  // Botón del menú en pantallas pequeñas
+                  IconButton(
+                    onPressed: () {
+                      Scaffold.maybeOf(context)?.openDrawer();
+                    },
+                    icon: const Icon(Icons.menu),
+                  ),
+
               ],
             ),
           ),
 
-          // Titulo de la pagina
+          // Título de la página
           Expanded(
             flex: 4,
             child: Center(
               child: Text(
                 tituloPagina,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 24,
+                  color: Colors.black,
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
           ),
 
-          // usuario
+          // Información del usuario
           Expanded(
             flex: 3,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
+
               children: [
-                Flexible(
-                  child: Text(
-                    nombreUsuario,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 18),
+
+                // Nombre visible solamente en pantallas grandes
+                if (esPantallaGrande) ...[
+
+                  Flexible(
+                    child: Text(
+                      nombreUsuario,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 10),
+                ],
+
+                // Ícono circular del usuario
+                CircleAvatar(
+                  backgroundColor: Colors.red[800],
+                  child: const Icon(
+                    Icons.build,
+                    color: Colors.black,
                   ),
                 ),
-                const SizedBox(width: 12),
-                const Icon(Icons.settings_outlined, size: 30),
+
               ],
             ),
           ),
+
         ],
       ),
     );
-
   }
 }

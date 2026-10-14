@@ -32,7 +32,7 @@ class PaginaInicio extends StatelessWidget {
 
               Container(
                 width: ancho,
-                height: alto* 0.20,
+                height: alto* 0.10,
                 decoration: BoxDecoration(
                   border: Border.all(
                     color: Colors.red,
