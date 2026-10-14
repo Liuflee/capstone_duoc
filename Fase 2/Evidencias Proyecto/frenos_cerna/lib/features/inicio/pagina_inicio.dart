@@ -2,7 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:frenos_cerna/shared/widgets/barra_superior.dart';
 import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
-
+import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
+import 'package:frenos_cerna/features/inventario/pagina_inventario.dart';
+import 'package:frenos_cerna/features/notificaciones/pagina_notificaciones.dart';
+import 'package:frenos_cerna/features/vehiculos/pagina_vehiculos.dart';
+import 'package:frenos_cerna/features/ventas/presentation/pagina_ventas.dart';
 // creamos la clase PaginaInicio que extiende StatelessWidget
 
 class PaginaInicio extends StatelessWidget {
