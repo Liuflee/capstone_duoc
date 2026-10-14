@@ -1,6 +1,7 @@
 // importaciones
 import 'package:flutter/material.dart';
 import 'package:frenos_cerna/shared/widgets/barra_superior.dart';
+import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
 
 // creamos la clase PaginaInicio que extiende StatelessWidget
 
@@ -17,7 +18,7 @@ class PaginaInicio extends StatelessWidget {
       backgroundColor: Colors.grey[200], // color de fondo de la página
 
       // cuerpo de la pagina
-      
+
       body: LayoutBuilder(
 
         builder:((context, constraints){
@@ -30,15 +31,9 @@ class PaginaInicio extends StatelessWidget {
 
               // barra superior
 
-              Container(
+              SizedBox(
                 width: ancho,
                 height: alto* 0.10,
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Colors.red,
-                    width: 2,
-                  )
-                ),
                 child: const BarraSuperior( // se llama el widget de barra superior
                   tituloPagina: 'Página Principal',
                 ),
@@ -51,19 +46,10 @@ class PaginaInicio extends StatelessWidget {
                   children: [
 
                     // barra lateral
-                    Container(
-                      width: ancho * 0.20, 
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Colors.cyan,
-                          width: 2,
-                          ),
-                      ),
-                      child: const Center(
-                        child: Text('BARRA LATERAL'),
-                      ),
+                    SizedBox(
+                      width: ancho * 0.12, 
+                      child: const MenuLateral(activo: 'Página Principal',)
                     ),
-                    
                     // contenido principal
                     Expanded( // asigna el resto del ancho
                       child: Container(
@@ -78,13 +64,9 @@ class PaginaInicio extends StatelessWidget {
                         ),
                       ),
                     )
-
                   ],
                 ),
               )
-
-
-
             ],
           );
         }) 
