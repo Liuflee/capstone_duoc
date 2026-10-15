@@ -1,16 +1,16 @@
-
 import 'package:flutter/material.dart';
 
 // Se crea la clase CartaNavegacion, un botón reutilizable
 class CartaNavegacion extends StatelessWidget {
 
-  // Variables que definen las características del botón
-  final double ancho; // Ancho del botón
-  final double alto; // Alto del botón
-  final IconData icono; // Icono del botón
-  final String texto; // Texto del botón
-  final String? numero; // Número opcional del botón
-  final VoidCallback? alPresionar; // Acción del botón
+  // Variables que definen las características de la tarjeta
+  final double ancho; // Ancho de la tarjeta
+  final double alto; // Alto de la tarjeta
+  final IconData icono; // Icono de la tarjeta
+  final String texto; // Texto de la tarjeta
+  final String? numero; // Número opcional de la tarjeta
+  final Color? color; // Color opcional de la tarjeta
+  final VoidCallback? alPresionar; // Acción de la tarjeta
 
   // Se crea el constructor de la clase
   const CartaNavegacion({
@@ -20,46 +20,62 @@ class CartaNavegacion extends StatelessWidget {
     required this.icono,
     required this.texto,
     this.numero,
+    this.color,
     this.alPresionar,
   });
 
   @override
   Widget build(BuildContext context) {
 
-    // Se crea el material que permite mostrar efectos visuales
+    // Se crea la superficie de la tarjeta
+    // Material permite aplicar los efectos de InkWell
     return Material(
-      color: Colors.grey[300], // Color de fondo
-      borderRadius: BorderRadius.circular(10), // Bordes redondeados
 
-      // Se crea el área interactiva del botón
+      // Si no se recibe un color, utiliza el gris predeterminado
+      color: color ?? Colors.grey[300],
+
+      // Se redondean los bordes de la tarjeta
+      borderRadius: BorderRadius.circular(10),
+
+      // Se crea el área interactiva de la tarjeta
       child: InkWell(
-        onTap: alPresionar, // Función al presionar el botón
-        borderRadius: BorderRadius.circular(10),
-        hoverColor: Colors.grey[400], // Color al pasar el mouse
 
-        // Se definen las dimensiones del botón
+        // Ejecuta la función recibida al presionar
+        onTap: alPresionar,
+
+        // Mantiene el efecto dentro de los bordes redondeados
+        borderRadius: BorderRadius.circular(10),
+
+        // Agrega una capa oscura transparente al pasar el mouse
+        // Esto permite conservar el color personalizado
+        hoverColor: const Color(0x14000000),
+
+        // Efecto visual al presionar la tarjeta
+        splashColor: const Color(0x22000000),
+
+        // Se establecen las dimensiones de la tarjeta
         child: SizedBox(
           width: ancho,
           height: alto,
 
-          // Espaciado interior del botón
+          // Se agrega espacio entre el contenido y los bordes
           child: Padding(
             padding: const EdgeInsets.all(10),
 
-            // Se determina la distribución del contenido
-            // Si existe un número, se utiliza Column
-            // Si no existe un número, se utiliza Row
+            // Si la tarjeta recibe un número, utiliza Column
+            // Si no recibe un número, utiliza Row
             child: numero != null
 
-                // Diseño vertical para botones con número
+                // Diseño vertical para tarjetas con número
                 ? Column(
                     mainAxisAlignment: MainAxisAlignment.center,
 
                     children: [
 
-                      // Icono del botón
+                      // Icono de la tarjeta
                       Row(
                         mainAxisAlignment: MainAxisAlignment.start,
+
                         children: [
                           Icon(
                             icono,
@@ -68,7 +84,7 @@ class CartaNavegacion extends StatelessWidget {
                         ],
                       ),
 
-                      // Número del botón
+                      // Número de la tarjeta
                       Text(
                         numero!,
                         style: const TextStyle(
@@ -77,10 +93,11 @@ class CartaNavegacion extends StatelessWidget {
                         ),
                       ),
 
-                      // Texto descriptivo del botón
+                      // Descripción de la tarjeta
                       Text(
                         texto,
                         textAlign: TextAlign.center,
+
                         style: const TextStyle(
                           fontSize: 12,
                         ),
@@ -89,26 +106,27 @@ class CartaNavegacion extends StatelessWidget {
                     ],
                   )
 
-                // Diseño horizontal para botones sin número
+                // Diseño horizontal para tarjetas sin número
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
 
                     children: [
 
-                      // Icono del botón
+                      // Icono de la tarjeta
                       Icon(
                         icono,
                         size: 40,
                       ),
 
-                      // Separación entre icono y texto
+                      // Separación entre el icono y el texto
                       const SizedBox(width: 10),
 
-                      // Texto descriptivo del botón
+                      // Texto de la tarjeta
                       Flexible(
                         child: Text(
                           texto,
                           textAlign: TextAlign.center,
+
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
