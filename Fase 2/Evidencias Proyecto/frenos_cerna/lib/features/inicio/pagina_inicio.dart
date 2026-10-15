@@ -82,13 +82,6 @@ class PaginaInicio extends StatelessWidget {
                           20, 12, 20, 20,
                         ),
 
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: Colors.green,
-                            width: 2,
-                          ),
-                        ),
-
                         // Se calculan las dimensiones del contenido
                         child: LayoutBuilder(
 
