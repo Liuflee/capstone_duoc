@@ -31,6 +31,7 @@ class SupabaseDatabase {
 }
 
 abstract final class SupabaseTables {
+  static const perfiles = 'perfil_usuario';
   static const clientes = 'cliente';
   static const vehiculos = 'vehiculo_cliente';
   static const ventas = 'venta';

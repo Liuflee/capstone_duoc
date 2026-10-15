@@ -1,7 +1,9 @@
-
 // Importaciones
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:frenos_cerna/core/data/supabase_database.dart';
+import 'package:frenos_cerna/features/autenticacion/data/autenticacion_repository.dart';
 import 'package:frenos_cerna/shared/widgets/barra_superior.dart';
 import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
 import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
@@ -13,24 +15,21 @@ import 'package:frenos_cerna/features/ventas/presentation/pagina_ventas.dart';
 
 // Se crea la clase PaginaInicio que extiende StatelessWidget
 class PaginaInicio extends StatelessWidget {
+  final PerfilUsuario? perfilUsuario;
 
   // Constructor de la clase PaginaInicio
-  const PaginaInicio({super.key});
+  const PaginaInicio({super.key, this.perfilUsuario});
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-
       // Color de fondo de la página
       backgroundColor: Colors.grey[200],
 
       // Cuerpo de la página
       body: LayoutBuilder(
-
         // Se obtienen las dimensiones disponibles de la ventana
         builder: (context, constraints) {
-
           // Dimensiones de la ventana
           final double ancho = constraints.maxWidth;
           final double alto = constraints.maxHeight;
@@ -38,62 +37,61 @@ class PaginaInicio extends StatelessWidget {
           // Se crea la distribución vertical de la página
           return Column(
             children: [
-
               // BARRA SUPERIOR
               SizedBox(
                 width: ancho,
                 height: alto * 0.10,
 
                 // Se llama el widget de barra superior
-                child: const BarraSuperior(
+                child: BarraSuperior(
                   tituloPagina: 'Página Principal',
+                  nombreUsuario:
+                      perfilUsuario?.nombre ??
+                      'Usuario', //Nombre del usuario obtenido del perfil
+                  rolUsuario: perfilUsuario?.rol.etiqueta,
+                  onCerrarSesion: () async {
+                    await SupabaseDatabase.client.auth.signOut(
+                      scope: SignOutScope.local,
+                    );
+                  },
                 ),
               ),
 
               // ZONA DE WIDGETS
-              Expanded( // Ocupa la altura restante de la página
+              Expanded(
+                // Ocupa la altura restante de la página
                 child: Row(
-
                   // Extiende los elementos verticalmente
                   crossAxisAlignment: CrossAxisAlignment.stretch,
 
                   children: [
-
                     // BARRA LATERAL
                     SizedBox(
                       width: ancho * 0.12,
 
                       // Se llama el widget del menú lateral
-                      child: const MenuLateral(
-                        activo: 'Página Principal',
-                      ),
+                      child: const MenuLateral(activo: 'Página Principal'),
                     ),
 
                     // CONTENIDO PRINCIPAL
-                    Expanded( // Ocupa el ancho restante
+                    Expanded(
+                      // Ocupa el ancho restante
                       child: Container(
-
                         // Estilos del contenedor principal
                         width: double.infinity,
 
                         // Padding superior reducido a 12
                         // para acercar el contenido a la barra superior
-                        padding: const EdgeInsets.fromLTRB(
-                          20, 12, 20, 20,
-                        ),
+                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
 
                         // Se calculan las dimensiones del contenido
                         child: LayoutBuilder(
-
                           builder: (context, espacio) {
-
                             // Ancho disponible del contenido principal
-                            final double anchoContenido =
-                                espacio.maxWidth;
+                            final double anchoContenido = espacio.maxWidth;
 
                             // Alto disponible del contenido principal
-                            final double altoContenido =
-                                espacio.maxHeight;
+                            final double altoContenido = espacio.maxHeight;
 
                             // Separación entre tarjetas
                             const double separacion = 20;
@@ -109,10 +107,9 @@ class PaginaInicio extends StatelessWidget {
 
                             // Calcula el alto proporcional
                             // con un mínimo de 170 y máximo de 240
-                            final double altoImportante =
-                                (altoContenido * 0.27)
-                                    .clamp(170.0, 240.0)
-                                    .toDouble();
+                            final double altoImportante = (altoContenido * 0.27)
+                                .clamp(170.0, 240.0)
+                                .toDouble();
 
                             // DIMENSIONES DE TARJETAS DE TRABAJO
 
@@ -126,42 +123,32 @@ class PaginaInicio extends StatelessWidget {
 
                             // Calcula el alto proporcional
                             // con un mínimo de 110 y máximo de 160
-                            final double altoTrabajo =
-                                (altoContenido * 0.17)
-                                    .clamp(110.0, 160.0)
-                                    .toDouble();
+                            final double altoTrabajo = (altoContenido * 0.17)
+                                .clamp(110.0, 160.0)
+                                .toDouble();
 
                             // Función que permite navegar a otra página
                             void abrirPagina(Widget pagina) {
-
                               Navigator.push(
                                 context,
 
-                                MaterialPageRoute(
-                                  builder: (context) => pagina,
-                                ),
+                                MaterialPageRoute(builder: (context) => pagina),
                               );
-
                             }
 
                             // Permite desplazarse verticalmente
                             // si el contenido supera el espacio disponible
                             return SingleChildScrollView(
-
                               // Se distribuyen las secciones verticalmente
                               child: Column(
-
                                 // Ocupa todo el ancho disponible
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.stretch,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
 
                                 // Posiciona el contenido desde arriba
                                 // evitando espacios vacíos innecesarios
-                                mainAxisAlignment:
-                                    MainAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.start,
 
                                 children: [
-
                                   // SECCIÓN IMPORTANTE
 
                                   // Título de la sección
@@ -181,7 +168,6 @@ class PaginaInicio extends StatelessWidget {
 
                                   // Contenedor de tarjetas importantes
                                   Wrap(
-
                                     // Separación horizontal
                                     spacing: separacion,
 
@@ -192,7 +178,6 @@ class PaginaInicio extends StatelessWidget {
                                     alignment: WrapAlignment.center,
 
                                     children: [
-
                                       // Tarjeta ventas del día
                                       CartaNavegacion(
                                         ancho: anchoImportante,
@@ -206,9 +191,7 @@ class PaginaInicio extends StatelessWidget {
 
                                         // Navega a ventas
                                         alPresionar: () {
-                                          abrirPagina(
-                                            const PaginaVentas(),
-                                          );
+                                          abrirPagina(const PaginaVentas());
                                         },
                                       ),
 
@@ -244,12 +227,9 @@ class PaginaInicio extends StatelessWidget {
 
                                         // Navega a inventario
                                         alPresionar: () {
-                                          abrirPagina(
-                                            const PaginaInventario(),
-                                          );
+                                          abrirPagina(const PaginaInventario());
                                         },
                                       ),
-
                                     ],
                                   ),
 
@@ -276,13 +256,11 @@ class PaginaInicio extends StatelessWidget {
                                   // PRIMERA FILA DE TRABAJO
                                   // Contiene tres tarjetas
                                   Wrap(
-
                                     spacing: separacion,
                                     runSpacing: separacion,
                                     alignment: WrapAlignment.center,
 
                                     children: [
-
                                       // Tarjeta historial de vehículos
                                       CartaNavegacion(
                                         ancho: anchoTrabajo,
@@ -292,9 +270,7 @@ class PaginaInicio extends StatelessWidget {
 
                                         // Navega al historial de vehículos
                                         alPresionar: () {
-                                          abrirPagina(
-                                            const PaginaVehiculos(),
-                                          );
+                                          abrirPagina(const PaginaVehiculos());
                                         },
                                       ),
 
@@ -307,9 +283,7 @@ class PaginaInicio extends StatelessWidget {
 
                                         // Navega a inventario
                                         alPresionar: () {
-                                          abrirPagina(
-                                            const PaginaInventario(),
-                                          );
+                                          abrirPagina(const PaginaInventario());
                                         },
                                       ),
 
@@ -327,7 +301,6 @@ class PaginaInicio extends StatelessWidget {
                                           );
                                         },
                                       ),
-
                                     ],
                                   ),
 
@@ -337,13 +310,11 @@ class PaginaInicio extends StatelessWidget {
                                   // SEGUNDA FILA DE TRABAJO
                                   // Contiene dos tarjetas
                                   Wrap(
-
                                     spacing: separacion,
                                     runSpacing: separacion,
                                     alignment: WrapAlignment.center,
 
                                     children: [
-
                                       // Tarjeta ventas
                                       CartaNavegacion(
                                         ancho: anchoTrabajo,
@@ -353,9 +324,7 @@ class PaginaInicio extends StatelessWidget {
 
                                         // Navega a ventas
                                         alPresionar: () {
-                                          abrirPagina(
-                                            const PaginaVentas(),
-                                          );
+                                          abrirPagina(const PaginaVentas());
                                         },
                                       ),
 
@@ -368,26 +337,20 @@ class PaginaInicio extends StatelessWidget {
 
                                         // Navegación pendiente
                                       ),
-
                                     ],
                                   ),
-
                                 ],
                               ),
                             );
-
                           },
                         ),
                       ),
                     ),
-
                   ],
                 ),
               ),
-
             ],
           );
-
         },
       ),
     );
