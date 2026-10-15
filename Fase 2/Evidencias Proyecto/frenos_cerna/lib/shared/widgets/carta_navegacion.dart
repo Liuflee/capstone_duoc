@@ -6,7 +6,7 @@ class CartaNavegacion extends StatelessWidget {
   // Variables que definen las características de la tarjeta
   final double ancho; // Ancho de la tarjeta
   final double alto; // Alto de la tarjeta
-  final IconData icono; // Icono de la tarjeta
+  final IconData? icono; // Icono opcional de la tarjeta
   final String texto; // Texto de la tarjeta
   final String? numero; // Número opcional de la tarjeta
   final Color? color; // Color opcional de la tarjeta
@@ -17,8 +17,8 @@ class CartaNavegacion extends StatelessWidget {
     super.key,
     required this.ancho,
     required this.alto,
-    required this.icono,
     required this.texto,
+    this.icono,
     this.numero,
     this.color,
     this.alPresionar,
@@ -28,13 +28,13 @@ class CartaNavegacion extends StatelessWidget {
   Widget build(BuildContext context) {
 
     // Se crea la superficie de la tarjeta
-    // Material permite aplicar los efectos de InkWell
+    // Material permite aplicar los efectos visuales de InkWell
     return Material(
 
-      // Si no se recibe un color, utiliza el gris predeterminado
+      // Si no recibe un color, utiliza el gris predeterminado
       color: color ?? Colors.grey[300],
 
-      // Se redondean los bordes de la tarjeta
+      // Redondea los bordes de la tarjeta
       borderRadius: BorderRadius.circular(10),
 
       // Se crea el área interactiva de la tarjeta
@@ -43,11 +43,10 @@ class CartaNavegacion extends StatelessWidget {
         // Ejecuta la función recibida al presionar
         onTap: alPresionar,
 
-        // Mantiene el efecto dentro de los bordes redondeados
+        // Mantiene los efectos dentro de los bordes redondeados
         borderRadius: BorderRadius.circular(10),
 
-        // Agrega una capa oscura transparente al pasar el mouse
-        // Esto permite conservar el color personalizado
+        // Agrega una capa transparente al pasar el mouse
         hoverColor: const Color(0x14000000),
 
         // Efecto visual al presionar la tarjeta
@@ -62,66 +61,93 @@ class CartaNavegacion extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(10),
 
-            // Si la tarjeta recibe un número, utiliza Column
-            // Si no recibe un número, utiliza Row
+            // Se determina la distribución del contenido
+            // Si existe un número, utiliza el diseño vertical
+            // Si no existe un número, utiliza el diseño horizontal
             child: numero != null
 
-                // Diseño vertical para tarjetas con número
-                ? Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                // DISEÑO VERTICAL PARA TARJETAS IMPORTANTES
+                ? Stack(
+                    fit: StackFit.expand,
 
                     children: [
 
-                      // Icono de la tarjeta
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
+                      // Si existe un icono, se muestra
+                      // en la esquina superior izquierda
+                      if (icono != null)
+                        Positioned(
+                          top: 0,
+                          left: 0,
 
-                        children: [
-                          Icon(
+                          child: Icon(
                             icono,
                             size: 30,
                           ),
-                        ],
-                      ),
-
-                      // Número de la tarjeta
-                      Text(
-                        numero!,
-                        style: const TextStyle(
-                          fontSize: 40,
-                          fontWeight: FontWeight.bold,
                         ),
-                      ),
 
-                      // Descripción de la tarjeta
-                      Text(
-                        texto,
-                        textAlign: TextAlign.center,
+                      // Se centra el número y el texto
+                      // independientemente de la posición del icono
+                      Center(
+                        child: Column(
 
-                        style: const TextStyle(
-                          fontSize: 12,
+                          // La columna ocupa solamente
+                          // el espacio necesario para su contenido
+                          mainAxisSize: MainAxisSize.min,
+
+                          children: [
+
+                            // Número de la tarjeta
+                            Text(
+                              numero!,
+
+                              style: const TextStyle(
+                                fontSize: 40,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+
+                            // Separación entre número y texto
+                            const SizedBox(height: 4),
+
+                            // Descripción de la tarjeta
+                            Text(
+                              texto,
+                              textAlign: TextAlign.center,
+
+                              style: const TextStyle(
+                                fontSize: 12,
+                              ),
+                            ),
+
+                          ],
                         ),
                       ),
 
                     ],
                   )
 
-                // Diseño horizontal para tarjetas sin número
+                // DISEÑO HORIZONTAL PARA TARJETAS DE TRABAJO
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
 
                     children: [
 
-                      // Icono de la tarjeta
-                      Icon(
-                        icono,
-                        size: 40,
-                      ),
+                      // Si existe un icono, se muestra
+                      // junto a su separación del texto
+                      if (icono != null) ...[
 
-                      // Separación entre el icono y el texto
-                      const SizedBox(width: 10),
+                        // Icono de la tarjeta
+                        Icon(
+                          icono,
+                          size: 40,
+                        ),
 
-                      // Texto de la tarjeta
+                        // Separación entre icono y texto
+                        const SizedBox(width: 10),
+
+                      ],
+
+                      // Texto descriptivo de la tarjeta
                       Flexible(
                         child: Text(
                           texto,
