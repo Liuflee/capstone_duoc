@@ -1,18 +1,28 @@
+// Importaciones necesarias para construir la interfaz y consultar los clientes.
 import 'package:flutter/material.dart';
+
 import 'package:frenos_cerna/core/data/supabase_database.dart';
+
 import 'package:frenos_cerna/features/clientes/pagina_crear_cliente.dart';
+
 import 'package:frenos_cerna/features/clientes/pagina_editar_cliente.dart';
+
+import 'package:frenos_cerna/shared/widgets/barra_superior.dart';
+
 import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
+import 'package:frenos_cerna/shared/widgets/tabla_datos.dart';
 
-// ============================================================
-// MODELO CLIENTE
-// ============================================================
-
+// Modelo que representa los datos de un cliente en la aplicación.
 class Cliente {
+
   final String id;
+
   final String nombre;
+
   final String numero;
+
   final String ultimaVenta;
+
   final String vehiculo;
 
   Cliente({
@@ -23,7 +33,9 @@ class Cliente {
     required this.vehiculo,
   });
 
+  // Convierte los campos de Supabase en un objeto Cliente.
   factory Cliente.fromJson(Map<String, dynamic> json) {
+
     return Cliente(
       id: json['rut']?.toString() ?? 'sin-rut',
       nombre: (json['nombre'] ?? 'Sin nombre').toString(),
@@ -31,14 +43,13 @@ class Cliente {
       ultimaVenta: 'No disponible',
       vehiculo: 'Sin registrar',
     );
+
   }
 }
 
-// ============================================================
-// PÁGINA CLIENTES
-// ============================================================
-
+// Página de clientes: conserva su estado para mostrar datos y realizar búsquedas.
 class PaginaClientes extends StatefulWidget {
+
   const PaginaClientes({super.key});
 
   @override
@@ -46,43 +57,41 @@ class PaginaClientes extends StatefulWidget {
 }
 
 class _PaginaClientesState extends State<PaginaClientes> {
-  // ==========================================================
-  // VARIABLES
-  // ==========================================================
 
+  // Lista de clientes recuperados desde Supabase.
   List<Cliente> clientes = [];
 
+  // Variables para controlar la carga de datos y sus posibles errores.
   bool _cargando = true;
+
   String? _error;
 
+  // Controlador del campo de búsqueda.
   final TextEditingController _busquedaController = TextEditingController();
-
-  // ==========================================================
-  // INICIALIZACIÓN
-  // ==========================================================
 
   @override
   void initState() {
+
     super.initState();
+
+    // Consulta los clientes cuando se abre la página.
     _cargarClientes();
   }
 
-  // ==========================================================
-  // LIBERAR CONTROLADORES
-  // ==========================================================
-
   @override
   void dispose() {
+
+    // Libera los recursos del campo de búsqueda al cerrar la página.
     _busquedaController.dispose();
+
     super.dispose();
   }
 
-  // ==========================================================
-  // CARGAR CLIENTES
-  // ==========================================================
-
+  // Consulta los clientes en Supabase y los ordena alfabéticamente.
   Future<void> _cargarClientes() async {
+
     try {
+
       final response = await SupabaseDatabase.client
           .from(SupabaseTables.clientes)
           .select('rut, nombre, fono')
@@ -90,12 +99,12 @@ class _PaginaClientesState extends State<PaginaClientes> {
 
       final data = response as List<dynamic>;
 
+      // Evita actualizar una pantalla que ya fue cerrada.
       if (!mounted) return;
 
+      // Transforma cada registro recibido en un objeto Cliente.
       final listaClientes = data
-          .map(
-            (item) => Cliente.fromJson(Map<String, dynamic>.from(item as Map)),
-          )
+          .map((item) => Cliente.fromJson(Map<String, dynamic>.from(item as Map)))
           .toList();
 
       setState(() {
@@ -103,41 +112,35 @@ class _PaginaClientesState extends State<PaginaClientes> {
         _cargando = false;
         _error = null;
       });
-    } catch (e) {
+
+    } catch (error) {
+
       if (!mounted) return;
 
+      // Informa a la interfaz que la consulta terminó con un error.
       setState(() {
-        _error = e.toString();
+        _error = error.toString();
         _cargando = false;
       });
     }
   }
 
-  // ============================================================
-  // BUSCAR CLIENTES
-  // ============================================================
-
-  // ============================================================
-  // BORRAR CLIENTE
-  // ============================================================
-
+  // Solicita confirmación antes de eliminar un cliente de Supabase.
   Future<void> _borrarCliente(Cliente cliente) async {
+
     final confirmar = await showDialog<bool>(
       context: context,
+
       builder: (context) => AlertDialog(
         backgroundColor: Colors.black,
 
-        // ========================================================
-        // TÍTULO
-        // ========================================================
+        // Título del cuadro de confirmación.
         title: const Text(
           'Borrar cliente',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
 
-        // ========================================================
-        // MENSAJE
-        // ========================================================
+        // Muestra el nombre del cliente que se pretende eliminar.
         content: RichText(
           text: TextSpan(
             style: const TextStyle(color: Colors.white, fontSize: 16),
@@ -157,84 +160,72 @@ class _PaginaClientesState extends State<PaginaClientes> {
           ),
         ),
 
-        // ========================================================
-        // BOTONES
-        // ========================================================
+        // Botones para cancelar o confirmar la eliminación.
         actions: [
-          // ======================================================
-          // BOTÓN CANCELAR
-          // ======================================================
 
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context, false);
             },
-
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.grey[600],
               foregroundColor: Colors.white,
             ),
-
             child: const Text(
               'Cancelar',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
             ),
           ),
 
-          // ======================================================
-          // BOTÓN BORRAR
-          // ======================================================
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context, true);
             },
-
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
             ),
-
             child: const Text(
               'Borrar',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
             ),
           ),
         ],
       ),
     );
 
+    // No elimina nada si el usuario cancela o la página ya no existe.
     if (confirmar != true || !mounted) return;
 
     try {
+
+      // Elimina el registro cuyo RUT corresponde al cliente seleccionado.
       await SupabaseDatabase.client
           .from(SupabaseTables.clientes)
           .delete()
           .eq('rut', int.parse(cliente.id));
 
+      // Actualiza la lista para quitar el cliente eliminado de la tabla.
       await _cargarClientes();
+
     } catch (error) {
+
       if (!mounted) return;
 
+      // Muestra un mensaje si Supabase no pudo eliminar el registro.
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('No se pudo borrar el cliente: $error')),
       );
     }
   }
 
-  // ============================================================
-  // CONSTRUIR PÁGINA
-  // ============================================================
-
   @override
   Widget build(BuildContext context) {
-    final esPantallaGrande = MediaQuery.of(context).size.width > 800;
+
+    // Obtiene el texto ingresado en el buscador sin distinguir mayúsculas.
     final textoBusqueda = _busquedaController.text.trim().toLowerCase();
+
+    // Filtra los clientes por nombre, RUT o número de teléfono.
     final clientesFiltrados = textoBusqueda.isEmpty
         ? clientes
         : clientes.where((cliente) {
@@ -243,772 +234,296 @@ class _PaginaClientesState extends State<PaginaClientes> {
                 cliente.numero.toLowerCase().contains(textoBusqueda);
           }).toList();
 
+    // Convierte los clientes filtrados a registros que entiende TablaDatos.
+    // El objeto original se conserva para utilizarlo al editar o borrar.
+    final List<Map<String, dynamic>> filasClientes = clientesFiltrados
+        .map((cliente) => <String, dynamic>{
+              'nombre': cliente.nombre,
+              'numero': cliente.numero,
+              'rut': cliente.id,
+              'cliente': cliente,
+            })
+        .toList();
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[200],
 
-      // ========================================================
-      // APP BAR
-      // ========================================================
-      appBar: construirAppBar(context, 'Clientes', esPantallaGrande),
+      // Obtiene el ancho y alto disponibles para reproducir la estructura de Inicio.
+      body: LayoutBuilder(
+        builder: (context, constraints) {
 
-      // ========================================================
-      // MENÚ LATERAL MÓVIL
-      // ========================================================
-      drawer: esPantallaGrande
-          ? null
-          : const Drawer(child: MenuLateral(activo: 'Clientes')),
+          final double ancho = constraints.maxWidth;
 
-      // ========================================================
-      // CONTENIDO PRINCIPAL
-      // ========================================================
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ======================================================
-          // MENÚ LATERAL ESCRITORIO
-          // ======================================================
+          final double alto = constraints.maxHeight;
 
-          if (esPantallaGrande) const ContenedorMenuLateral(activo: 'Clientes'),
-
-          // ======================================================
-          // ÁREA PRINCIPAL
-          // ======================================================
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-
-                children: [
-                  // ==================================================
-                  // BOTÓN AÑADIR CLIENTE
-                  // ==================================================
-
-                  ElevatedButton.icon(
-                    onPressed: () async {
-                      final actualizado = await Navigator.push<bool>(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const PaginaCrearCliente(),
-                        ),
-                      );
-
-                      if (actualizado == true) {
-                        _cargarClientes();
-                      }
-                    },
-
-                    icon: const Icon(
-                      Icons.person_add_alt_1,
-                      color: Colors.black,
-                    ),
-
-                    label: const Text(
-                      '+ Añadir cliente',
-                      style: TextStyle(color: Colors.black),
-                    ),
-
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey[400],
-
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 15,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // ==================================================
-                  // BUSCADOR
-                  // ==================================================
-                  Container(
-                    width: 300,
-                    color: Colors.grey[300],
-
-                    padding: const EdgeInsets.only(left: 10),
-
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _busquedaController,
-
-                            decoration: const InputDecoration(
-                              hintText: 'BUSCAR CLIENTE',
-                              border: InputBorder.none,
-                            ),
-
-                            // ==================================================
-                            // BÚSQUEDA AUTOMÁTICA
-                            // ==================================================
-                            onChanged: (_) => setState(() {}),
-                          ),
-                        ),
-
-                        // ==================================================
-                        // BOTÓN DECORATIVO
-                        // ==================================================
-                        IconButton(
-                          onPressed: null,
-
-                          icon: const Icon(Icons.search, color: Colors.black),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // ==================================================
-                  // SEPARACIÓN ENTRE BUSCADOR Y TABLA
-                  // ==================================================
-                  const SizedBox(height: 20),
-
-                  // ==================================================
-                  // MENSAJE DE ERROR
-                  // ==================================================
-                  if (_error != null) Text('Error al cargar clientes: $_error'),
-
-                  // ==================================================
-                  // CARGANDO / TABLA
-                  // ==================================================
-                  if (_cargando)
-                    const Expanded(
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  else
-                    Expanded(
-                      child: _ConstruirTablaClientes(
-                        clientes: clientesFiltrados,
-
-                        onEditar: (cliente) async {
-                          final actualizado = await Navigator.push<bool>(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  PaginaEditarCliente(cliente: cliente),
-                            ),
-                          );
-
-                          if (actualizado == true) {
-                            _cargarClientes();
-                          }
-                        },
-
-                        onBorrar: _borrarCliente,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ============================================================
-// TABLA DE CLIENTES
-// ============================================================
-
-class _ConstruirTablaClientes extends StatelessWidget {
-  final List<Cliente> clientes;
-
-  final Future<void> Function(Cliente) onEditar;
-
-  final Future<void> Function(Cliente) onBorrar;
-
-  const _ConstruirTablaClientes({
-    required this.clientes,
-    required this.onEditar,
-    required this.onBorrar,
-  });
-
-  // ============================================================
-  // CONSTRUIR TABLA
-  // ============================================================
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        // ========================================================
-        // ANCHO DE LA TABLA
-        // ========================================================
-
-        const double anchoMinimoTabla = 850;
-
-        final double anchoTabla = constraints.maxWidth > anchoMinimoTabla
-            ? constraints.maxWidth
-            : anchoMinimoTabla;
-
-        // ========================================================
-        // ANCHO DE COLUMNAS FIJAS
-        //
-        // NÚMERO  = 150
-        // RUT     = 150
-        // CAMBIAR = 145
-        // BORRAR  = 145
-        //
-        // TOTAL = 590
-        // ========================================================
-
-        final double anchoNombre = anchoTabla - 590;
-
-        // ========================================================
-        // SCROLL HORIZONTAL
-        // ========================================================
-
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-
-          child: SizedBox(
-            width: anchoTabla,
-
-            child: CustomScrollView(
-              slivers: [
-                // ==================================================
-                // ENCABEZADO FIJO
-                // ==================================================
-
-                SliverPersistentHeader(
-                  pinned: true,
-
-                  delegate: _EncabezadoTablaDelegate(
-                    child: _crearEncabezado(anchoNombre),
-                  ),
-                ),
-
-                // ==================================================
-                // FILAS
-                // ==================================================
-                SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final cliente = clientes[index];
-
-                    return _crearFila(context, cliente, index, anchoNombre);
-                  }, childCount: clientes.length),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // ============================================================
-  // ENCABEZADO DE LA TABLA
-  // ============================================================
-
-  Widget _crearEncabezado(double anchoNombre) {
-    return Container(
-      color: Colors.red[400],
-
-      child: Row(
-        children: [
-          // ======================================================
-          // COLUMNA NOMBRE
-          // ======================================================
-
-          SizedBox(
-            width: anchoNombre,
-
-            child: Container(
-              height: 56,
-
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-                  top: BorderSide(color: Colors.black, width: 2),
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              alignment: Alignment.centerLeft,
-
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-
-              child: const Text(
-                'NOMBRE',
-
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-
-          // ======================================================
-          // COLUMNA NÚMERO
-          // ======================================================
-          SizedBox(
-            width: 150,
-
-            child: Container(
-              height: 56,
-
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-                  top: BorderSide(color: Colors.black, width: 2),
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              alignment: Alignment.center,
-
-              child: const Text(
-                'NÚMERO',
-
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-
-          // ======================================================
-          // COLUMNA RUT
-          // ======================================================
-          SizedBox(
-            width: 150,
-
-            child: Container(
-              height: 56,
-
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-                  top: BorderSide(color: Colors.black, width: 2),
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              alignment: Alignment.center,
-
-              child: const Text(
-                'RUT',
-
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-
-          // ======================================================
-          // COLUMNA CAMBIAR
-          // ======================================================
-          SizedBox(
-            width: 145,
-
-            child: Container(
-              height: 56,
-
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-                  top: BorderSide(color: Colors.black, width: 2),
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              alignment: Alignment.center,
-
-              child: const Text(
-                'CAMBIAR',
-
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-
-          // ======================================================
-          // COLUMNA BORRAR
-          // ======================================================
-          SizedBox(
-            width: 145,
-
-            child: Container(
-              height: 56,
-
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-                  right: BorderSide(color: Colors.black, width: 2),
-                  top: BorderSide(color: Colors.black, width: 2),
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              alignment: Alignment.center,
-
-              child: const Text(
-                'BORRAR',
-
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ============================================================
-  // FILA DE CLIENTE
-  // ============================================================
-
-  Widget _crearFila(
-    BuildContext context,
-    Cliente cliente,
-    int index,
-    double anchoNombre,
-  ) {
-    // ==========================================================
-    // COLOR ALTERNADO DE LAS FILAS
-    // ==========================================================
-
-    final color = index % 2 == 0 ? Colors.grey[200] : Colors.grey[300];
-
-    return Container(
-      height: 70,
-      color: color,
-
-      child: Row(
-        children: [
-          // ======================================================
-          // COLUMNA NOMBRE
-          // ======================================================
-
-          SizedBox(
-            width: anchoNombre,
-
-            child: Container(
-              height: 70,
-
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-
-              child: Row(
-                children: [
-                  // ------------------------------------------------
-                  // ICONO DEL CLIENTE
-                  // ------------------------------------------------
-
-                  CircleAvatar(
-                    backgroundColor: Colors.red[300],
-
-                    child: const Icon(Icons.person, color: Colors.black),
-                  ),
-
-                  const SizedBox(width: 10),
-
-                  // ------------------------------------------------
-                  // NOMBRE DEL CLIENTE
-                  // ------------------------------------------------
-                  Expanded(
-                    child: Text(
-                      cliente.nombre,
-
-                      overflow: TextOverflow.ellipsis,
-
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // ======================================================
-          // COLUMNA NÚMERO
-          // ======================================================
-          SizedBox(
-            width: 150,
-
-            child: Container(
-              height: 70,
-
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              alignment: Alignment.center,
-
-              child: Text(cliente.numero, overflow: TextOverflow.ellipsis),
-            ),
-          ),
-
-          // ======================================================
-          // COLUMNA RUT
-          // ======================================================
-          SizedBox(
-            width: 150,
-
-            child: Container(
-              height: 70,
-
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              alignment: Alignment.center,
-
-              child: Text(cliente.id, overflow: TextOverflow.ellipsis),
-            ),
-          ),
-
-          // ======================================================
-          // COLUMNA CAMBIAR
-          // ======================================================
-          SizedBox(
-            width: 145,
-
-            child: Container(
-              height: 70,
-
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              alignment: Alignment.center,
-
-              child: IconButton(
-                icon: const Icon(Icons.edit, size: 30),
-
-                onPressed: () {
-                  onEditar(cliente);
-                },
-              ),
-            ),
-          ),
-
-          // ======================================================
-          // COLUMNA BORRAR
-          // ======================================================
-          SizedBox(
-            width: 145,
-
-            child: Container(
-              height: 70,
-
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-                  right: BorderSide(color: Colors.black, width: 2),
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              alignment: Alignment.center,
-
-              child: IconButton(
-                icon: const Icon(
-                  Icons.cancel_outlined,
-                  color: Colors.red,
-                  size: 30,
-                ),
-
-                onPressed: () {
-                  onBorrar(cliente);
-                },
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ============================================================
-// ENCABEZADO FIJO DE LA TABLA
-// ============================================================
-
-class _EncabezadoTablaDelegate extends SliverPersistentHeaderDelegate {
-  final Widget child;
-
-  _EncabezadoTablaDelegate({required this.child});
-
-  @override
-  double get minExtent => 56;
-
-  @override
-  double get maxExtent => 56;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return child;
-  }
-
-  @override
-  bool shouldRebuild(covariant _EncabezadoTablaDelegate oldDelegate) {
-    return oldDelegate.child != child;
-  }
-}
-
-// ============================================================
-// APP BAR
-// ============================================================
-
-PreferredSizeWidget construirAppBar(
-  BuildContext context,
-  String titulo,
-  bool esPantallaGrande,
-) {
-  return AppBar(
-    backgroundColor: Colors.grey[300],
-    elevation: 0,
-
-    title: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
-      children: [
-        // ======================================================
-        // LOGO Y NOMBRE DE LA EMPRESA
-        // ======================================================
-
-        if (esPantallaGrande)
-          Row(
+          return Column(
             children: [
-              Container(
-                width: 40,
-                height: 40,
 
-                color: Colors.grey[500],
-
-                child: const Icon(
-                  Icons.settings_input_component,
-                  color: Colors.white,
-                ),
+              // Barra superior reutilizable, con el título de esta página.
+              SizedBox(
+                width: ancho,
+                height: alto * 0.10,
+                child: const BarraSuperior(tituloPagina: 'Clientes'),
               ),
 
-              const SizedBox(width: 10),
+              // Área situada debajo de la barra superior.
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
 
-              const Text(
-                'Frenos\nCerna',
+                    // Menú lateral reutilizable que marca Clientes como seleccionado.
+                    SizedBox(
+                      width: ancho * 0.12,
+                      child: const MenuLateral(activo: 'Clientes'),
+                    ),
 
-                style: TextStyle(color: Colors.black, fontSize: 16),
+                    // Contenido principal de la página Clientes.
+                    Expanded(
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+
+                            // Abre el formulario para registrar un nuevo cliente.
+                            ElevatedButton.icon(
+                              onPressed: () async {
+
+                                final actualizado = await Navigator.push<bool>(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const PaginaCrearCliente(),
+                                  ),
+                                );
+
+                                // Recarga la tabla si se registró un cliente.
+                                if (actualizado == true) {
+                                  _cargarClientes();
+                                }
+                              },
+
+                              icon: const Icon(
+                                Icons.person_add_alt_1,
+                                color: Colors.black,
+                              ),
+
+                              label: const Text(
+                                '+ Añadir cliente',
+                                style: TextStyle(color: Colors.black),
+                              ),
+
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey[400],
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 15,
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            // Campo de búsqueda de clientes.
+                            Container(
+                              width: 300,
+                              color: Colors.grey[300],
+                              padding: const EdgeInsets.only(left: 10),
+
+                              child: Row(
+                                children: [
+
+                                  // Filtra automáticamente a medida que se escribe.
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _busquedaController,
+                                      decoration: const InputDecoration(
+                                        hintText: 'BUSCAR CLIENTE',
+                                        border: InputBorder.none,
+                                      ),
+                                      onChanged: (_) => setState(() {}),
+                                    ),
+                                  ),
+
+                                  // Ícono visual del buscador; la búsqueda ya es automática.
+                                  const IconButton(
+                                    onPressed: null,
+                                    icon: Icon(Icons.search, color: Colors.black),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            // Muestra el error de carga, cuando exista.
+                            if (_error != null)
+                              Text('Error al cargar clientes: $_error'),
+
+                            // Reserva el espacio restante para la tabla o el indicador de carga.
+                            if (_cargando)
+                              const Expanded(
+                                child: Center(child: CircularProgressIndicator()),
+                              )
+                            else
+                              Expanded(
+                                // Widget reutilizable de tabla, alimentado por los clientes filtrados.
+                                child: TablaDatos(
+
+                                  // Encabezados visibles de la tabla.
+                                  nombresColumnas: const [
+                                    'NOMBRE',
+                                    'NÚMERO',
+                                    'RUT',
+                                    'CAMBIAR',
+                                    'BORRAR',
+                                  ],
+
+                                  // Campos asociados a los valores de cada registro.
+                                  // Las columnas de acciones no necesitan campo.
+                                  camposColumnas: const [
+                                    'nombre',
+                                    'numero',
+                                    'rut',
+                                    '',
+                                    '',
+                                  ],
+
+                                  // Preferencia de ancho para cada columna.
+                                  // El widget los ajusta para ocupar el espacio total.
+                                  anchosColumnas: const [330, 150, 150, 120, 120],
+
+                                  // Resultados de Supabase ya filtrados por el buscador.
+                                  filas: filasClientes,
+
+                                  // Personaliza las columnas que contienen widgets.
+                                  celdasPersonalizadas: {
+
+                                    // Columna 0: nombre con avatar del cliente.
+                                    0: (context, fila) {
+                                      final cliente = fila['cliente'] as Cliente;
+
+                                      return Row(
+                                        children: [
+                                          CircleAvatar(
+                                            backgroundColor: Colors.red[300],
+                                            child: const Icon(
+                                              Icons.person,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: Text(
+                                              cliente.nombre,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+
+                                    // Columna 3: botón de edición del cliente.
+                                    3: (context, fila) {
+                                      final cliente = fila['cliente'] as Cliente;
+
+                                      return IconButton(
+                                        tooltip: 'Editar cliente',
+                                        icon: const Icon(Icons.edit, size: 30),
+                                        onPressed: () async {
+                                          final actualizado = await Navigator.push<bool>(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  PaginaEditarCliente(cliente: cliente),
+                                            ),
+                                          );
+
+                                          // Actualiza la tabla si el cliente fue editado.
+                                          if (!mounted) return;
+                                          if (actualizado == true) {
+                                            await _cargarClientes();
+                                          }
+                                        },
+                                      );
+                                    },
+
+                                    // Columna 4: botón para borrar con confirmación.
+                                    4: (context, fila) {
+                                      final cliente = fila['cliente'] as Cliente;
+
+                                      return IconButton(
+                                        tooltip: 'Borrar cliente',
+                                        icon: const Icon(
+                                          Icons.cancel_outlined,
+                                          color: Colors.red,
+                                          size: 30,
+                                        ),
+                                        onPressed: () {
+                                          _borrarCliente(cliente);
+                                        },
+                                      );
+                                    },
+                                  },
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
-          ),
-
-        // ======================================================
-        // TÍTULO DE LA PÁGINA
-        // ======================================================
-        Text(
-          titulo,
-
-          style: const TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-          ),
-        ),
-
-        // ======================================================
-        // USUARIO
-        // ======================================================
-        Row(
-          children: [
-            if (esPantallaGrande)
-              const Text(
-                'Leonardo',
-
-                style: TextStyle(color: Colors.black, fontSize: 16),
-              ),
-
-            const SizedBox(width: 10),
-
-            CircleAvatar(
-              backgroundColor: Colors.red[800],
-
-              child: const Icon(Icons.build, color: Colors.black),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
+          );
+        },
+      ),
+    );
+  }
 }
 
-// ============================================================
-// CAMPO EDITABLE
-// ============================================================
-
+// Campo de texto reutilizable con un icono de edición decorativo.
+// Se conserva porque es una clase pública del archivo original.
 class CampoEditable extends StatelessWidget {
+
   final TextEditingController? controlador;
+
   final String? hint;
 
   const CampoEditable({super.key, this.controlador, this.hint});
 
   @override
   Widget build(BuildContext context) {
+
     return Container(
       width: 400,
       color: Colors.grey[300],
-
       child: Row(
         children: [
-          // ====================================================
-          // CAMPO DE TEXTO
-          // ====================================================
 
+          // Campo que utiliza el controlador y el texto de ayuda recibidos.
           Expanded(
             child: TextField(
               controller: controlador,
-
               decoration: InputDecoration(
                 hintText: hint,
                 border: InputBorder.none,
-
                 contentPadding: const EdgeInsets.symmetric(horizontal: 10),
               ),
-
               style: const TextStyle(fontSize: 18),
             ),
           ),
 
-          // ====================================================
-          // ICONO EDITAR
-          // ====================================================
+          // Icono que indica visualmente la edición.
           Container(
             color: Colors.grey[400],
-
             padding: const EdgeInsets.all(8),
-
             child: const Icon(Icons.edit_square, size: 30),
           ),
         ],
