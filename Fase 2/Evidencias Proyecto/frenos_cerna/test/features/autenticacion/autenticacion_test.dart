@@ -24,13 +24,31 @@ void main() {
   testWidgets('muestra el acceso y deshabilita acciones sin Supabase', (
     tester,
   ) async {
-    await tester.pumpWidget(const MaterialApp(home: PaginaAutenticacion()));
+    await tester.pumpWidget(
+      MaterialApp(home: PaginaAutenticacion(onEntrarModoPrueba: () {})),
+    );
 
     expect(find.text('Iniciar sesión'), findsOneWidget);
     expect(find.text('¿No tienes cuenta? Regístrate'), findsOneWidget);
+    expect(find.text('Entrar en modo de prueba'), findsOneWidget);
     expect(
       tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
       isNull,
     );
+  });
+
+  testWidgets('permite activar el acceso local de prueba', (tester) async {
+    var modoPruebaActivado = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PaginaAutenticacion(
+          onEntrarModoPrueba: () => modoPruebaActivado = true,
+        ),
+      ),
+    );
+
+    await tester.ensureVisible(find.text('Entrar en modo de prueba'));
+    await tester.tap(find.text('Entrar en modo de prueba'));
+    expect(modoPruebaActivado, isTrue);
   });
 }

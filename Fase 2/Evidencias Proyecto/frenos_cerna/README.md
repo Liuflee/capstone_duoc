@@ -24,6 +24,8 @@ WHERE p.user_id = u.id
 
 El formulario público nunca permite escoger el rol: las nuevas cuentas siempre quedan como `empleado`. La aplicación carga el perfil autenticado y el rol tipado para poder diferenciar las experiencias por perfil. Las autorizaciones de los datos se aplican también en Supabase mediante RLS; no se debe confiar solo en ocultar controles del frontend.
 
+Para pruebas locales, la pantalla de acceso tiene un botón «Entrar en modo de prueba». Este modo no inicia sesión en Supabase ni habilita operaciones protegidas. Antes de distribuir la app, cambia `habilitarModoPrueba` a `false` en `lib/features/autenticacion/presentation/puerta_autenticacion.dart` para ocultar el botón.
+
 El archivo `supabase.config.json` está excluido de Git. No pongas una `service_role` key en la aplicación. La aplicación mostrará el formulario de autenticación deshabilitado hasta configurar Supabase.
 
 El cliente y los nombres de las tablas están centralizados en `lib/core/data/supabase_database.dart`. Clientes, vehículos, inventario y ventas se consultan desde Supabase; las altas y ediciones usan las columnas definidas en el esquema. El historial de ventas calcula los totales desde sus tablas de detalle.

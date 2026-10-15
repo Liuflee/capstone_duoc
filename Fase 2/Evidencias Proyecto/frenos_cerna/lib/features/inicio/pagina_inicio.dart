@@ -16,9 +16,16 @@ import 'package:frenos_cerna/features/ventas/presentation/pagina_ventas.dart';
 // Se crea la clase PaginaInicio que extiende StatelessWidget
 class PaginaInicio extends StatelessWidget {
   final PerfilUsuario? perfilUsuario;
+  final bool modoPrueba;
+  final VoidCallback? onSalirModoPrueba;
 
   // Constructor de la clase PaginaInicio
-  const PaginaInicio({super.key, this.perfilUsuario});
+  const PaginaInicio({
+    super.key,
+    this.perfilUsuario,
+    this.modoPrueba = false,
+    this.onSalirModoPrueba,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -48,12 +55,16 @@ class PaginaInicio extends StatelessWidget {
                   nombreUsuario:
                       perfilUsuario?.nombre ??
                       'Usuario', //Nombre del usuario obtenido del perfil
-                  rolUsuario: perfilUsuario?.rol.etiqueta,
-                  onCerrarSesion: () async {
-                    await SupabaseDatabase.client.auth.signOut(
-                      scope: SignOutScope.local,
-                    );
-                  },
+                  rolUsuario: modoPrueba
+                      ? 'Sin sesión'
+                      : perfilUsuario?.rol.etiqueta,
+                  onCerrarSesion: modoPrueba
+                      ? () async => onSalirModoPrueba?.call()
+                      : () async {
+                          await SupabaseDatabase.client.auth.signOut(
+                            scope: SignOutScope.local,
+                          );
+                        },
                 ),
               ),
 

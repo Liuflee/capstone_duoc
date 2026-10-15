@@ -6,7 +6,9 @@ import 'package:frenos_cerna/features/autenticacion/data/autenticacion_repositor
 import 'package:frenos_cerna/shared/widgets/campo_formulario.dart';
 
 class PaginaAutenticacion extends StatefulWidget {
-  const PaginaAutenticacion({super.key});
+  final VoidCallback? onEntrarModoPrueba;
+
+  const PaginaAutenticacion({super.key, this.onEntrarModoPrueba});
 
   @override
   State<PaginaAutenticacion> createState() => _PaginaAutenticacionState();
@@ -88,7 +90,9 @@ class _PaginaAutenticacionState extends State<PaginaAutenticacion> {
     } on AuthException catch (error) {
       if (mounted) setState(() => _error = error.message);
     } catch (error) {
-      if (mounted) setState(() => _error = 'No se pudo completar la solicitud: $error');
+      if (mounted) {
+        setState(() => _error = 'No se pudo completar la solicitud: $error');
+      }
     } finally {
       if (mounted) setState(() => _procesando = false);
     }
@@ -226,7 +230,8 @@ class _PaginaAutenticacionState extends State<PaginaAutenticacion> {
                             SizedBox(
                               height: 48,
                               child: FilledButton(
-                                onPressed: _procesando ||
+                                onPressed:
+                                    _procesando ||
                                         !SupabaseDatabase.isConfigured
                                     ? null
                                     : _enviar,
@@ -265,6 +270,16 @@ class _PaginaAutenticacionState extends State<PaginaAutenticacion> {
                                 style: TextStyle(color: Colors.red[800]),
                               ),
                             ),
+                            if (widget.onEntrarModoPrueba != null) ...[
+                              const Divider(height: 28),
+                              OutlinedButton.icon(
+                                onPressed: _procesando
+                                    ? null
+                                    : widget.onEntrarModoPrueba,
+                                icon: const Icon(Icons.science_outlined),
+                                label: const Text('Entrar en modo de prueba'),
+                              ),
+                            ],
                           ],
                         ),
                       ),

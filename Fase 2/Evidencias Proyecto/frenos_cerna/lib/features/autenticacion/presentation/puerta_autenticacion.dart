@@ -8,6 +8,9 @@ import 'package:frenos_cerna/features/autenticacion/data/autenticacion_repositor
 import 'package:frenos_cerna/features/autenticacion/presentation/pagina_autenticacion.dart';
 import 'package:frenos_cerna/features/inicio/pagina_inicio.dart';
 
+// Desactiva este interruptor antes de distribuir la aplicación.
+const bool habilitarModoPrueba = true;
+
 class PuertaAutenticacion extends StatefulWidget {
   const PuertaAutenticacion({super.key});
 
@@ -18,6 +21,7 @@ class PuertaAutenticacion extends StatefulWidget {
 class _PuertaAutenticacionState extends State<PuertaAutenticacion> {
   late final StreamSubscription<AuthState> _suscripcionAutenticacion;
   Session? _sesion;
+  bool _modoPrueba = false;
 
   @override
   void initState() {
@@ -45,12 +49,37 @@ class _PuertaAutenticacionState extends State<PuertaAutenticacion> {
   @override
   Widget build(BuildContext context) {
     if (!SupabaseDatabase.isConfigured) {
-      return const PaginaAutenticacion();
+      if (_modoPrueba) return _paginaPrueba();
+      return PaginaAutenticacion(
+        onEntrarModoPrueba: habilitarModoPrueba
+            ? () => setState(() => _modoPrueba = true)
+            : null,
+      );
     }
 
+    if (_modoPrueba) return _paginaPrueba();
+
     final usuario = _sesion?.user;
-    if (usuario == null) return const PaginaAutenticacion();
+    if (usuario == null) {
+      return PaginaAutenticacion(
+        onEntrarModoPrueba: habilitarModoPrueba
+            ? () => setState(() => _modoPrueba = true)
+            : null,
+      );
+    }
     return _CargarPerfil(userId: usuario.id);
+  }
+
+  Widget _paginaPrueba() {
+    return PaginaInicio(
+      perfilUsuario: const PerfilUsuario(
+        id: 'modo-prueba',
+        nombre: 'Modo de prueba',
+        rol: RolUsuario.empleado,
+      ),
+      modoPrueba: true,
+      onSalirModoPrueba: () => setState(() => _modoPrueba = false),
+    );
   }
 }
 
