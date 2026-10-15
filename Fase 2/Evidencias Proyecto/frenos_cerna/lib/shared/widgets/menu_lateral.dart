@@ -19,18 +19,17 @@ class MenuLateral extends StatelessWidget {
           // BOTÓN PÁGINA PRINCIPAL
           InkWell(
             onTap: () {
-              if (activo != 'Inicio') {
-                Navigator.pushNamedAndRemoveUntil(
+              if (activo != 'Página Principal') {
+                Navigator.pushReplacement(
                   context,
-                  NavegacionRutas.inicio,
-                  (Route<dynamic> route) => false,
+                  NavegacionRutas.sinAnimacion(const PaginaInicio()),
                 );
               }
             },
             child: _MenuItem(
               icono: Icons.home,
               texto: 'Página\nPrincipal',
-              activo: activo == 'Inicio',
+              activo: activo == 'Página Principal',
             ),
           ),
 
@@ -79,10 +78,6 @@ class MenuLateral extends StatelessWidget {
           InkWell(
             onTap: () {
               if (activo != 'Pruebas') {
-                Navigator.pushReplacement(
-                  context,
-                  NavegacionRutas.sinAnimacion(const PaginaInicio()),
-                );
               }
             },
             child: _MenuItem(
