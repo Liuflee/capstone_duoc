@@ -1,330 +1,132 @@
+
+// Importaciones
 import 'package:flutter/material.dart';
+
 import 'package:frenos_cerna/core/navigation/nav_rutas.dart';
+
 import 'package:frenos_cerna/core/data/supabase_database.dart';
-import 'package:frenos_cerna/features/inventario/pagina_inventario.dart';
-import 'package:frenos_cerna/features/notificaciones/pagina_notificaciones.dart';
-import 'package:frenos_cerna/features/vehiculos/pagina_vehiculos.dart';
-import 'package:frenos_cerna/features/ventas/presentation/pagina_ventas.dart';
 
-import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
+import 'package:frenos_cerna/features/inicio/pagina_inicio.dart';
 
+// Función principal de la aplicación
 Future<void> main() async {
+
+  // Inicializa los servicios de Flutter
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Inicializa la conexión con Supabase
   await SupabaseDatabase.initialize();
+
+  // Ejecuta la aplicación
   runApp(const MiAplicacion());
+
 }
 
+// Se crea la clase principal de la aplicación
 class MiAplicacion extends StatelessWidget {
+
+  // Constructor de la clase
   const MiAplicacion({super.key});
 
   @override
   Widget build(BuildContext context) {
+
+    // Configuración general de la aplicación
     return MaterialApp(
+
+      // Oculta la etiqueta de DEBUG
       debugShowCheckedModeBanner: false,
+
+      // Nombre de la aplicación
       title: 'Frenos Cerna',
+
+      // Configuración visual general
       theme: ThemeData(
+
+        // Fuente predeterminada
         fontFamily: 'Courier',
+
+        // Configuración de las transiciones entre páginas
         pageTransitionsTheme: const PageTransitionsTheme(
+
           builders: {
-            TargetPlatform.windows: _SinAnimacionPageTransitionsBuilder(),
-            TargetPlatform.linux: _SinAnimacionPageTransitionsBuilder(),
-            TargetPlatform.macOS: _SinAnimacionPageTransitionsBuilder(),
+
+            // Deshabilita animaciones de navegación en Windows
+            TargetPlatform.windows:
+                _SinAnimacionPageTransitionsBuilder(),
+
+            // Deshabilita animaciones de navegación en Linux
+            TargetPlatform.linux:
+                _SinAnimacionPageTransitionsBuilder(),
+
+            // Deshabilita animaciones de navegación en macOS
+            TargetPlatform.macOS:
+                _SinAnimacionPageTransitionsBuilder(),
+
           },
         ),
       ),
+
+      // Configuración de las rutas de navegación
       onGenerateRoute: (settings) {
+
+        // Ruta correspondiente a la página de inicio
         if (settings.name == NavegacionRutas.inicio) {
-          return NavegacionRutas.sinAnimacion(const PaginaPrincipal());
+
+          // Navega a la página de inicio sin animación
+          return NavegacionRutas.sinAnimacion(
+            const PaginaInicio(),
+          );
+
         }
+
+        // Devuelve null cuando no reconoce la ruta
         return null;
+
       },
-      home: const PaginaPrincipal(),
+
+      // PÁGINA INICIAL DE LA APLICACIÓN
+
+      // AQUÍ SE CAMBIA POR LA RUTA DEL LOGIN
+      // CUANDO SE DESARROLLE EL SISTEMA DE AUTENTICACIÓN
+
+      // Por ahora se muestra directamente la página de inicio
+      home: const PaginaInicio(),
+
     );
   }
 }
 
-class _SinAnimacionPageTransitionsBuilder extends PageTransitionsBuilder {
+// Se crea una clase para eliminar las animaciones de navegación
+class _SinAnimacionPageTransitionsBuilder
+    extends PageTransitionsBuilder {
+
+  // Constructor de la clase
   const _SinAnimacionPageTransitionsBuilder();
 
   @override
   Widget buildTransitions<T>(
+
+    // Ruta que se está mostrando
     PageRoute<T> route,
+
+    // Contexto de Flutter
     BuildContext context,
+
+    // Animación de entrada
     Animation<double> animation,
+
+    // Animación de salida
     Animation<double> secondaryAnimation,
+
+    // Widget correspondiente a la página
     Widget child,
+
   ) {
+
+    // Devuelve directamente la página
+    // sin aplicar animaciones de transición
     return child;
-  }
-}
 
-class PaginaPrincipal extends StatelessWidget {
-  const PaginaPrincipal({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    // sacamo el ancho
-    final anchoPantalla = MediaQuery.of(context).size.width;
-    // Definimos si es una pantalla grande (Desktop/Tablet) o pequeña (Teléfono)
-    final esPantallaGrande = anchoPantalla > 800;
-
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.grey[300],
-        elevation: 0,
-        // Si es pantalla pequeña, el botón del Drawer aparece automáticamente
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            if (esPantallaGrande) // Solo mostramos el logo en el AppBar si hay espacio
-              Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    color: Colors.grey[500],
-                    child: const Icon(
-                      Icons.settings_input_component,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'Frenos\nCerna',
-                    style: TextStyle(color: Colors.black, fontSize: 16),
-                  ),
-                ],
-              ),
-            const Text(
-              'Inicio',
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
-              ),
-            ),
-            Row(
-              children: [
-                if (esPantallaGrande) // Ocultamos el nombre en celular para ahorrar espacio
-                  const Text(
-                    'Leonardo',
-                    style: TextStyle(color: Colors.black, fontSize: 16),
-                  ),
-                const SizedBox(width: 10),
-                CircleAvatar(
-                  backgroundColor: Colors.red[800],
-                  child: const Icon(Icons.build, color: Colors.black),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-      // Si es pantalla pequeña, usamos un Drawer (menú hamburguesa)
-      drawer: esPantallaGrande
-          ? null
-          : const Drawer(child: MenuLateral(activo: 'Inicio')),
-      body: Row(
-        children: [
-          if (esPantallaGrande) const ContenedorMenuLateral(activo: 'Inicio'),
-
-          // CONTENIDO PRINCIPAL
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const Text(
-                      'IMPORTANTE',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    // Usamos WRAP en lugar de ROW. Se adaptará a la pantalla.
-                    Wrap(
-                      spacing: 20, // Espacio horizontal entre tarjetas
-                      runSpacing: 20, // Espacio vertical cuando saltan de línea
-                      alignment: WrapAlignment.center,
-                      children: const [
-                        _InfoCard(
-                          icono: Icons.people_outline,
-                          numero: '2',
-                          texto: 'VENTAS DEL\nDÍA',
-                        ),
-                        _InfoCard(
-                          icono: Icons.warning_amber_rounded,
-                          numero: '1',
-                          texto: 'NOTIFICACIONES',
-                        ),
-                        _InfoCard(
-                          icono: Icons.help_outline,
-                          numero: '23',
-                          texto: 'PRODUCTOS\nFALTANTES',
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 40),
-                    const Text(
-                      'TRABAJO',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    // Usamos WRAP nuevamente
-                    Wrap(
-                      spacing: 20,
-                      runSpacing: 20,
-                      alignment: WrapAlignment.center,
-                      children: [
-                        InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const PaginaVehiculos(),
-                              ),
-                            );
-                          },
-                          child: const _ActionCard(
-                            icono: Icons.menu_book,
-                            texto: 'HISTORIAL\nVEHÍCULOS',
-                          ),
-                        ),
-                        InkWell(
-                          onTap: () {
-                            // Esto hace la navegación a la nueva página
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const PaginaInventario(),
-                              ),
-                            );
-                          },
-                          child: const _ActionCard(
-                            icono: Icons.cases_outlined,
-                            texto: 'INVENTARIO',
-                          ),
-                        ),
-                        InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const PaginaNotificaciones(),
-                              ),
-                            );
-                          },
-                          child: const _ActionCard(
-                            icono: Icons.warning_amber_rounded,
-                            texto: 'NOTIFICACIONES',
-                          ),
-                        ),
-                        InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const PaginaVentas(),
-                              ),
-                            );
-                          },
-                          child: const _ActionCard(
-                            icono: Icons.attach_money,
-                            texto: 'VENTAS',
-                          ),
-                        ),
-                        _ActionCard(icono: Icons.bar_chart, texto: 'DATOS'),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoCard extends StatelessWidget {
-  final IconData icono;
-  final String numero;
-  final String texto;
-
-  const _InfoCard({
-    required this.icono,
-    required this.numero,
-    required this.texto,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 150,
-      height: 150,
-      decoration: BoxDecoration(
-        color: Colors.grey[300],
-        borderRadius: BorderRadius.circular(10),
-      ),
-      padding: const EdgeInsets.all(10),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [Icon(icono, size: 30)],
-          ),
-          Text(
-            numero,
-            style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
-          ),
-          Text(
-            texto,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActionCard extends StatelessWidget {
-  final IconData icono;
-  final String texto;
-
-  const _ActionCard({required this.icono, required this.texto});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 220,
-      height: 100,
-      decoration: BoxDecoration(
-        color: Colors.grey[300],
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icono, size: 40),
-          const SizedBox(width: 10),
-          Text(
-            texto,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
-    );
   }
 }
