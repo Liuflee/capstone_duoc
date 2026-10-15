@@ -6,7 +6,7 @@ import 'package:frenos_cerna/core/navigation/nav_rutas.dart';
 
 import 'package:frenos_cerna/core/data/supabase_database.dart';
 
-import 'package:frenos_cerna/features/inicio/pagina_inicio.dart';
+import 'package:frenos_cerna/features/autenticacion/presentation/puerta_autenticacion.dart';
 
 // Función principal de la aplicación
 Future<void> main() async {
@@ -75,7 +75,7 @@ class MiAplicacion extends StatelessWidget {
 
           // Navega a la página de inicio sin animación
           return NavegacionRutas.sinAnimacion(
-            const PaginaInicio(),
+            const PuertaAutenticacion(),
           );
 
         }
@@ -85,13 +85,7 @@ class MiAplicacion extends StatelessWidget {
 
       },
 
-      // PÁGINA INICIAL DE LA APLICACIÓN
-
-      // AQUÍ SE CAMBIA POR LA RUTA DEL LOGIN
-      // CUANDO SE DESARROLLE EL SISTEMA DE AUTENTICACIÓN
-
-      // Por ahora se muestra directamente la página de inicio
-      home: const PaginaInicio(),
+      home: const PuertaAutenticacion(),
 
     );
   }
