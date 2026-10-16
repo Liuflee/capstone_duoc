@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frenos_cerna/core/data/supabase_database.dart';
 import 'package:frenos_cerna/features/inventario/pagina_edicion_producto.dart';
 import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
+import 'package:frenos_cerna/shared/widgets/tabla_datos.dart';
 
 // ============================================================
 // MODELO PRODUCTO
@@ -71,6 +72,10 @@ class _PaginaInventarioState extends State<PaginaInventario> {
   String? _error;
 
   final TextEditingController _busquedaController = TextEditingController();
+
+  // Colores de cabecera que se alternan entre las columnas.
+  static const Color _rojoClaro = Color.fromARGB(255, 253, 116, 116);
+  static const Color _rojoOscuro = Color.fromARGB(255, 207, 81, 81);
 
   // ==========================================================
   // INICIALIZACIÓN
@@ -302,6 +307,20 @@ class _PaginaInventarioState extends State<PaginaInventario> {
     final anchoPantalla = MediaQuery.of(context).size.width;
 
     final esPantallaGrande = anchoPantalla > 800;
+
+    // Convierte los productos filtrados a registros que entiende TablaDatos.
+    // El objeto original se conserva para usarlo al ver/editar el producto.
+    final List<Map<String, dynamic>> filasProductos = _productosFiltrados
+        .map(
+          (producto) => <String, dynamic>{
+            'nombre': producto.nombre,
+            'categoria': producto.categoria,
+            'precio': '\$${producto.precio.toStringAsFixed(0)}',
+            'cantidad': producto.cantidad.toString(),
+            'producto': producto,
+          },
+        )
+        .toList();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -566,13 +585,80 @@ class _PaginaInventarioState extends State<PaginaInventario> {
                     )
                   else
                     Expanded(
-                      child: _ConstruirTablaProductos(
-                        productos: _productosFiltrados,
+                      child: TablaDatos(
+                        // Encabezados visibles de la tabla.
+                        nombresColumnas: const [
+                          'PRODUCTO',
+                          'CATEGORÍA',
+                          'PRECIO',
+                          'CANTIDAD',
+                          'VER',
+                        ],
 
-                        // ==================================================
-                        // RECARGAR DESDE EL STATE PADRE
-                        // ==================================================
-                        onRecargar: _cargarProductos,
+                        // Campos de cada columna (vacío si la celda es personalizada).
+                        camposColumnas: const [
+                          'nombre',
+                          'categoria',
+                          'precio',
+                          'cantidad',
+                          '',
+                        ],
+
+                        // Ancho proporcional de cada columna.
+                        anchosColumnas: const [450, 180, 130, 130, 100],
+
+                        // Colores de cabecera alternando entre los dos rojos.
+                        coloresEncabezados: const [
+                          _rojoClaro,
+                          _rojoOscuro,
+                          _rojoClaro,
+                          _rojoOscuro,
+                          _rojoClaro,
+                        ],
+
+                        filas: filasProductos,
+
+                        celdasPersonalizadas: {
+                          // Columna 0: nombre del producto en negrita.
+                          0: (context, fila) {
+                            final producto = fila['producto'] as Producto;
+
+                            return Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                producto.nombre,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            );
+                          },
+
+                          // Columna 4: botón para ver/editar el producto.
+                          4: (context, fila) {
+                            final producto = fila['producto'] as Producto;
+
+                            return IconButton(
+                              tooltip: 'Ver producto',
+                              icon: const Icon(Icons.search, size: 30),
+                              onPressed: () async {
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        PaginaEdicionProducto(producto: producto),
+                                  ),
+                                );
+
+                                // Recarga los productos después de editar.
+                                if (!mounted) return;
+                                await _cargarProductos();
+                              },
+                            );
+                          },
+                        },
                       ),
                     ),
                 ],
@@ -582,464 +668,5 @@ class _PaginaInventarioState extends State<PaginaInventario> {
         ],
       ),
     );
-  }
-}
-
-// ============================================================
-// TABLA DE PRODUCTOS
-// ============================================================
-
-class _ConstruirTablaProductos extends StatelessWidget {
-  final List<Producto> productos;
-
-  // ============================================================
-  // FUNCIÓN DE RECARGA
-  // ============================================================
-
-  final Future<void> Function() onRecargar;
-
-  const _ConstruirTablaProductos({
-    required this.productos,
-    required this.onRecargar,
-  });
-
-  // ============================================================
-  // CONSTRUIR TABLA
-  // ============================================================
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        const double anchoMinimoTabla = 850;
-
-        final double anchoTabla = constraints.maxWidth > anchoMinimoTabla
-            ? constraints.maxWidth
-            : anchoMinimoTabla;
-
-        const double anchoCategoria = 180;
-
-        const double anchoPrecio = 130;
-
-        const double anchoCantidad = 130;
-
-        const double anchoVer = 100;
-
-        final double anchoProducto =
-            anchoTabla -
-            anchoCategoria -
-            anchoPrecio -
-            anchoCantidad -
-            anchoVer;
-
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-
-          child: SizedBox(
-            width: anchoTabla,
-
-            child: CustomScrollView(
-              slivers: [
-                // ==================================================
-                // ENCABEZADO FIJO
-                // ==================================================
-
-                SliverPersistentHeader(
-                  pinned: true,
-
-                  delegate: _EncabezadoTablaDelegate(
-                    child: _crearEncabezado(
-                      anchoProducto,
-                      anchoCategoria,
-                      anchoPrecio,
-                      anchoCantidad,
-                      anchoVer,
-                    ),
-                  ),
-                ),
-
-                // ==================================================
-                // FILAS
-                // ==================================================
-                SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final producto = productos[index];
-
-                    return _crearFila(
-                      context,
-                      producto,
-                      index,
-                      anchoProducto,
-                      anchoCategoria,
-                      anchoPrecio,
-                      anchoCantidad,
-                      anchoVer,
-                    );
-                  }, childCount: productos.length),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // ============================================================
-  // ENCABEZADO
-  // ============================================================
-
-  Widget _crearEncabezado(
-    double anchoProducto,
-    double anchoCategoria,
-    double anchoPrecio,
-    double anchoCantidad,
-    double anchoVer,
-  ) {
-    return Container(
-      color: Colors.red[400],
-
-      child: Row(
-        children: [
-          SizedBox(
-            width: anchoProducto,
-
-            child: Container(
-              height: 56,
-
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-
-                  top: BorderSide(color: Colors.black, width: 2),
-
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              alignment: Alignment.centerLeft,
-
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-
-              child: const Text(
-                'PRODUCTO',
-
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-
-          SizedBox(
-            width: anchoCategoria,
-
-            child: Container(
-              height: 56,
-
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-
-                  top: BorderSide(color: Colors.black, width: 2),
-
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              alignment: Alignment.center,
-
-              child: const Text(
-                'CATEGORÍA',
-
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-
-          SizedBox(
-            width: anchoPrecio,
-
-            child: Container(
-              height: 56,
-
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-
-                  top: BorderSide(color: Colors.black, width: 2),
-
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              alignment: Alignment.center,
-
-              child: const Text(
-                'PRECIO',
-
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-
-          SizedBox(
-            width: anchoCantidad,
-
-            child: Container(
-              height: 56,
-
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-
-                  top: BorderSide(color: Colors.black, width: 2),
-
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              alignment: Alignment.center,
-
-              child: const Text(
-                'CANTIDAD',
-
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-
-          SizedBox(
-            width: anchoVer,
-
-            child: Container(
-              height: 56,
-
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-
-                  right: BorderSide(color: Colors.black, width: 2),
-
-                  top: BorderSide(color: Colors.black, width: 2),
-
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              alignment: Alignment.center,
-
-              child: const Text(
-                'VER',
-
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ============================================================
-  // FILA DE PRODUCTO
-  // ============================================================
-
-  Widget _crearFila(
-    BuildContext context,
-    Producto producto,
-    int index,
-    double anchoProducto,
-    double anchoCategoria,
-    double anchoPrecio,
-    double anchoCantidad,
-    double anchoVer,
-  ) {
-    final Color? colorFila = index % 2 == 0
-        ? Colors.grey[200]
-        : Colors.grey[300];
-
-    return Container(
-      height: 70,
-      color: colorFila,
-
-      child: Row(
-        children: [
-          SizedBox(
-            width: anchoProducto,
-
-            child: Container(
-              height: 70,
-
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              alignment: Alignment.centerLeft,
-
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-
-              child: Text(
-                producto.nombre,
-
-                overflow: TextOverflow.ellipsis,
-
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-
-          SizedBox(
-            width: anchoCategoria,
-
-            child: Container(
-              height: 70,
-
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              alignment: Alignment.center,
-
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-
-              child: Text(producto.categoria, overflow: TextOverflow.ellipsis),
-            ),
-          ),
-
-          SizedBox(
-            width: anchoPrecio,
-
-            child: Container(
-              height: 70,
-
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              alignment: Alignment.center,
-
-              child: Text('\$${producto.precio.toStringAsFixed(0)}'),
-            ),
-          ),
-
-          SizedBox(
-            width: anchoCantidad,
-
-            child: Container(
-              height: 70,
-
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              alignment: Alignment.center,
-
-              child: Text(producto.cantidad.toString()),
-            ),
-          ),
-
-          SizedBox(
-            width: anchoVer,
-
-            child: Container(
-              height: 70,
-
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-
-                  right: BorderSide(color: Colors.black, width: 2),
-
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              alignment: Alignment.center,
-
-              child: IconButton(
-                icon: const Icon(Icons.search, size: 30),
-
-                onPressed: () async {
-                  await Navigator.push(
-                    context,
-
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          PaginaEdicionProducto(producto: producto),
-                    ),
-                  );
-
-                  // ==================================================
-                  // RECARGAR PRODUCTOS DESPUÉS DE EDITAR
-                  // ==================================================
-
-                  await onRecargar();
-                },
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ============================================================
-// ENCABEZADO FIJO DE LA TABLA
-// ============================================================
-
-class _EncabezadoTablaDelegate extends SliverPersistentHeaderDelegate {
-  final Widget child;
-
-  _EncabezadoTablaDelegate({required this.child});
-
-  @override
-  double get minExtent => 56;
-
-  @override
-  double get maxExtent => 56;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return child;
-  }
-
-  @override
-  bool shouldRebuild(covariant _EncabezadoTablaDelegate oldDelegate) {
-    return oldDelegate.child != child;
   }
 }

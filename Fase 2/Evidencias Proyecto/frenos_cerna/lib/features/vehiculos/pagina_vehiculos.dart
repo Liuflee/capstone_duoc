@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frenos_cerna/core/data/supabase_database.dart';
 import 'package:frenos_cerna/features/vehiculos/pagina_detalle_vehiculo.dart';
 import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
+import 'package:frenos_cerna/shared/widgets/tabla_datos.dart';
 
 class HistorialVehiculo {
   final String id;
@@ -59,6 +60,10 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
   String? _error;
   String _busqueda = '';
 
+  // Colores de cabecera que se alternan entre las columnas.
+  static const Color _rojoClaro = Color.fromARGB(255, 253, 116, 116);
+  static const Color _rojoOscuro = Color.fromARGB(255, 207, 81, 81);
+
   @override
   void initState() {
     super.initState();
@@ -77,6 +82,8 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
 
       final data = response as List<dynamic>;
 
+      if (!mounted) return;
+
       setState(() {
         historial = data
             .map(
@@ -90,6 +97,8 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
         _error = null;
       });
     } catch (e) {
+      if (!mounted) return;
+
       setState(() {
         _error = e.toString();
         _cargando = false;
@@ -120,6 +129,20 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
   @override
   Widget build(BuildContext context) {
     final esPantallaGrande = MediaQuery.of(context).size.width > 800;
+
+    // Convierte los vehículos filtrados a registros que entiende TablaDatos.
+    // El objeto original se conserva para usarlo al revisar el detalle.
+    final List<Map<String, dynamic>> filasVehiculos = _vehiculosFiltrados
+        .map(
+          (registro) => <String, dynamic>{
+            'cliente': registro.clienteNombre,
+            'vehiculo': registro.vehiculoNombre,
+            'kilometraje': registro.total.toStringAsFixed(0),
+            'patente': registro.fecha,
+            'registro': registro,
+          },
+        )
+        .toList();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -217,16 +240,93 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                     )
                   else
                     Expanded(
-                      child: _TablaVehiculos(
-                        historial: _vehiculosFiltrados,
-                        onRevisar: (registro) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  PaginaDetalleVehiculo(vehiculo: registro),
-                            ),
-                          );
+                      child: TablaDatos(
+                        // Encabezados visibles de la tabla.
+                        nombresColumnas: const [
+                          'CLIENTE',
+                          'VEHÍCULO',
+                          'KILOMETRAJE',
+                          'PATENTE',
+                          'REVISAR',
+                        ],
+
+                        // Campos de cada columna (vacío si la celda es personalizada).
+                        camposColumnas: const [
+                          'cliente',
+                          'vehiculo',
+                          'kilometraje',
+                          'patente',
+                          '',
+                        ],
+
+                        // Ancho proporcional de cada columna.
+                        anchosColumnas: const [300, 230, 150, 150, 120],
+
+                        // Colores de cabecera alternando entre los dos rojos.
+                        coloresEncabezados: const [
+                          _rojoClaro,
+                          _rojoOscuro,
+                          _rojoClaro,
+                          _rojoOscuro,
+                          _rojoClaro,
+                        ],
+
+                        filas: filasVehiculos,
+
+                        celdasPersonalizadas: {
+                          // Columna 0: cliente con avatar.
+                          0: (context, fila) {
+                            final registro =
+                                fila['registro'] as HistorialVehiculo;
+
+                            return Row(
+                              children: [
+                                CircleAvatar(
+                                  backgroundColor: Colors.red[300],
+                                  child: const Icon(
+                                    Icons.person_outline,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    registro.clienteNombre,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+
+                          // Columna 4: botón para revisar el detalle del vehículo.
+                          4: (context, fila) {
+                            final registro =
+                                fila['registro'] as HistorialVehiculo;
+
+                            return IconButton(
+                              tooltip: 'Revisar vehículo',
+                              icon: const Icon(
+                                Icons.search,
+                                size: 35,
+                                color: Colors.black,
+                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        PaginaDetalleVehiculo(vehiculo: registro),
+                                  ),
+                                );
+                              },
+                            );
+                          },
                         },
                       ),
                     ),
@@ -237,259 +337,5 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
         ],
       ),
     );
-  }
-}
-
-class _TablaVehiculos extends StatelessWidget {
-  final List<HistorialVehiculo> historial;
-  final void Function(HistorialVehiculo) onRevisar;
-
-  const _TablaVehiculos({required this.historial, required this.onRevisar});
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const double anchoMinimoTabla = 850;
-
-        final double anchoTabla = constraints.maxWidth > anchoMinimoTabla
-            ? constraints.maxWidth
-            : anchoMinimoTabla;
-
-        const double anchoVehiculo = 230;
-        const double anchoKilometraje = 150;
-        const double anchoPatente = 150;
-        const double anchoRevisar = 120;
-
-        final double anchoCliente =
-            anchoTabla -
-            anchoVehiculo -
-            anchoKilometraje -
-            anchoPatente -
-            anchoRevisar -
-            4;
-
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: SizedBox(
-            width: anchoTabla,
-            child: CustomScrollView(
-              slivers: [
-                SliverPersistentHeader(
-                  pinned: true,
-                  delegate: _EncabezadoTablaVehiculosDelegate(
-                    child: _crearEncabezado(
-                      anchoCliente,
-                      anchoVehiculo,
-                      anchoKilometraje,
-                      anchoPatente,
-                      anchoRevisar,
-                    ),
-                  ),
-                ),
-                SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final registro = historial[index];
-
-                    return _crearFila(
-                      registro,
-                      index,
-                      anchoCliente,
-                      anchoVehiculo,
-                      anchoKilometraje,
-                      anchoPatente,
-                      anchoRevisar,
-                    );
-                  }, childCount: historial.length),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _crearEncabezado(
-    double anchoCliente,
-    double anchoVehiculo,
-    double anchoKilometraje,
-    double anchoPatente,
-    double anchoRevisar,
-  ) {
-    return Container(
-      height: 56,
-      decoration: BoxDecoration(
-        color: Colors.red[400],
-        border: Border.all(color: Colors.black, width: 2),
-      ),
-      child: Row(
-        children: [
-          _celdaEncabezado('CLIENTE', anchoCliente, tieneBordeDerecho: true),
-          _celdaEncabezado('VEHÍCULO', anchoVehiculo, tieneBordeDerecho: true),
-          _celdaEncabezado(
-            'KILOMETRAJE',
-            anchoKilometraje,
-            tieneBordeDerecho: true,
-          ),
-          _celdaEncabezado('PATENTE', anchoPatente, tieneBordeDerecho: true),
-          _celdaEncabezado('REVISAR', anchoRevisar, tieneBordeDerecho: false),
-        ],
-      ),
-    );
-  }
-
-  Widget _celdaEncabezado(
-    String texto,
-    double ancho, {
-    required bool tieneBordeDerecho,
-  }) {
-    return Container(
-      width: ancho,
-      height: double.infinity,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        border: tieneBordeDerecho
-            ? const Border(right: BorderSide(color: Colors.black, width: 2))
-            : null,
-      ),
-      child: Text(
-        texto,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  Widget _crearFila(
-    HistorialVehiculo registro,
-    int indice,
-    double anchoCliente,
-    double anchoVehiculo,
-    double anchoKilometraje,
-    double anchoPatente,
-    double anchoRevisar,
-  ) {
-    final Color colorFila = indice % 2 == 0
-        ? Colors.grey[200]!
-        : Colors.grey[300]!;
-
-    return Container(
-      height: 70,
-      decoration: BoxDecoration(
-        color: colorFila,
-        border: const Border(
-          left: BorderSide(color: Colors.black, width: 2),
-          right: BorderSide(color: Colors.black, width: 2),
-          bottom: BorderSide(color: Colors.black, width: 2),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: anchoCliente,
-            height: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            decoration: const BoxDecoration(
-              border: Border(right: BorderSide(color: Colors.black, width: 2)),
-            ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: Colors.red[300],
-                  child: const Icon(Icons.person_outline, color: Colors.black),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    registro.clienteNombre,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            width: anchoVehiculo,
-            height: double.infinity,
-            alignment: Alignment.centerLeft,
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            decoration: const BoxDecoration(
-              border: Border(right: BorderSide(color: Colors.black, width: 2)),
-            ),
-            child: Text(
-              registro.vehiculoNombre,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 16),
-            ),
-          ),
-          Container(
-            width: anchoKilometraje,
-            height: double.infinity,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              border: Border(right: BorderSide(color: Colors.black, width: 2)),
-            ),
-            child: Text(
-              registro.total.toStringAsFixed(0),
-              style: const TextStyle(fontSize: 16),
-            ),
-          ),
-          Container(
-            width: anchoPatente,
-            height: double.infinity,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              border: Border(right: BorderSide(color: Colors.black, width: 2)),
-            ),
-            child: Text(registro.fecha, style: const TextStyle(fontSize: 16)),
-          ),
-          SizedBox(
-            width: anchoRevisar,
-            height: double.infinity,
-            child: Center(
-              child: IconButton(
-                icon: const Icon(Icons.search, size: 35, color: Colors.black),
-                onPressed: () => onRevisar(registro),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EncabezadoTablaVehiculosDelegate extends SliverPersistentHeaderDelegate {
-  final Widget child;
-
-  _EncabezadoTablaVehiculosDelegate({required this.child});
-
-  @override
-  double get minExtent => 56;
-
-  @override
-  double get maxExtent => 56;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return child;
-  }
-
-  @override
-  bool shouldRebuild(covariant _EncabezadoTablaVehiculosDelegate oldDelegate) {
-    return false;
   }
 }

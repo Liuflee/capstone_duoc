@@ -391,9 +391,27 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                     '',
                                   ],
 
-                                  // Preferencia de ancho para cada columna.
+                                  // Ancho proporcional de cada columna.
                                   // El widget los ajusta para ocupar el espacio total.
                                   anchosColumnas: const [330, 150, 150, 120, 120],
+
+                                  // Color de cada cabecera (null usa colorEncabezado).
+                                  coloresEncabezados: const [
+                                    Color.fromARGB(255, 253, 116, 116),
+                                    Color.fromARGB(255, 207, 81, 81),
+                                    Color.fromARGB(255, 253, 116, 116),
+                                    Color.fromARGB(255, 207, 81, 81),
+                                    Color.fromARGB(255, 253, 116, 116),
+                                  ],
+
+                                  // Color del texto de cada cabecera (null usa blanco).
+                                  coloresTextoEncabezados: const [
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                  ],
 
                                   // Resultados de Supabase ya filtrados por el buscador.
                                   filas: filasClientes,

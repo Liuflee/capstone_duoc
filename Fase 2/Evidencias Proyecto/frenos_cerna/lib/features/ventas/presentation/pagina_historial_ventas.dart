@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frenos_cerna/features/ventas/data/ventas_repository.dart';
 import 'package:frenos_cerna/features/ventas/presentation/pagina_detalle_venta.dart';
 import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
+import 'package:frenos_cerna/shared/widgets/tabla_datos.dart';
 
 typedef VentaHistorica = VentaRegistro;
 
@@ -18,27 +19,12 @@ class _PaginaHistorialVentasState extends State<PaginaHistorialVentas> {
   bool _cargando = true;
   String? _error;
 
-  // Controlador horizontal compartido
-  final ScrollController _scrollHorizontal = ScrollController();
-
   // Controlador de búsqueda
   final TextEditingController _busquedaController = TextEditingController();
 
-  // ============================================================
-  // ANCHOS FIJOS DE LAS COLUMNAS
-  // ============================================================
-
-  // Se mantienen constantes para que la tabla NO cambie
-  // de dimensiones al realizar una búsqueda.
-  static const double _anchoCliente = 250;
-  static const double _anchoProducto = 450;
-  static const double _anchoTotal = 150;
-  static const double _anchoFecha = 180;
-  static const double _anchoVer = 100;
-
-  // Espacio interno para separar el texto de las líneas
-  // verticales de las columnas.
-  static const double _paddingColumnas = 12;
+  // Colores de cabecera que se alternan entre las columnas.
+  static const Color _rojoClaro = Color.fromARGB(255, 253, 116, 116);
+  static const Color _rojoOscuro = Color.fromARGB(255, 207, 81, 81);
 
   @override
   void initState() {
@@ -51,7 +37,6 @@ class _PaginaHistorialVentasState extends State<PaginaHistorialVentas> {
 
   @override
   void dispose() {
-    _scrollHorizontal.dispose();
     _busquedaController.dispose();
     super.dispose();
   }
@@ -60,12 +45,16 @@ class _PaginaHistorialVentasState extends State<PaginaHistorialVentas> {
     try {
       final data = await VentaRegistro.obtenerTodas();
 
+      if (!mounted) return;
+
       setState(() {
         _historial = data;
         _cargando = false;
         _error = null;
       });
     } catch (e) {
+      if (!mounted) return;
+
       setState(() {
         _error = e.toString();
         _cargando = false;
@@ -92,249 +81,8 @@ class _PaginaHistorialVentasState extends State<PaginaHistorialVentas> {
 
   void _filtrarHistorial() => setState(() {});
 
-  // ============================================================
-  // COLUMNAS DE LA TABLA
-  // ============================================================
-
-  List<DataColumn> _crearColumnas() {
-    return const [
-      DataColumn(
-        label: SizedBox(
-          width: _anchoCliente,
-          child: Text(
-            'CLIENTE',
-            style: TextStyle(color: Colors.white, fontSize: 18),
-          ),
-        ),
-      ),
-      DataColumn(
-        label: SizedBox(
-          width: _anchoProducto,
-          child: Padding(
-            padding: EdgeInsets.only(left: _paddingColumnas),
-            child: Text(
-              'PRODUCTO',
-              style: TextStyle(color: Colors.white, fontSize: 18),
-            ),
-          ),
-        ),
-      ),
-      DataColumn(
-        label: SizedBox(
-          width: _anchoTotal,
-          child: Padding(
-            padding: EdgeInsets.only(left: _paddingColumnas),
-            child: Text(
-              'TOTAL',
-              style: TextStyle(color: Colors.white, fontSize: 18),
-            ),
-          ),
-        ),
-      ),
-      DataColumn(
-        label: SizedBox(
-          width: _anchoFecha,
-          child: Padding(
-            padding: EdgeInsets.only(left: _paddingColumnas),
-            child: Text(
-              'FECHA',
-              style: TextStyle(color: Colors.white, fontSize: 18),
-            ),
-          ),
-        ),
-      ),
-      DataColumn(
-        label: SizedBox(
-          width: _anchoVer,
-          child: Text(
-            'VER',
-            style: TextStyle(color: Colors.white, fontSize: 18),
-          ),
-        ),
-      ),
-    ];
-  }
-
-  // ============================================================
-  // FILAS DE LA TABLA
-  // ============================================================
-
-  List<DataRow> _crearFilas() {
-    return _historialFiltrado.asMap().entries.map((entrada) {
-      int indice = entrada.key;
-      VentaHistorica venta = entrada.value;
-
-      return DataRow(
-        color: WidgetStateProperty.all(
-          indice % 2 == 0 ? Colors.grey[200] : Colors.grey[300],
-        ),
-        cells: [
-          DataCell(
-            SizedBox(
-              width: _anchoCliente,
-              child: Text(
-                venta.clienteNombre,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-            ),
-          ),
-
-          DataCell(
-            SizedBox(
-              width: _anchoProducto,
-              child: Padding(
-                padding: const EdgeInsets.only(
-                  left: _paddingColumnas,
-                  top: 10.0,
-                  bottom: 10.0,
-                ),
-                child: Text(
-                  venta.productosResumen,
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ),
-            ),
-          ),
-
-          DataCell(
-            SizedBox(
-              width: _anchoTotal,
-              child: Padding(
-                padding: const EdgeInsets.only(left: _paddingColumnas),
-                child: Text(
-                  '\$${venta.total.toStringAsFixed(0).replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          DataCell(
-            SizedBox(
-              width: _anchoFecha,
-              child: Padding(
-                padding: const EdgeInsets.only(left: _paddingColumnas),
-                child: Text(venta.fecha, style: const TextStyle(fontSize: 18)),
-              ),
-            ),
-          ),
-
-          DataCell(
-            SizedBox(
-              width: _anchoVer,
-              child: IconButton(
-                icon: const Icon(Icons.search, size: 40, color: Colors.black),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => PaginaDetalleVenta(
-                        idVenta: venta.id,
-                        clienteNombre: venta.clienteNombre,
-                        vehiculoNombre: 'Vehículo Registrado',
-                        total: venta.total,
-                        fecha: venta.fecha,
-                        desdeHistorial: true,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-        ],
-      );
-    }).toList();
-  }
-
-  // ============================================================
-  // TABLA
-  // ============================================================
-
-  Widget _crearTabla({bool ocultarEncabezado = false}) {
-    return DataTable(
-      headingRowColor: ocultarEncabezado
-          ? WidgetStateProperty.all(Colors.transparent)
-          : WidgetStateProperty.all(Colors.red[400]),
-      headingRowHeight: ocultarEncabezado ? 0 : null,
-      border: ocultarEncabezado
-          ? const TableBorder(
-              left: BorderSide(color: Colors.black, width: 2),
-              right: BorderSide(color: Colors.black, width: 2),
-              bottom: BorderSide(color: Colors.black, width: 2),
-              horizontalInside: BorderSide(color: Colors.black, width: 2),
-              verticalInside: BorderSide(color: Colors.black, width: 2),
-            )
-          : TableBorder.all(color: Colors.black, width: 2),
-      dataRowMaxHeight: 100,
-
-      // Mantiene las mismas dimensiones de columnas.
-      columnSpacing: 0,
-
-      columns: _crearColumnas(),
-      rows: _crearFilas(),
-    );
-  }
-
-  // ============================================================
-  // ENCABEZADO FIJO
-  // ============================================================
-
-  Widget _crearEncabezadoFijo() {
-    return Positioned(
-      top: 0,
-      left: 0,
-      right: 0,
-      child: IgnorePointer(
-        child: Container(
-          color: Colors.white,
-          child: SingleChildScrollView(
-            controller: _scrollHorizontal,
-            scrollDirection: Axis.horizontal,
-            physics: const NeverScrollableScrollPhysics(),
-            child: ClipRect(
-              child: SizedBox(
-                height: 56,
-                child: Align(
-                  alignment: Alignment.topLeft,
-                  child: DataTable(
-                    headingRowColor: WidgetStateProperty.all(Colors.red[400]),
-                    headingRowHeight: 56,
-                    border: const TableBorder(
-                      top: BorderSide(color: Colors.black, width: 2),
-                      left: BorderSide(color: Colors.black, width: 2),
-                      right: BorderSide(color: Colors.black, width: 2),
-                      verticalInside: BorderSide(color: Colors.black, width: 2),
-                      horizontalInside: BorderSide(
-                        color: Colors.transparent,
-                        width: 0,
-                      ),
-                    ),
-                    dataRowMaxHeight: 100,
-
-                    // Mismo spacing que la tabla.
-                    columnSpacing: 0,
-
-                    // Mismas columnas y mismos anchos.
-                    columns: _crearColumnas(),
-
-                    // Se mantienen las filas para conservar
-                    // exactamente las mismas dimensiones.
-                    rows: _crearFilas(),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
+  String _formatearTotal(double total) {
+    return '\$${total.toStringAsFixed(0).replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => '.')}';
   }
 
   // ============================================================
@@ -344,6 +92,20 @@ class _PaginaHistorialVentasState extends State<PaginaHistorialVentas> {
   @override
   Widget build(BuildContext context) {
     final esPantallaGrande = MediaQuery.of(context).size.width > 800;
+
+    // Convierte las ventas filtradas a registros que entiende TablaDatos.
+    // El objeto original se conserva para usarlo al ver el detalle.
+    final List<Map<String, dynamic>> filasHistorial = _historialFiltrado
+        .map(
+          (venta) => <String, dynamic>{
+            'cliente': venta.clienteNombre,
+            'producto': venta.productosResumen,
+            'total': _formatearTotal(venta.total),
+            'fecha': venta.fecha,
+            'venta': venta,
+          },
+        )
+        .toList();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -497,27 +259,127 @@ class _PaginaHistorialVentasState extends State<PaginaHistorialVentas> {
                     )
                   else
                     Expanded(
-                      child: Stack(
-                        children: [
-                          // ============================================================
-                          // CUERPO DE LA TABLA
-                          // ============================================================
+                      child: Padding(
+                        // Compensa los 14 px que TablaDatos reserva a la
+                        // derecha para el scrollbar, así queda centrada.
+                        padding: const EdgeInsets.only(left: 14),
+                        child: TablaDatos(
+                          // Encabezados visibles de la tabla.
+                          nombresColumnas: const [
+                            'CLIENTE',
+                            'PRODUCTO',
+                            'TOTAL',
+                            'FECHA',
+                            'VER',
+                          ],
 
-                          SingleChildScrollView(
-                            scrollDirection: Axis.vertical,
-                            padding: const EdgeInsets.only(top: 56),
-                            child: SingleChildScrollView(
-                              controller: _scrollHorizontal,
-                              scrollDirection: Axis.horizontal,
-                              child: _crearTabla(ocultarEncabezado: true),
-                            ),
-                          ),
+                          // Campos de cada columna (vacío si la celda es personalizada).
+                          camposColumnas: const [
+                            'cliente',
+                            'producto',
+                            'total',
+                            'fecha',
+                            '',
+                          ],
 
-                          // ============================================================
-                          // ENCABEZADO FIJO
-                          // ============================================================
-                          _crearEncabezadoFijo(),
-                        ],
+                          // Ancho proporcional de cada columna.
+                          anchosColumnas: const [250, 450, 150, 180, 100],
+
+                          // Colores de cabecera alternando entre los dos rojos.
+                          coloresEncabezados: const [
+                            _rojoClaro,
+                            _rojoOscuro,
+                            _rojoClaro,
+                            _rojoOscuro,
+                            _rojoClaro,
+                          ],
+
+                          // Altura de fila similar a la original.
+                          altoFila: 100,
+
+                          filas: filasHistorial,
+
+                          celdasPersonalizadas: {
+                            // Columna 0: cliente en negrita.
+                            0: (context, fila) {
+                              final venta = fila['venta'] as VentaHistorica;
+
+                              return Text(
+                                venta.clienteNombre,
+                                textAlign: TextAlign.center,
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
+                              );
+                            },
+
+                            // Columna 1: resumen de productos.
+                            1: (context, fila) {
+                              final venta = fila['venta'] as VentaHistorica;
+
+                              return Text(
+                                venta.productosResumen,
+                                textAlign: TextAlign.center,
+                                maxLines: 4,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 16),
+                              );
+                            },
+
+                            // Columna 2: total en negrita.
+                            2: (context, fila) {
+                              return Text(
+                                fila['total'] as String,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              );
+                            },
+
+                            // Columna 3: fecha.
+                            3: (context, fila) {
+                              return Text(
+                                fila['fecha'] as String,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(fontSize: 18),
+                              );
+                            },
+
+                            // Columna 4: botón para ver el detalle de la venta.
+                            4: (context, fila) {
+                              final venta = fila['venta'] as VentaHistorica;
+
+                              return IconButton(
+                                tooltip: 'Ver venta',
+                                icon: const Icon(
+                                  Icons.search,
+                                  size: 40,
+                                  color: Colors.black,
+                                ),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => PaginaDetalleVenta(
+                                        idVenta: venta.id,
+                                        clienteNombre: venta.clienteNombre,
+                                        vehiculoNombre: 'Vehículo Registrado',
+                                        total: venta.total,
+                                        fecha: venta.fecha,
+                                        desdeHistorial: true,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          },
+                        ),
                       ),
                     ),
                 ],
