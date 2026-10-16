@@ -11,6 +11,10 @@ import 'package:frenos_cerna/shared/widgets/barra_superior.dart';
 
 import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
 import 'package:frenos_cerna/shared/widgets/tabla_datos.dart';
+// Importa el buscador reutilizable que se coloca encima de la tabla.
+import 'package:frenos_cerna/shared/widgets/buscador_tabla.dart';
+// Importa el selector y las opciones configurables de filtrado.
+import 'package:frenos_cerna/shared/widgets/filtros_tabla.dart';
 
 // Modelo que representa los datos de un cliente en la aplicación.
 class Cliente {
@@ -68,6 +72,9 @@ class _PaginaClientesState extends State<PaginaClientes> {
 
   // Controlador del campo de búsqueda.
   final TextEditingController _busquedaController = TextEditingController();
+
+  // Identifica los campos en los que se aplica el texto de búsqueda.
+  String _filtroSeleccionado = 'todos';
 
   @override
   void initState() {
@@ -225,14 +232,20 @@ class _PaginaClientesState extends State<PaginaClientes> {
     // Obtiene el texto ingresado en el buscador sin distinguir mayúsculas.
     final textoBusqueda = _busquedaController.text.trim().toLowerCase();
 
-    // Filtra los clientes por nombre, RUT o número de teléfono.
+    // Aplica la búsqueda al campo elegido; Todos conserva la búsqueda original.
     final clientesFiltrados = textoBusqueda.isEmpty
-        ? clientes
-        : clientes.where((cliente) {
-            return cliente.nombre.toLowerCase().contains(textoBusqueda) ||
-                cliente.id.toLowerCase().contains(textoBusqueda) ||
-                cliente.numero.toLowerCase().contains(textoBusqueda);
-          }).toList();
+        ? clientes // Sin texto se muestran todos los clientes recuperados.
+        : clientes.where((cliente) { // Evalúa cada cliente con la selección actual.
+            // Selecciona los valores asociados al identificador del filtro.
+            final campos = switch (_filtroSeleccionado) {
+              'nombre' => [cliente.nombre], // Busca únicamente en el nombre.
+              'numero' => [cliente.numero], // Busca únicamente en el teléfono.
+              'rut' => [cliente.id], // Busca únicamente en el RUT.
+              _ => [cliente.nombre, cliente.numero, cliente.id], // Busca en todos los campos.
+            }; // Finaliza la selección de campos.
+            // Comprueba las coincidencias sin distinguir mayúsculas.
+            return campos.any((campo) => campo.toLowerCase().contains(textoBusqueda));
+          }).toList(); // Entrega solo los clientes que cumplen la búsqueda.
 
     // Convierte los clientes filtrados a registros que entiende TablaDatos.
     // El objeto original se conserva para utilizarlo al editar o borrar.
@@ -326,35 +339,39 @@ class _PaginaClientesState extends State<PaginaClientes> {
 
                             const SizedBox(height: 20),
 
-                            // Campo de búsqueda de clientes.
-                            Container(
-                              width: 300,
-                              color: Colors.grey[300],
-                              padding: const EdgeInsets.only(left: 10),
-
-                              child: Row(
-                                children: [
-
-                                  // Filtra automáticamente a medida que se escribe.
-                                  Expanded(
-                                    child: TextField(
-                                      controller: _busquedaController,
-                                      decoration: const InputDecoration(
-                                        hintText: 'BUSCAR CLIENTE',
-                                        border: InputBorder.none,
-                                      ),
-                                      onChanged: (_) => setState(() {}),
-                                    ),
-                                  ),
-
-                                  // Ícono visual del buscador; la búsqueda ya es automática.
-                                  const IconButton(
-                                    onPressed: null,
-                                    icon: Icon(Icons.search, color: Colors.black),
-                                  ),
-                                ],
-                              ),
-                            ),
+                            // Obtiene el ancho del mismo contenedor que ocupa TablaDatos.
+                            LayoutBuilder(
+                              builder: (context, restricciones) {
+                                // Distribuye los controles fuera del espacio de la tabla.
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 14), // Descuenta el espacio reservado por TablaDatos para el desplazamiento.
+                                  child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween, // Ubica los controles en extremos opuestos.
+                                  children: [ // Mantiene ambos controles en una misma fila.
+                                    FiltrosTabla(
+                                      anchoTabla: (restricciones.maxWidth - 14).clamp(0.0, double.infinity).toDouble(), // Calcula el 33 % del ancho visible de la tabla.
+                                      filtroSeleccionado: _filtroSeleccionado, // Refleja una única selección.
+                                      filtros: const [ // Define manualmente las opciones de Clientes.
+                                        OpcionFiltroTabla(id: 'todos', texto: 'Todos los campos'), // Conserva la búsqueda general.
+                                        OpcionFiltroTabla(id: 'nombre', texto: 'Nombre'), // Limita la búsqueda al nombre.
+                                        OpcionFiltroTabla(id: 'numero', texto: 'Número'), // Limita la búsqueda al teléfono.
+                                        OpcionFiltroTabla(id: 'rut', texto: 'RUT'), // Limita la búsqueda al RUT.
+                                      ], // Finaliza las opciones disponibles.
+                                      alSeleccionar: (id) { // Recibe el identificador del filtro elegido.
+                                        setState(() => _filtroSeleccionado = id); // Actualiza las filas con el nuevo criterio.
+                                      }, // Finaliza la selección del filtro.
+                                    ), // Finaliza el selector situado a la izquierda.
+                                    BuscadorTabla(
+                                      anchoTabla: (restricciones.maxWidth - 14).clamp(0.0, double.infinity).toDouble(), // Usa el mismo ancho visible de la tabla que el selector.
+                                      controlador: _busquedaController, // Conserva el texto al cambiar de filtro.
+                                      textoAyuda: 'BUSCAR CLIENTE', // Conserva la indicación del buscador original.
+                                      alCambiar: (_) => setState(() {}), // Actualiza la tabla mientras se escribe.
+                                    ), // Finaliza el buscador situado a la derecha.
+                                  ], // Finaliza los controles superiores de la tabla.
+                                  ), // Finaliza la distribución horizontal.
+                                ); // Finaliza la alineación con el borde visible de la tabla.
+                              }, // Finaliza el cálculo del ancho disponible.
+                            ), // Finaliza la fila independiente de búsqueda y filtros.
 
                             const SizedBox(height: 20),
 
