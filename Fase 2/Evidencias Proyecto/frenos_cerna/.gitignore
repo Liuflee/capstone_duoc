@@ -23,6 +23,9 @@ migrate_working_dir/
 # is commented out by default.
 #.vscode/
 
+# Configuración personal de F5; permanece únicamente en este equipo.
+/.vscode/launch.json
+
 # Flutter/Dart/Pub related
 /supabase.config.json
 **/doc/api/
