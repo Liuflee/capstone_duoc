@@ -15,6 +15,8 @@ import 'package:frenos_cerna/shared/widgets/tabla_datos.dart';
 import 'package:frenos_cerna/shared/widgets/buscador_tabla.dart';
 // Importa el selector y las opciones configurables de filtrado.
 import 'package:frenos_cerna/shared/widgets/filtros_tabla.dart';
+// Importa la tarjeta reutilizable para abrir el registro de clientes.
+import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
 
 // Modelo que representa los datos de un cliente en la aplicación.
 class Cliente {
@@ -301,41 +303,29 @@ class _PaginaClientesState extends State<PaginaClientes> {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
 
-                            // Abre el formulario para registrar un nuevo cliente.
-                            ElevatedButton.icon(
-                              onPressed: () async {
-
-                                final actualizado = await Navigator.push<bool>(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const PaginaCrearCliente(),
-                                  ),
-                                );
-
-                                // Recarga la tabla si se registró un cliente.
-                                if (actualizado == true) {
-                                  _cargarClientes();
-                                }
-                              },
-
-                              icon: const Icon(
-                                Icons.person_add_alt_1,
-                                color: Colors.black,
-                              ),
-
-                              label: const Text(
-                                '+ Añadir cliente',
-                                style: TextStyle(color: Colors.black),
-                              ),
-
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey[400],
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 15,
-                                ),
-                              ),
-                            ),
+                            // Alinea la tarjeta con el borde visible derecho de la tabla.
+                            Padding(
+                              padding: const EdgeInsets.only(right: 14), // Reserva el mismo espacio lateral que TablaDatos.
+                              child: CartaNavegacion(
+                                ancho: 240, // Define el ancho deseado sin superar el espacio disponible del contenedor.
+                                alto: 70, // Da espacio al icono y al texto de la tarjeta.
+                                texto: 'AÑADIR CLIENTE', // Describe la acción de navegación.
+                                icono: Icons.person_add_alt_1, // Identifica visualmente el registro de clientes.
+                                color: Colors.grey[400], // Conserva el color de la acción anterior.
+                                alPresionar: () async { // Abre el formulario al pulsar la tarjeta.
+                                  final actualizado = await Navigator.push<bool>(
+                                    context, // Utiliza la navegación de la página actual.
+                                    MaterialPageRoute(
+                                      builder: (context) => const PaginaCrearCliente(), // Construye el formulario de registro.
+                                    ), // Finaliza la ruta del formulario.
+                                  ); // Espera el resultado del registro.
+                                  if (!mounted) return; // Evita recargar una página que ya se cerró.
+                                  if (actualizado == true) { // Comprueba si se registró un cliente.
+                                    await _cargarClientes(); // Actualiza la tabla conservando la búsqueda y el filtro.
+                                  } // Finaliza la actualización condicional.
+                                }, // Finaliza la acción de la tarjeta.
+                              ), // Finaliza la tarjeta reutilizable.
+                            ), // Finaliza la alineación con la tabla.
 
                             const SizedBox(height: 20),
 
