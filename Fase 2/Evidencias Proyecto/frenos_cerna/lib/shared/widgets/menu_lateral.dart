@@ -33,7 +33,7 @@ class MenuLateral extends StatelessWidget {
     minimum: const EdgeInsets.only(bottom: 12),
     child: Padding(
       padding: const EdgeInsets.fromLTRB(8, 12, 8, 0),
-      child: Container(
+      child: SizedBox(
         width: double.infinity, // Da al cierre una base completa y definida dentro del menú.
         child: Semantics(
           button: true,

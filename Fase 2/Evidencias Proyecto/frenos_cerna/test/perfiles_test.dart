@@ -102,7 +102,7 @@ void main() {
         for (final tipo in TipoPerfil.values) {
           // Comprueba dueño y mecánico.
           expect(
-            find.text('PERFIL ' + tipo.nombre),
+            find.text('PERFIL ${tipo.nombre}'),
             findsNothing,
           ); // Retira el acceso de consulta por sección.
           for (final modo in [
