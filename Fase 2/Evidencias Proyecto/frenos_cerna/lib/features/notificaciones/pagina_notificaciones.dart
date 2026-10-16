@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
+import 'package:frenos_cerna/shared/widgets/tabla_datos.dart';
 
 class _ProductoProveedor {
   final String nombre;
@@ -39,6 +40,14 @@ class _PaginaNotificacionesState extends State<PaginaNotificaciones> {
   final List<_ProductoReservado> _reservados = [];
   bool _mostrarReservados = false;
   String _busqueda = '';
+
+  // Colores de cabecera que se alternan entre las columnas.
+  static const Color _rojoClaro = Color.fromARGB(255, 253, 116, 116);
+  static const Color _rojoOscuro = Color.fromARGB(255, 207, 81, 81);
+
+  // TablaDatos reserva este espacio a la derecha para la barra de scroll.
+  // Se compensa con el mismo espacio a la izquierda para que quede centrada.
+  static const double _compensacionScroll = 14;
 
   static const List<_ProductoProveedor> _productos = [
     _ProductoProveedor(
@@ -222,7 +231,9 @@ class _PaginaNotificacionesState extends State<PaginaNotificaciones> {
               child: MenuLateral(activo: 'Notificaciones'),
             ),
           Expanded(
-            child: SingleChildScrollView(
+            // La tabla necesita altura limitada, por eso se usa una Column
+            // con la tabla dentro de Expanded en lugar de un scroll general.
+            child: Padding(
               padding: EdgeInsets.all(esPantallaGrande ? 30 : 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -280,10 +291,11 @@ class _PaginaNotificacionesState extends State<PaginaNotificaciones> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  if (_mostrarReservados)
-                    _construirListaReservados(esPantallaGrande)
-                  else
-                    _construirCatalogo(esPantallaGrande),
+                  Expanded(
+                    child: _mostrarReservados
+                        ? _construirListaReservados(esPantallaGrande)
+                        : _construirCatalogo(esPantallaGrande),
+                  ),
                 ],
               ),
             ),
@@ -309,7 +321,7 @@ class _PaginaNotificacionesState extends State<PaginaNotificaciones> {
     }
 
     if (!esPantallaGrande) {
-      return Column(
+      return ListView(
         children: productos
             .map(
               (producto) => _TarjetaProducto(
@@ -321,37 +333,45 @@ class _PaginaNotificacionesState extends State<PaginaNotificaciones> {
       );
     }
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: DataTable(
-        headingRowColor: WidgetStateProperty.all(Colors.red[400]),
-        dataRowMinHeight: 76,
-        dataRowMaxHeight: 92,
-        columnSpacing: 28,
-        border: const TableBorder(
-          verticalInside: BorderSide(color: Colors.black, width: 1.5),
-        ),
-        columns: const [
-          DataColumn(label: _EncabezadoTabla('PRODUCTO')),
-          DataColumn(label: _EncabezadoTabla('PRECIO VIEJO')),
-          DataColumn(label: _EncabezadoTabla('PRECIO NUEVO')),
-          DataColumn(label: _EncabezadoTabla('FECHA')),
+    // Convierte los productos a registros que entiende TablaDatos.
+    final List<Map<String, dynamic>> filas = productos
+        .map(
+          (producto) => <String, dynamic>{
+            'nombre': producto.nombre,
+            'precioViejo': _formatearPrecio(producto.precioAnterior),
+            'precioNuevo': _formatearPrecio(producto.precioActual),
+            'fecha': producto.fecha,
+          },
+        )
+        .toList();
+
+    return Padding(
+      // Compensa el espacio que TablaDatos reserva a la derecha para el
+      // scrollbar, así los márgenes izquierdo y derecho quedan iguales.
+      padding: const EdgeInsets.only(left: _compensacionScroll),
+      child: TablaDatos(
+        nombresColumnas: const [
+          'PRODUCTO',
+          'PRECIO VIEJO',
+          'PRECIO NUEVO',
+          'FECHA',
         ],
-        rows: productos.asMap().entries.map((entrada) {
-          final indice = entrada.key;
-          final producto = entrada.value;
-          return DataRow(
-            color: WidgetStateProperty.all(
-              indice.isEven ? Colors.grey[300] : Colors.grey[200],
-            ),
-            cells: [
-              DataCell(_TextoTabla(producto.nombre)),
-              DataCell(_TextoTabla(_formatearPrecio(producto.precioAnterior))),
-              DataCell(_TextoTabla(_formatearPrecio(producto.precioActual))),
-              DataCell(_TextoTabla(producto.fecha, pequeno: true)),
-            ],
-          );
-        }).toList(),
+        camposColumnas: const ['nombre', 'precioViejo', 'precioNuevo', 'fecha'],
+        anchosColumnas: const [300, 160, 160, 140],
+        coloresEncabezados: const [
+          _rojoClaro,
+          _rojoOscuro,
+          _rojoClaro,
+          _rojoOscuro,
+        ],
+        filas: filas,
+        celdasPersonalizadas: {
+          0: (context, fila) => _TextoTabla(fila['nombre'] as String),
+          1: (context, fila) => _TextoTabla(fila['precioViejo'] as String),
+          2: (context, fila) => _TextoTabla(fila['precioNuevo'] as String),
+          3: (context, fila) =>
+              _TextoTabla(fila['fecha'] as String, pequeno: true),
+        },
       ),
     );
   }
@@ -381,7 +401,7 @@ class _PaginaNotificacionesState extends State<PaginaNotificaciones> {
     }
 
     if (!esPantallaGrande) {
-      return Column(
+      return ListView(
         children: productos
             .map(
               (producto) => Card(
@@ -402,36 +422,38 @@ class _PaginaNotificacionesState extends State<PaginaNotificaciones> {
       );
     }
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: DataTable(
-        headingRowColor: WidgetStateProperty.all(Colors.red[400]),
-        dataRowMinHeight: 76,
-        dataRowMaxHeight: 92,
-        columnSpacing: 36,
-        columns: const [
-          DataColumn(label: _EncabezadoTabla('PRODUCTO')),
-          DataColumn(label: _EncabezadoTabla('PROVEEDOR')),
-          DataColumn(label: _EncabezadoTabla('FECHA')),
-          DataColumn(label: _EncabezadoTabla('ESTADO')),
+    // Convierte los reservados a registros que entiende TablaDatos.
+    final List<Map<String, dynamic>> filas = productos
+        .map(
+          (producto) => <String, dynamic>{
+            'nombre': producto.nombre,
+            'proveedor': producto.proveedor,
+            'fecha': _formatearFecha(producto.fecha),
+            'estado': 'EN ESPERA',
+          },
+        )
+        .toList();
+
+    return Padding(
+      padding: const EdgeInsets.only(left: _compensacionScroll),
+      child: TablaDatos(
+        nombresColumnas: const ['PRODUCTO', 'PROVEEDOR', 'FECHA', 'ESTADO'],
+        camposColumnas: const ['nombre', 'proveedor', 'fecha', 'estado'],
+        anchosColumnas: const [300, 200, 140, 140],
+        coloresEncabezados: const [
+          _rojoClaro,
+          _rojoOscuro,
+          _rojoClaro,
+          _rojoOscuro,
         ],
-        rows: productos.asMap().entries.map((entrada) {
-          final indice = entrada.key;
-          final producto = entrada.value;
-          return DataRow(
-            color: WidgetStateProperty.all(
-              indice.isEven ? Colors.grey[300] : Colors.grey[200],
-            ),
-            cells: [
-              DataCell(_TextoTabla(producto.nombre)),
-              DataCell(_TextoTabla(producto.proveedor)),
-              DataCell(
-                _TextoTabla(_formatearFecha(producto.fecha), pequeno: true),
-              ),
-              const DataCell(_TextoTabla('EN ESPERA')),
-            ],
-          );
-        }).toList(),
+        filas: filas,
+        celdasPersonalizadas: {
+          0: (context, fila) => _TextoTabla(fila['nombre'] as String),
+          1: (context, fila) => _TextoTabla(fila['proveedor'] as String),
+          2: (context, fila) =>
+              _TextoTabla(fila['fecha'] as String, pequeno: true),
+          3: (context, fila) => _TextoTabla(fila['estado'] as String),
+        },
       ),
     );
   }
@@ -493,24 +515,7 @@ class _BotonSeccion extends StatelessWidget {
   }
 }
 
-class _EncabezadoTabla extends StatelessWidget {
-  final String texto;
-
-  const _EncabezadoTabla(this.texto);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      texto,
-      style: const TextStyle(
-        color: Colors.white,
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-      ),
-    );
-  }
-}
-
+// Texto de las celdas de la tabla, centrado y con el estilo original.
 class _TextoTabla extends StatelessWidget {
   final String texto;
   final bool pequeno;
@@ -521,6 +526,9 @@ class _TextoTabla extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       texto,
+      textAlign: TextAlign.center,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
       style: TextStyle(
         fontSize: pequeno ? 14 : 18,
         fontWeight: FontWeight.w600,

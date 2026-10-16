@@ -7,7 +7,8 @@ typedef ConstructorCeldaTabla = Widget Function(
   Map<String, dynamic> fila,
 );
 
-// Tabla reutilizable para mostrar entre tres y cinco columnas.
+// Tabla reutilizable y ajustable: número de columnas, ancho y color de cada
+// cabecera se configuran desde el constructor.
 // Los datos, las cabeceras y las acciones se configuran desde el constructor.
 class TablaDatos extends StatefulWidget {
 
@@ -30,6 +31,13 @@ class TablaDatos extends StatefulWidget {
   // Las claves del mapa son los índices de las columnas, comenzando en cero.
   final Map<int, ConstructorCeldaTabla> celdasPersonalizadas;
 
+  // Color individual de cada cabecera. Si es null, o si una posición
+  // es null, se usa colorEncabezado. Debe tener un elemento por columna.
+  final List<Color?>? coloresEncabezados;
+
+  // Color del texto de cada cabecera (mismo criterio que coloresEncabezados).
+  final List<Color?>? coloresTextoEncabezados;
+
   // Propiedades visuales opcionales.
   final double altoEncabezado;
   final double altoFila;
@@ -45,14 +53,20 @@ class TablaDatos extends StatefulWidget {
     required this.anchosColumnas,
     required this.filas,
     this.celdasPersonalizadas = const {},
+    this.coloresEncabezados,
+    this.coloresTextoEncabezados,
     this.altoEncabezado = 56,
     this.altoFila = 70,
     this.colorEncabezado = const Color(0xFFEF6767),
     this.colorBorde = Colors.black,
     this.mensajeSinDatos = 'No hay registros para mostrar',
-  })  : assert(nombresColumnas.length >= 3 && nombresColumnas.length <= 5),
+  })  : assert(nombresColumnas.length >= 1),
         assert(camposColumnas.length == nombresColumnas.length),
-        assert(anchosColumnas.length == nombresColumnas.length);
+        assert(anchosColumnas.length == nombresColumnas.length),
+        assert(coloresEncabezados == null ||
+            coloresEncabezados.length == nombresColumnas.length),
+        assert(coloresTextoEncabezados == null ||
+            coloresTextoEncabezados.length == nombresColumnas.length);
 
   @override
   State<TablaDatos> createState() => _TablaDatosState();
@@ -95,8 +109,9 @@ class _TablaDatosState extends State<TablaDatos> {
         // Se reserva un espacio a la derecha para la barra de scroll.
         // Así el desplazamiento no tapa el contenido de la última columna.
         const double espacioScroll = 14;
-        final double anchoTabla =
-            (restricciones.maxWidth - espacioScroll).clamp(0.0, double.infinity).toDouble();
+        final double anchoTabla = (restricciones.maxWidth - espacioScroll)
+            .clamp(0.0, double.infinity)
+            .toDouble();
 
         // Suma los anchos solicitados para convertirlos en proporciones.
         final double totalAnchos = widget.anchosColumnas.reduce(
@@ -123,7 +138,7 @@ class _TablaDatosState extends State<TablaDatos> {
         return Column(
           children: [
 
-            // Encabezado de las columnas, con fondo rojo.
+            // Encabezado de las columnas.
             Padding(
               padding: const EdgeInsets.only(right: espacioScroll),
               child: _construirEncabezado(anchosCalculados),
@@ -173,7 +188,8 @@ class _TablaDatosState extends State<TablaDatos> {
           alignment: Alignment.center,
           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
           decoration: BoxDecoration(
-            color: widget.colorEncabezado,
+            // Color propio de la columna o, si no hay, el color general.
+            color: widget.coloresEncabezados?[indice] ?? widget.colorEncabezado,
             border: _bordeCelda(indice, esEncabezado: true),
           ),
 
@@ -186,8 +202,8 @@ class _TablaDatosState extends State<TablaDatos> {
               widget.nombresColumnas[indice],
               maxLines: 1,
               softWrap: false,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: widget.coloresTextoEncabezados?[indice] ?? Colors.white,
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
               ),
@@ -219,9 +235,8 @@ class _TablaDatosState extends State<TablaDatos> {
 
         // Obtiene el valor de la base de datos mediante el nombre del campo.
         final String campo = widget.camposColumnas[indice];
-        final String valor = campo.isEmpty
-            ? ''
-            : (fila[campo]?.toString() ?? '');
+        final String valor =
+            campo.isEmpty ? '' : (fila[campo]?.toString() ?? '');
 
         return Container(
           width: anchos[indice],

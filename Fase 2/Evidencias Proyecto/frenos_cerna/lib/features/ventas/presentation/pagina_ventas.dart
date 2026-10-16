@@ -4,6 +4,7 @@ import 'package:frenos_cerna/features/ventas/presentation/pagina_crear_ventas.da
 import 'package:frenos_cerna/features/ventas/presentation/pagina_detalle_venta.dart';
 import 'package:frenos_cerna/features/ventas/presentation/pagina_historial_ventas.dart';
 import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
+import 'package:frenos_cerna/shared/widgets/tabla_datos.dart';
 
 typedef VentaEnProceso = VentaRegistro;
 
@@ -19,6 +20,10 @@ class _PaginaVentasState extends State<PaginaVentas> {
   bool _cargando = true;
   String? _error;
 
+  // Colores de cabecera que se alternan entre las columnas.
+  static const Color _rojoClaro = Color.fromARGB(255, 253, 116, 116);
+  static const Color _rojoOscuro = Color.fromARGB(255, 207, 81, 81);
+
   @override
   void initState() {
     super.initState();
@@ -29,12 +34,16 @@ class _PaginaVentasState extends State<PaginaVentas> {
     try {
       final data = await VentaRegistro.obtenerTodas();
 
+      if (!mounted) return;
+
       setState(() {
         ventasActivas = data;
         _cargando = false;
         _error = null;
       });
     } catch (e) {
+      if (!mounted) return;
+
       setState(() {
         _error = e.toString();
         _cargando = false;
@@ -45,6 +54,19 @@ class _PaginaVentasState extends State<PaginaVentas> {
   @override
   Widget build(BuildContext context) {
     final esPantallaGrande = MediaQuery.of(context).size.width > 800;
+
+    // Convierte las ventas a registros que entiende TablaDatos.
+    // El objeto original se conserva para usarlo al ver el detalle.
+    final List<Map<String, dynamic>> filasVentas = ventasActivas
+        .map(
+          (venta) => <String, dynamic>{
+            'cliente': venta.clienteNombre,
+            'vehiculo': venta.vehiculoNombre,
+            'productos': venta.productosResumen,
+            'venta': venta,
+          },
+        )
+        .toList();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -308,376 +330,139 @@ class _PaginaVentasState extends State<PaginaVentas> {
                   // ==================================================
                   else
                     Expanded(
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          const double anchoTabla = 900;
+                      child: Padding(
+                        // Compensa los 14 px que TablaDatos reserva a la
+                        // derecha para el scrollbar, así queda centrada.
+                        padding: const EdgeInsets.only(left: 14),
+                        child: TablaDatos(
+                          // Encabezados visibles de la tabla.
+                          nombresColumnas: const [
+                            'CLIENTE',
+                            'VEHÍCULO',
+                            'PRODUCTOS',
+                            'VER',
+                          ],
 
-                          return SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
+                          // Campos de cada columna (vacío si la celda es personalizada).
+                          camposColumnas: const [
+                            'cliente',
+                            'vehiculo',
+                            'productos',
+                            '',
+                          ],
 
-                            child: SizedBox(
-                              width: anchoTabla,
+                          // Ancho proporcional de cada columna.
+                          anchosColumnas: const [200, 200, 400, 100],
 
-                              child: CustomScrollView(
-                                slivers: [
-                                  // ==================================
-                                  // ENCABEZADO FIJO
-                                  // ==================================
+                          // Colores de cabecera alternando entre los dos rojos.
+                          coloresEncabezados: const [
+                            _rojoClaro,
+                            _rojoOscuro,
+                            _rojoClaro,
+                            _rojoOscuro,
+                          ],
 
-                                  SliverPersistentHeader(
-                                    pinned: true,
+                          // Las filas de ventas son más altas que el valor por defecto.
+                          altoFila: 120,
 
-                                    delegate: _EncabezadoVentasDelegate(
-                                      child: _crearEncabezado(),
+                          filas: filasVentas,
+
+                          celdasPersonalizadas: {
+                            // Columna 0: cliente con avatar.
+                            0: (context, fila) {
+                              final venta = fila['venta'] as VentaEnProceso;
+
+                              return Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 20,
+                                    backgroundColor: Colors.red[300],
+                                    child: const Icon(
+                                      Icons.person_outline,
+                                      color: Colors.black,
+                                      size: 30,
                                     ),
                                   ),
-
-                                  // ==================================
-                                  // FILAS
-                                  // ==================================
-                                  SliverList(
-                                    delegate: SliverChildBuilderDelegate((
-                                      context,
-                                      indice,
-                                    ) {
-                                      final venta = ventasActivas[indice];
-
-                                      return _crearFila(context, venta, indice);
-                                    }, childCount: ventasActivas.length),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      venta.clienteNombre,
+                                      maxLines: 3,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                      ),
+                                    ),
                                   ),
                                 ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+                              );
+                            },
 
-  // ============================================================
-  // ENCABEZADO DE LA TABLA
-  // ============================================================
+                            // Columna 1: vehículo.
+                            1: (context, fila) {
+                              final venta = fila['venta'] as VentaEnProceso;
 
-  Widget _crearEncabezado() {
-    return Container(
-      height: 56,
-      color: Colors.red[400],
+                              return Text(
+                                venta.vehiculoNombre,
+                                textAlign: TextAlign.center,
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 18),
+                              );
+                            },
 
-      child: Row(
-        children: [
-          // ========================================================
-          // CLIENTE
-          // ========================================================
+                            // Columna 2: resumen de productos.
+                            2: (context, fila) {
+                              final venta = fila['venta'] as VentaEnProceso;
 
-          SizedBox(
-            width: 200,
-            height: 56,
+                              return Text(
+                                venta.productosResumen,
+                                textAlign: TextAlign.center,
+                                maxLines: 4,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 16),
+                              );
+                            },
 
-            child: Container(
-              alignment: Alignment.center,
+                            // Columna 3: botón para ver el detalle de la venta.
+                            3: (context, fila) {
+                              final venta = fila['venta'] as VentaEnProceso;
 
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-                  top: BorderSide(color: Colors.black, width: 2),
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              child: const Text(
-                'CLIENTE',
-
-                style: TextStyle(color: Colors.white, fontSize: 18),
-              ),
-            ),
-          ),
-
-          // ========================================================
-          // VEHÍCULO
-          // ========================================================
-          SizedBox(
-            width: 200,
-            height: 56,
-
-            child: Container(
-              alignment: Alignment.center,
-
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-                  top: BorderSide(color: Colors.black, width: 2),
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              child: const Text(
-                'VEHÍCULO',
-
-                style: TextStyle(color: Colors.white, fontSize: 18),
-              ),
-            ),
-          ),
-
-          // ========================================================
-          // PRODUCTOS
-          // ========================================================
-          SizedBox(
-            width: 400,
-            height: 56,
-
-            child: Container(
-              alignment: Alignment.center,
-
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-                  top: BorderSide(color: Colors.black, width: 2),
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              child: const Text(
-                'PRODUCTOS',
-
-                style: TextStyle(color: Colors.white, fontSize: 18),
-              ),
-            ),
-          ),
-
-          // ========================================================
-          // VER
-          // ========================================================
-          SizedBox(
-            width: 100,
-            height: 56,
-
-            child: Container(
-              alignment: Alignment.center,
-
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-                  right: BorderSide(color: Colors.black, width: 2),
-                  top: BorderSide(color: Colors.black, width: 2),
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              child: const Text(
-                'VER',
-
-                style: TextStyle(color: Colors.white, fontSize: 18),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ============================================================
-  // FILA DE VENTA
-  // ============================================================
-
-  Widget _crearFila(BuildContext context, VentaEnProceso venta, int indice) {
-    final color = indice % 2 == 0 ? Colors.grey[200] : Colors.grey[300];
-
-    return Container(
-      height: 120,
-      color: color,
-
-      child: Row(
-        children: [
-          // ========================================================
-          // CLIENTE
-          // ========================================================
-
-          SizedBox(
-            width: 200,
-            height: 120,
-
-            child: Container(
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              alignment: Alignment.centerLeft,
-
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 20,
-
-                    backgroundColor: Colors.red[300],
-
-                    child: const Icon(
-                      Icons.person_outline,
-                      color: Colors.black,
-                      size: 30,
-                    ),
-                  ),
-
-                  const SizedBox(width: 10),
-
-                  Expanded(
-                    child: Text(
-                      venta.clienteNombre,
-
-                      overflow: TextOverflow.ellipsis,
-
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // ========================================================
-          // VEHÍCULO
-          // ========================================================
-          SizedBox(
-            width: 200,
-            height: 120,
-
-            child: Container(
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              alignment: Alignment.center,
-
-              child: Text(
-                venta.vehiculoNombre,
-
-                style: const TextStyle(fontSize: 18),
-              ),
-            ),
-          ),
-
-          // ========================================================
-          // PRODUCTOS
-          // ========================================================
-          SizedBox(
-            width: 400,
-            height: 120,
-
-            child: Container(
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              alignment: Alignment.center,
-
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-
-              child: Text(
-                venta.productosResumen,
-
-                style: const TextStyle(fontSize: 16),
-              ),
-            ),
-          ),
-
-          // ========================================================
-          // VER
-          // ========================================================
-          SizedBox(
-            width: 100,
-            height: 120,
-
-            child: Container(
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.black, width: 2),
-                  right: BorderSide(color: Colors.black, width: 2),
-                  bottom: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-
-              alignment: Alignment.center,
-
-              child: IconButton(
-                icon: const Icon(Icons.search, size: 40, color: Colors.black),
-
-                onPressed: () {
-                  Navigator.push(
-                    context,
-
-                    MaterialPageRoute(
-                      builder: (context) => PaginaDetalleVenta(
-                        idVenta: venta.id,
-
-                        clienteNombre: venta.clienteNombre.replaceAll(
-                          '\n',
-                          ' ',
+                              return IconButton(
+                                tooltip: 'Ver venta',
+                                icon: const Icon(
+                                  Icons.search,
+                                  size: 40,
+                                  color: Colors.black,
+                                ),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => PaginaDetalleVenta(
+                                        idVenta: venta.id,
+                                        clienteNombre: venta.clienteNombre
+                                            .replaceAll('\n', ' '),
+                                        vehiculoNombre: venta.vehiculoNombre,
+                                        total: venta.total,
+                                        desdeHistorial: false,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          },
                         ),
-
-                        vehiculoNombre: venta.vehiculoNombre,
-
-                        total: venta.total,
-
-                        desdeHistorial: false,
                       ),
                     ),
-                  );
-                },
+                ],
               ),
             ),
           ),
         ],
       ),
     );
-  }
-}
-
-// ============================================================
-// ENCABEZADO FIJO DE LA TABLA DE VENTAS
-// ============================================================
-
-class _EncabezadoVentasDelegate extends SliverPersistentHeaderDelegate {
-  final Widget child;
-
-  _EncabezadoVentasDelegate({required this.child});
-
-  @override
-  double get minExtent => 56;
-
-  @override
-  double get maxExtent => 56;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return child;
-  }
-
-  @override
-  bool shouldRebuild(covariant _EncabezadoVentasDelegate oldDelegate) {
-    return oldDelegate.child != child;
   }
 }
