@@ -1,9 +1,11 @@
+// Importa las cartas que conservan las acciones de la página.
+import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:frenos_cerna/core/data/supabase_database.dart';
 import 'package:frenos_cerna/features/autenticacion/data/autenticacion_repository.dart';
-import 'package:frenos_cerna/shared/widgets/campo_formulario.dart';
+import 'package:frenos_cerna/shared/widgets/formulario_datos.dart';
 
 class PaginaAutenticacion extends StatefulWidget {
   final VoidCallback? onEntrarModoPrueba;
@@ -117,7 +119,7 @@ class _PaginaAutenticacionState extends State<PaginaAutenticacion> {
     final anchoPantalla = MediaQuery.sizeOf(context).width;
 
     return Scaffold(
-      backgroundColor: Colors.grey[200],
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -169,7 +171,7 @@ class _PaginaAutenticacionState extends State<PaginaAutenticacion> {
                               const SizedBox(height: 16),
                             ],
                             if (_esRegistro) ...[
-                              CampoFormulario(
+                              FormularioDatos.acceso(
                                 controller: _nombre,
                                 etiqueta: 'Nombre',
                                 icono: Icons.person_outline,
@@ -183,7 +185,7 @@ class _PaginaAutenticacionState extends State<PaginaAutenticacion> {
                               ),
                               const SizedBox(height: 16),
                             ],
-                            CampoFormulario(
+                            FormularioDatos.acceso(
                               controller: _correo,
                               etiqueta: 'Correo electrónico',
                               icono: Icons.email_outlined,
@@ -192,7 +194,7 @@ class _PaginaAutenticacionState extends State<PaginaAutenticacion> {
                               validador: _validarCorreo,
                             ),
                             const SizedBox(height: 16),
-                            CampoFormulario(
+                            FormularioDatos.acceso(
                               controller: _contrasena,
                               etiqueta: 'Contraseña',
                               icono: Icons.lock_outline,
@@ -204,7 +206,7 @@ class _PaginaAutenticacionState extends State<PaginaAutenticacion> {
                             ),
                             if (_esRegistro) ...[
                               const SizedBox(height: 16),
-                              CampoFormulario(
+                              FormularioDatos.acceso(
                                 controller: _confirmarContrasena,
                                 etiqueta: 'Confirmar contraseña',
                                 icono: Icons.lock_outline,
@@ -229,7 +231,11 @@ class _PaginaAutenticacionState extends State<PaginaAutenticacion> {
                             const SizedBox(height: 20),
                             SizedBox(
                               height: 48,
-                              child: FilledButton(
+                              child: CartaNavegacion.accion(
+                                // Conserva las medidas y la función de la acción original.
+                                tipoBoton: 'filled',
+                                conservarEstiloOriginal: true, // Recupera el botón rojo del ancho del formulario y su alto original.
+
                                 onPressed:
                                     _procesando ||
                                         !SupabaseDatabase.isConfigured
@@ -260,7 +266,11 @@ class _PaginaAutenticacionState extends State<PaginaAutenticacion> {
                               ),
                             ),
                             const SizedBox(height: 12),
-                            TextButton(
+                            CartaNavegacion.accion(
+                              // Conserva las medidas y la función de la acción original.
+                              tipoBoton: 'text',
+                              conservarEstiloOriginal: true, // Recupera el enlace de registro sin fondo gris ni tamaño mínimo añadido.
+
                               onPressed: _procesando ? null : _cambiarModo,
                               child: Text(
                                 _esRegistro
@@ -272,7 +282,11 @@ class _PaginaAutenticacionState extends State<PaginaAutenticacion> {
                             ),
                             if (widget.onEntrarModoPrueba != null) ...[
                               const Divider(height: 28),
-                              OutlinedButton.icon(
+                              CartaNavegacion.accion(
+                                // Conserva las medidas y la función de la acción original.
+                                tipoBoton: 'outlined',
+                                conservarEstiloOriginal: true, // Recupera el acceso de prueba con su borde y sus medidas anteriores.
+
                                 onPressed: _procesando
                                     ? null
                                     : widget.onEntrarModoPrueba,

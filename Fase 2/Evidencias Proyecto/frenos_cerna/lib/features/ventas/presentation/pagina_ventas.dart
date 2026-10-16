@@ -1,15 +1,36 @@
+import 'package:frenos_cerna/features/ventas/data/ventas_pendientes_repository.dart'; // Integra las ventas todavía locales.
+import 'package:frenos_cerna/features/ventas/presentation/pagina_detalle_venta_pendiente.dart'; // Abre el historial de una venta sin pago.
+import 'package:frenos_cerna/shared/widgets/filtros_tabla.dart'; // Filtra las ventas por estado.
+import 'package:frenos_cerna/shared/widgets/buscador_tabla.dart'; // Conserva la búsqueda de la tabla.
+// Importa la barra superior común a las páginas.
+import 'package:frenos_cerna/shared/widgets/barra_superior.dart';
+// Importa las cartas que conservan las acciones de la página.
+import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
 import 'package:flutter/material.dart';
 import 'package:frenos_cerna/features/ventas/data/ventas_repository.dart';
-import 'package:frenos_cerna/features/ventas/presentation/pagina_crear_ventas.dart';
 import 'package:frenos_cerna/features/ventas/presentation/pagina_detalle_venta.dart';
-import 'package:frenos_cerna/features/ventas/presentation/pagina_historial_ventas.dart';
 import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
 import 'package:frenos_cerna/shared/widgets/tabla_datos.dart';
 
 typedef VentaEnProceso = VentaRegistro;
 
 class PaginaVentas extends StatefulWidget {
-  const PaginaVentas({super.key});
+  final VentasPendientesRepository?
+  repositorioPendientes; // Permite verificar el almacenamiento local.
+  final Future<List<VentaRegistro>> Function()?
+  cargarVentas; // Permite comprobar el catálogo cerrado sin conexión real.
+  final bool
+  mostrarHistorial; // Separa el historial completo de las ventas diarias.
+  final DateTime Function()?
+  ahora; // Permite comprobar límites de día sin depender del reloj real.
+  const PaginaVentas({
+    super.key,
+    this.mostrarHistorial =
+        false, // La vista principal muestra únicamente el día actual.
+    this.ahora, // Mantiene el reloj real por defecto.
+    this.repositorioPendientes,
+    this.cargarVentas,
+  });
 
   @override
   State<PaginaVentas> createState() => _PaginaVentasState();
@@ -17,6 +38,20 @@ class PaginaVentas extends StatefulWidget {
 
 class _PaginaVentasState extends State<PaginaVentas> {
   List<VentaEnProceso> ventasActivas = [];
+  final _busqueda = TextEditingController(); // Conserva la búsqueda de Ventas.
+  String _estado = 'todas'; // Muestra inicialmente todos los estados.
+  List<VentaPendiente> _pendientes =
+      []; // Conserva las ventas guardadas localmente.
+  VentasPendientesRepository get _repositorio =>
+      widget.repositorioPendientes ??
+      VentasPendientesRepository
+          .instancia; // Usa el mismo catálogo al crear y editar.
+  @override // Libera los recursos al salir de Ventas.
+  void dispose() {
+    _busqueda.dispose();
+    super.dispose();
+  } // Evita conservar el controlador de una página cerrada.
+
   bool _cargando = true;
   String? _error;
 
@@ -31,42 +66,126 @@ class _PaginaVentasState extends State<PaginaVentas> {
   }
 
   Future<void> _cargarVentas() async {
+    // Combina las ventas locales con las ya pagadas.
+    List<VentaPendiente> pendientes =
+        _pendientes; // Conserva datos visibles ante un fallo de lectura.
+    List<VentaRegistro> cerradas =
+        ventasActivas; // Conserva el historial ya recuperado.
+    final errores =
+        <String>[]; // Informa por separado fallos locales y remotos.
     try {
-      final data = await VentaRegistro.obtenerTodas();
+      pendientes = await _repositorio.obtenerTodas();
+    } catch (error) {
+      errores.add('No se pudieron cargar las pendientes locales: $error');
+    } // Las pendientes no requieren conexión.
+    try {
+      cerradas =
+          await (widget.cargarVentas?.call() ?? VentaRegistro.obtenerTodas());
+    } catch (error) {
+      errores.add('No se pudo actualizar el historial de Supabase: $error');
+    } // Consulta solamente ventas concretadas.
+    if (!mounted) return; // Evita actualizar una página cerrada.
+    setState(() {
+      _pendientes = pendientes;
+      ventasActivas = cerradas;
+      _error = errores.isEmpty ? null : errores.join('\n');
+      _cargando = false;
+    }); // Conserva las pendientes aunque no haya conexión.
+  } // Finaliza la carga combinada.
 
-      if (!mounted) return;
-
-      setState(() {
-        ventasActivas = data;
-        _cargando = false;
-        _error = null;
-      });
-    } catch (e) {
-      if (!mounted) return;
-
-      setState(() {
-        _error = e.toString();
-        _cargando = false;
-      });
-    }
-  }
+  Widget _controlesVentas() => Padding(
+    padding: const EdgeInsets.only(left: 14, bottom: 20),
+    child: LayoutBuilder(
+      builder: (context, limites) {
+        // Alinea los controles con el ancho visible de la tabla.
+        final ancho = (limites.maxWidth - 14).clamp(
+          0.0,
+          double.infinity,
+        ); // Excluye el espacio del scrollbar.
+        return Padding(
+          padding: const EdgeInsets.only(right: 14),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Conserva filtros y búsqueda en sus extremos.
+              FiltrosTabla(
+                anchoTabla: ancho,
+                filtros: const [
+                  OpcionFiltroTabla(id: 'todas', texto: 'TODAS LAS VENTAS'),
+                  OpcionFiltroTabla(id: 'cerrada', texto: 'VENTA CERRADA'),
+                  OpcionFiltroTabla(id: 'pendiente', texto: 'VENTA EN PROCESO'),
+                ],
+                filtroSeleccionado: _estado,
+                alSeleccionar: (valor) => setState(() => _estado = valor),
+              ), // Filtra por el origen real de la venta.
+              BuscadorTabla(
+                anchoTabla: ancho,
+                controlador: _busqueda,
+                alCambiar: (_) => setState(() {}),
+              ), // Busca por cliente, vehículo o producto sin cambiar el estado.
+            ],
+          ),
+        ); // Finaliza los controles de la tabla.
+      },
+    ),
+  ); // Finaliza la adaptación del ancho.
 
   @override
   Widget build(BuildContext context) {
-    final esPantallaGrande = MediaQuery.of(context).size.width > 800;
+    final esPantallaGrande =
+        MediaQuery.of(context).size.width >=
+        700; // Comparte el punto de adaptación del menú principal.
 
     // Convierte las ventas a registros que entiende TablaDatos.
     // El objeto original se conserva para usarlo al ver el detalle.
-    final List<Map<String, dynamic>> filasVentas = ventasActivas
-        .map(
-          (venta) => <String, dynamic>{
-            'cliente': venta.clienteNombre,
-            'vehiculo': venta.vehiculoNombre,
-            'productos': venta.productosResumen,
-            'venta': venta,
-          },
-        )
-        .toList();
+
+    final hoy = (widget.ahora?.call() ?? DateTime.now())
+        .toLocal(); // Compara los días en la misma zona horaria.
+    bool esDeHoy(DateTime? fecha) =>
+        fecha != null &&
+        fecha.toLocal().year == hoy.year &&
+        fecha.toLocal().month == hoy.month &&
+        fecha.toLocal().day ==
+            hoy.day; // Excluye ventas sin fecha conocida de la vista diaria.
+    final consulta = _busqueda.text
+        .trim()
+        .toLowerCase(); // Normaliza la búsqueda.
+    final List<Map<String, dynamic>> filasVentas =
+        [
+              // Combina ambos estados sin alterar las tablas.
+              for (final pendiente in _pendientes.where(
+                (venta) =>
+                    widget.mostrarHistorial || esDeHoy(venta.fechaCreacion),
+              )) // Recorre las ventas guardadas en este dispositivo.
+                {
+                  'cliente': pendiente.nombreCliente,
+                  'vehiculo': pendiente.registro.vehiculoNombre,
+                  'productos': pendiente.registro.productosResumen,
+                  'venta': pendiente.registro,
+                  'pendiente': pendiente,
+                  'estado': 'pendiente',
+                }, // Conserva el borrador detrás de la fila.
+              for (final venta in ventasActivas.where(
+                (venta) =>
+                    widget.mostrarHistorial || esDeHoy(venta.fechaRegistro),
+              )) // Recorre únicamente ventas concretadas en Supabase.
+                {
+                  'cliente': venta.clienteNombre,
+                  'vehiculo': venta.vehiculoNombre,
+                  'productos': venta.productosResumen,
+                  'venta': venta,
+                  'estado': 'cerrada',
+                }, // Distingue el historial cerrado.
+            ]
+            .where(
+              (fila) =>
+                  (_estado == 'todas' || fila['estado'] == _estado) &&
+                  ['cliente', 'vehiculo', 'productos'].any(
+                    (campo) =>
+                        fila[campo].toString().toLowerCase().contains(consulta),
+                  ),
+            )
+            .toList(); // Combina estado y búsqueda.
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -74,77 +193,20 @@ class _PaginaVentasState extends State<PaginaVentas> {
       // ============================================================
       // APP BAR
       // ============================================================
-      appBar: AppBar(
-        backgroundColor: Colors.grey[300],
-        elevation: 0,
-
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
-          children: [
-            // ======================================================
-            // LOGO Y NOMBRE
-            // ======================================================
-
-            if (esPantallaGrande)
-              Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    color: Colors.grey[500],
-
-                    child: const Icon(
-                      Icons.settings_input_component,
-                      color: Colors.white,
-                    ),
-                  ),
-
-                  const SizedBox(width: 10),
-
-                  const Text(
-                    'Frenos\nCerna',
-
-                    style: TextStyle(color: Colors.black, fontSize: 16),
-                  ),
-                ],
-              ),
-
-            // ======================================================
-            // TÍTULO
-            // ======================================================
-            const Text(
-              'Ventas',
-
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
-              ),
-            ),
-
-            // ======================================================
-            // USUARIO
-            // ======================================================
-            Row(
-              children: [
-                if (esPantallaGrande)
-                  const Text(
-                    'Leonardo',
-
-                    style: TextStyle(color: Colors.black, fontSize: 16),
-                  ),
-
-                const SizedBox(width: 10),
-
-                CircleAvatar(
-                  backgroundColor: Colors.red[800],
-
-                  child: const Icon(Icons.build, color: Colors.black),
-                ),
-              ],
-            ),
-          ],
+      appBar: PreferredSize(
+        // Comparte el diez por ciento de altura con la página principal.
+        preferredSize: Size.fromHeight(
+          MediaQuery.sizeOf(context).height * 0.10,
+        ),
+        child: SizedBox(
+          height:
+              MediaQuery.sizeOf(context).height *
+              0.10, // Mantiene la altura común de las barras.
+          child: BarraSuperior(
+            tituloPagina: widget.mostrarHistorial
+                ? 'Historial de ventas'
+                : 'Ventas del día',
+          ), // Reutiliza el encabezado de Inicio.
         ),
       ),
 
@@ -167,7 +229,10 @@ class _PaginaVentasState extends State<PaginaVentas> {
           // ========================================================
 
           if (esPantallaGrande)
-            const SizedBox(width: 150, child: MenuLateral(activo: 'Ventas')),
+            SizedBox(
+              width: MediaQuery.sizeOf(context).width * 0.12,
+              child: const MenuLateral(activo: 'Ventas'),
+            ),
 
           // ========================================================
           // CONTENIDO PRINCIPAL
@@ -184,131 +249,18 @@ class _PaginaVentasState extends State<PaginaVentas> {
                   // BOTONES SUPERIORES
                   // ==================================================
 
-                  Wrap(
-                    spacing: 40,
-                    runSpacing: 20,
-                    alignment: WrapAlignment.center,
-
-                    children: [
-                      // ==============================================
-                      // REGISTRAR VENTA
-                      // ==============================================
-
-                      InkWell(
-                        onTap: () async {
-                          final registrada = await Navigator.push<bool>(
-                            context,
-
-                            MaterialPageRoute(
-                              builder: (context) => const PaginaCrearVenta(),
-                            ),
-                          );
-
-                          if (registrada == true) {
-                            _cargarVentas();
-                          }
-                        },
-
-                        child: Container(
-                          width: 350,
-                          height: 120,
-
-                          decoration: BoxDecoration(
-                            color: Colors.red[400],
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-
-                          padding: const EdgeInsets.all(20),
-
-                          child: const Row(
-                            children: [
-                              Icon(
-                                Icons.attach_money,
-                                size: 70,
-                                color: Colors.black87,
-                              ),
-
-                              SizedBox(width: 15),
-
-                              Expanded(
-                                child: Text(
-                                  'REGISTRAR\nVENTA NUEVA',
-
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      // ==============================================
-                      // HISTORIAL
-                      // ==============================================
-                      InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const PaginaHistorialVentas(),
-                            ),
-                          );
-                        },
-
-                        child: Container(
-                          width: 350,
-                          height: 120,
-
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-
-                          padding: const EdgeInsets.all(20),
-
-                          child: const Row(
-                            children: [
-                              Icon(
-                                Icons.menu_book,
-                                size: 70,
-                                color: Colors.black87,
-                              ),
-
-                              SizedBox(width: 15),
-
-                              Expanded(
-                                child: Text(
-                                  'HISTORIAL\nDE VENTAS',
-
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 50),
+                  const SizedBox(height: 12),
 
                   // ==================================================
                   // TÍTULO
                   // ==================================================
-                  const Text(
-                    'VENTAS EN PROCESO',
+                  Text(
+                    widget.mostrarHistorial ? 'HISTORIAL DE VENTAS' : 'VENTAS',
 
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
 
                   const SizedBox(height: 20),
@@ -316,8 +268,17 @@ class _PaginaVentasState extends State<PaginaVentas> {
                   // ==================================================
                   // ERROR
                   // ==================================================
-                  if (_error != null) Text('Error al cargar ventas: $_error'),
-
+                  if (!widget.mostrarHistorial)
+                    Text(
+                      'VENTAS DEL DÍA: ${hoy.day.toString().padLeft(2, '0')}/${hoy.month.toString().padLeft(2, '0')}/${hoy.year}',
+                    ), // Distingue claramente el alcance diario.
+                  if (!widget.mostrarHistorial &&
+                      ventasActivas.any((venta) => venta.fechaRegistro == null))
+                    const Text(
+                      'Las ventas sin fecha conocida están disponibles en el historial completo.',
+                    ), // Mantiene consultables las ventas antiguas.
+                  if (_error != null) Text(_error!),
+                  _controlesVentas(), // Mantiene el filtro por estado encima de la tabla.
                   // ==================================================
                   // CARGANDO
                   // ==================================================
@@ -335,6 +296,7 @@ class _PaginaVentasState extends State<PaginaVentas> {
                         // derecha para el scrollbar, así queda centrada.
                         padding: const EdgeInsets.only(left: 14),
                         child: TablaDatos(
+                          mostrarControles: false, // La página aplica el filtro por estado y la búsqueda.
                           // Encabezados visibles de la tabla.
                           nombresColumnas: const [
                             'CLIENTE',
@@ -429,27 +391,47 @@ class _PaginaVentasState extends State<PaginaVentas> {
                             3: (context, fila) {
                               final venta = fila['venta'] as VentaEnProceso;
 
-                              return IconButton(
+                              return CartaNavegacion.accion(
+                                // Conserva las medidas y la función de la acción original.
+                                tipoBoton: 'icon',
+
                                 tooltip: 'Ver venta',
-                                icon: const Icon(
+                                child: const Icon(
                                   Icons.search,
                                   size: 40,
                                   color: Colors.black,
                                 ),
-                                onPressed: () {
-                                  Navigator.push(
+
+                                onPressed: () async {
+                                  // Abre el detalle según el estado real.
+                                  final pendiente =
+                                      fila['pendiente'] as VentaPendiente?; // Recupera el borrador local si corresponde.
+                                  await Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => PaginaDetalleVenta(
-                                        idVenta: venta.id,
-                                        clienteNombre: venta.clienteNombre
-                                            .replaceAll('\n', ' '),
-                                        vehiculoNombre: venta.vehiculoNombre,
-                                        total: venta.total,
-                                        desdeHistorial: false,
+                                      settings: RouteSettings(
+                                        name: pendiente == null
+                                            ? '/sales/closed'
+                                            : '/sales/pending',
                                       ),
+                                      builder: (context) => pendiente != null
+                                          ? PaginaDetalleVentaPendiente(
+                                              venta: pendiente,
+                                              repositorio: _repositorio,
+                                            )
+                                          : PaginaDetalleVenta(
+                                              idVenta: venta.id,
+                                              rutCliente: venta.rutCliente, // Abre el perfil por su relación real.
+                                              clienteNombre: venta.clienteNombre
+                                                  .replaceAll('\n', ' '),
+                                              vehiculoNombre:
+                                                  venta.vehiculoNombre,
+                                              total: venta.total,
+                                              desdeHistorial: false,
+                                            ),
                                     ),
-                                  );
+                                  ); // Conserva historial cerrado sin edición ni confirmación.
+                                  if (mounted) await _cargarVentas(); // Refresca la lista después de editar o confirmar el pago.
                                 },
                               );
                             },

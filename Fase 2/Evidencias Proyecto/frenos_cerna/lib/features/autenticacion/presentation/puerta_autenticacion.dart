@@ -1,3 +1,6 @@
+// Importa las cartas que conservan las acciones de la página.
+import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -138,7 +141,7 @@ class _ErrorPerfil extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[200],
+      backgroundColor: Colors.white,
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 460),
@@ -152,7 +155,10 @@ class _ErrorPerfil extends StatelessWidget {
                   const SizedBox(height: 12),
                   Text(mensaje, textAlign: TextAlign.center),
                   const SizedBox(height: 16),
-                  FilledButton(
+                  CartaNavegacion.accion(
+                    // Conserva las medidas y la función de la acción original.
+                    tipoBoton: 'filled',
+
                     onPressed: () => SupabaseDatabase.client.auth.signOut(
                       scope: SignOutScope.local,
                     ),

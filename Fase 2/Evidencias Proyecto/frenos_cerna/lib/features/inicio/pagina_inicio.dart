@@ -1,3 +1,5 @@
+import 'package:frenos_cerna/features/ventas/presentation/pagina_crear_ventas.dart'; // Abre directamente el registro de una venta.
+import 'package:frenos_cerna/features/ventas/presentation/pagina_ventas_historial.dart'; // Abre el historial completo.
 // Importaciones
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -10,7 +12,6 @@ import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
 
 import 'package:frenos_cerna/features/inventario/pagina_inventario.dart';
 import 'package:frenos_cerna/features/notificaciones/pagina_notificaciones.dart';
-import 'package:frenos_cerna/features/vehiculos/pagina_vehiculos.dart';
 import 'package:frenos_cerna/features/ventas/presentation/pagina_ventas.dart';
 
 // Se crea la clase PaginaInicio que extiende StatelessWidget
@@ -30,8 +31,10 @@ class PaginaInicio extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Conserva la navegación lateral en pantallas pequeñas.
+      drawer: const Drawer(child: MenuLateral(activo: 'Página Principal')),
       // Color de fondo de la página
-      backgroundColor: Colors.grey[200],
+      backgroundColor: Colors.white,
 
       // Cuerpo de la página
       body: LayoutBuilder(
@@ -77,12 +80,13 @@ class PaginaInicio extends StatelessWidget {
 
                   children: [
                     // BARRA LATERAL
-                    SizedBox(
-                      width: ancho * 0.12,
+                    if (ancho >= 700) // Comparte el menú de escritorio y permite usar el desplegable en móvil.
+                      SizedBox(
+                        width: ancho * 0.12,
 
-                      // Se llama el widget del menú lateral
-                      child: const MenuLateral(activo: 'Página Principal'),
-                    ),
+                        // Se llama el widget del menú lateral
+                        child: const MenuLateral(activo: 'Página Principal'),
+                      ),
 
                     // CONTENIDO PRINCIPAL
                     Expanded(
@@ -210,18 +214,16 @@ class PaginaInicio extends StatelessWidget {
                                       CartaNavegacion(
                                         ancho: anchoImportante,
                                         alto: altoImportante,
-                                        icono: Icons.warning_amber_rounded,
-                                        numero: '1',
-                                        texto: 'NOTIFICACIONES',
+                                        icono: Icons.add,
+
+                                        texto: 'NUEVA VENTA',
 
                                         // Color opcional
                                         // color: Colors.amber[100],
 
-                                        // Navega a notificaciones
+                                        // Abre directamente el registro de una nueva venta
                                         alPresionar: () {
-                                          abrirPagina(
-                                            const PaginaNotificaciones(),
-                                          );
+                                          abrirPagina(const PaginaCrearVenta());
                                         },
                                       ),
 
@@ -277,11 +279,13 @@ class PaginaInicio extends StatelessWidget {
                                         ancho: anchoTrabajo,
                                         alto: altoTrabajo,
                                         icono: Icons.menu_book,
-                                        texto: 'HISTORIAL\nVEHÍCULOS',
+                                        texto: 'HISTORIAL\nDE VENTAS',
 
-                                        // Navega al historial de vehículos
+                                        // Abre el historial completo de ventas
                                         alPresionar: () {
-                                          abrirPagina(const PaginaVehiculos());
+                                          abrirPagina(
+                                            const PaginaVentasHistorial(),
+                                          );
                                         },
                                       ),
 
@@ -346,7 +350,11 @@ class PaginaInicio extends StatelessWidget {
                                         icono: Icons.bar_chart,
                                         texto: 'DATOS',
 
-                                        // Navegación pendiente
+                                        // Abre los datos disponibles sin añadir campos a la base.
+                                        alPresionar: () => Navigator.pushNamed(
+                                          context,
+                                          '/data',
+                                        ),
                                       ),
                                     ],
                                   ),

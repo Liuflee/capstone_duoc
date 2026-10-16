@@ -10,6 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   supabase_flutter: ^2.17.2
+  shared_preferences: ^2.5.5 # Conserva las ventas pendientes en el dispositivo.
 
 dev_dependencies:
   flutter_test:

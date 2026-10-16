@@ -2,26 +2,35 @@ import 'package:frenos_cerna/core/data/supabase_database.dart';
 
 class VentaRegistro {
   static const _select =
-      'id, iva, rut_cliente, patente_vehiculo, cliente(nombre), '
+      '*, cliente(nombre), '
       'vehiculo_cliente(patente, modelo_vehiculo(modelo, marca_vehiculo(marca))), '
       'detalle_venta_producto(total, producto(codigo_producto, cod_barra)), '
       'detalle_venta_servicio(total, servicio(id, descripcion))';
 
   final String id;
+  final String
+  rutCliente; // Conserva la relación para abrir el perfil correcto.
   final String clienteNombre;
   final String vehiculoNombre;
   final String productosResumen;
   final double total;
   final String fecha;
+  final DateTime?
+  fechaRegistro; // Conserva la fecha del servidor cuando está disponible.
+
   final List<Map<String, dynamic>> items;
 
   const VentaRegistro({
     required this.id,
+    this.rutCliente =
+        '', // Mantiene compatibilidad con registros de prueba anteriores.
     required this.clienteNombre,
     required this.vehiculoNombre,
     required this.productosResumen,
     required this.total,
     required this.fecha,
+    this.fechaRegistro, // Las ventas antiguas pueden no tener una fecha conocida.
+
     required this.items,
   });
 
@@ -42,6 +51,7 @@ class VentaRegistro {
             ? producto['cod_barra'].toString()
             : 'Producto $codigo',
         'codigo': codigo,
+
         'total': _number(detalle['total']),
       });
     }
@@ -63,6 +73,9 @@ class VentaRegistro {
 
     return VentaRegistro(
       id: json['id']?.toString() ?? '',
+      rutCliente:
+          json['rut_cliente']?.toString() ??
+          '', // Obtiene la clave real del cliente.
       clienteNombre: (cliente['nombre'] ?? json['rut_cliente'] ?? 'Sin cliente')
           .toString(),
       vehiculoNombre: partesVehiculo.isEmpty
@@ -73,7 +86,9 @@ class VentaRegistro {
         0,
         (sum, item) => sum + (item['total'] as double),
       ),
-      fecha: 'No registrada',
+      fecha: json['fecha_registro']?.toString() ?? 'No registrada', // Conserva explícitamente la ausencia de fecha en ventas antiguas.
+      fechaRegistro: DateTime.tryParse(json['fecha_registro']?.toString() ?? '')
+          ?.toLocal(), // Compara días en la zona horaria del dispositivo.
       items: items,
     );
   }
@@ -90,6 +105,20 @@ class VentaRegistro {
               VentaRegistro.fromJson(Map<String, dynamic>.from(item as Map)),
         )
         .toList();
+  }
+
+  static Future<List<VentaRegistro>> obtenerPorCliente(String rut) async {
+    final datos = await SupabaseDatabase.client
+        .from(SupabaseTables.ventas)
+        .select(_select)
+        .eq('rut_cliente', int.parse(rut))
+        .order(
+          'id',
+          ascending: false,
+        ); // Recupera el historial real del cliente.
+    return datos
+        .map((fila) => VentaRegistro.fromJson(Map<String, dynamic>.from(fila)))
+        .toList(); // Convierte las ventas del cliente.
   }
 
   static Future<VentaRegistro> obtenerPorId(String id) async {

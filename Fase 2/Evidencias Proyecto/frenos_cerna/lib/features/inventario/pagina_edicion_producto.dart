@@ -1,3 +1,14 @@
+// Consulta el historial real sin depender de fechas inexistentes.
+import 'package:frenos_cerna/features/ventas/data/ventas_repository.dart';
+import 'package:frenos_cerna/features/ventas/presentation/pagina_detalle_venta.dart';
+// Importa la tabla compartida para los registros de detalle.
+import 'package:frenos_cerna/shared/widgets/tabla_datos.dart';
+// Importa la barra superior común a las páginas.
+import 'package:frenos_cerna/shared/widgets/barra_superior.dart';
+// Importa los campos de formulario reutilizables.
+import 'package:frenos_cerna/shared/widgets/formulario_datos.dart';
+// Importa las cartas que conservan las acciones de la página.
+import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
 import 'package:flutter/material.dart';
 import 'package:frenos_cerna/core/data/supabase_database.dart';
 
@@ -20,6 +31,35 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
   late TextEditingController _precioController;
   late String _categoriaSeleccionada;
   late int _cantidadActual;
+  List<VentaRegistro> _ventasProducto =
+      []; // Conserva las compras reales de este producto.
+  String? _errorHistorial; // Informa los fallos del historial.
+  int? _tipoSeleccionado; // Conserva la categoría real.
+  List<Map<String, dynamic>> _categorias =
+      []; // Conserva las categorías existentes.
+  Future<void> _cargarComplementos() async {
+    try {
+      final ventas = await VentaRegistro.obtenerTodas();
+      final categorias = await SupabaseDatabase.client
+          .from(SupabaseTables.tiposProducto)
+          .select('id, nombre_tipo');
+      if (mounted) {
+        setState(() {
+          _ventasProducto = ventas
+              .where(
+                (venta) => venta.items.any(
+                  (item) => item['codigo'] == widget.producto.id,
+                ),
+              )
+              .toList();
+          _categorias = List<Map<String, dynamic>>.from(categorias);
+        });
+      }
+    } catch (error) {
+      if (mounted) setState(() => _errorHistorial = error.toString());
+    }
+  } // Recupera únicamente datos del esquema autorizado.
+
   bool _guardando = false;
 
   @override
@@ -34,6 +74,8 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
     );
     _categoriaSeleccionada = widget.producto.categoria;
     _cantidadActual = widget.producto.cantidad;
+    _tipoSeleccionado = widget.producto.tipoId;
+    _cargarComplementos(); // Consulta categoría e historial.
   }
 
   @override
@@ -62,8 +104,10 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
                 : _nombreController.text.trim(),
             'precio': precio,
             'stock': _cantidadActual,
+            if (_tipoSeleccionado != null)
+              'tipo': _tipoSeleccionado, // Guarda la categoría seleccionada.
           })
-          .eq('codigo_producto', int.parse(widget.producto.id));
+          .eq('codigo_producto', widget.producto.id);
       if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Producto actualizado.')));
@@ -78,77 +122,27 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
     }
   }
 
-  Future<void> _borrarProducto() async {
-    try {
-      await SupabaseDatabase.client
-          .from(SupabaseTables.productos)
-          .delete()
-          .eq('codigo_producto', int.parse(widget.producto.id));
-      if (!mounted) return;
-      Navigator.pop(context, true);
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo borrar el producto: $error')),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final anchoPantalla = MediaQuery.of(context).size.width;
-    final esPantallaGrande = anchoPantalla > 800;
+    final esPantallaGrande =
+        anchoPantalla >=
+        700; // Comparte el punto de adaptación del menú principal.
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.grey[300],
-        elevation: 0,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            if (esPantallaGrande)
-              Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    color: Colors.grey[500],
-                    child: const Icon(
-                      Icons.settings_input_component,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'Frenos\nCerna',
-                    style: TextStyle(color: Colors.black, fontSize: 16),
-                  ),
-                ],
-              ),
-            Text(
-              '“${widget.producto.nombre}”',
-              style: const TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
-              ),
-            ),
-            Row(
-              children: [
-                if (esPantallaGrande)
-                  const Text(
-                    'Leonardo',
-                    style: TextStyle(color: Colors.black, fontSize: 16),
-                  ),
-                const SizedBox(width: 10),
-                CircleAvatar(
-                  backgroundColor: Colors.red[800],
-                  child: const Icon(Icons.build, color: Colors.black),
-                ),
-              ],
-            ),
-          ],
+      appBar: PreferredSize(
+        // Comparte el diez por ciento de altura con la página principal.
+        preferredSize: Size.fromHeight(
+          MediaQuery.sizeOf(context).height * 0.10,
+        ),
+        child: SizedBox(
+          height:
+              MediaQuery.sizeOf(context).height *
+              0.10, // Mantiene la altura común de las barras.
+          child: BarraSuperior(
+            tituloPagina: 'Edición de producto',
+          ), // Reutiliza el encabezado de Inicio.
         ),
       ),
       drawer: esPantallaGrande
@@ -159,7 +153,10 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
         children: [
           // MENÚ LATERAL (Fijo, no hace scroll)
           if (esPantallaGrande)
-            const ContenedorMenuLateral(activo: 'Inventario'),
+            SizedBox(
+              width: MediaQuery.sizeOf(context).width * 0.12,
+              child: MenuLateral(activo: 'Inventario'),
+            ),
 
           // CONTENIDO PRINCIPAL (Scrollable)
           Expanded(
@@ -172,7 +169,10 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
                   // Botón Volver
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: ElevatedButton.icon(
+                    child: CartaNavegacion.accion(
+                      // Conserva las medidas y la función de la acción original.
+                      tipoBoton: 'elevated',
+
                       onPressed: () => Navigator.pop(context),
                       icon: const Icon(Icons.arrow_back, color: Colors.black),
                       label: const Text(
@@ -190,11 +190,16 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
                   ),
                   const SizedBox(height: 30),
 
-                  // Botones Guardar y Borrar
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  // Acción para guardar los cambios
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10, // Conserva las medidas y pasa las acciones a otra fila en Android.
+                    alignment: WrapAlignment.center,
                     children: [
-                      ElevatedButton.icon(
+                      CartaNavegacion.accion(
+                        // Conserva las medidas y la función de la acción original.
+                        tipoBoton: 'elevated',
+
                         onPressed: _guardando ? null : _guardarProducto,
                         icon: const Icon(Icons.download, color: Colors.black),
                         label: const Text(
@@ -205,34 +210,14 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey[400],
+                          backgroundColor: const Color(0xFFB7B7B7),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 30,
                             vertical: 15,
                           ),
                         ),
                       ),
-                      ElevatedButton.icon(
-                        onPressed: _guardando ? null : _borrarProducto,
-                        icon: const Icon(
-                          Icons.cancel_outlined,
-                          color: Colors.white,
-                        ),
-                        label: const Text(
-                          'BORRAR',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red[400],
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 30,
-                            vertical: 15,
-                          ),
-                        ),
-                      ),
+                      const SizedBox.shrink(),
                     ],
                   ),
                   const SizedBox(height: 40),
@@ -263,27 +248,30 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
-                  Container(
-                    width: 400,
-                    height: 50,
-                    decoration: BoxDecoration(color: Colors.grey[300]),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Center(
-                            child: Text(
-                              _categoriaSeleccionada,
-                              style: const TextStyle(fontSize: 18),
-                            ),
-                          ),
-                        ),
-                        Container(
-                          width: 50,
-                          color: Colors.grey[400],
-                          child: const Icon(Icons.arrow_drop_down, size: 40),
-                        ),
-                      ],
+                  DropdownButtonFormField<int>(
+                    initialValue: _tipoSeleccionado,
+                    decoration: const InputDecoration(
+                      filled: true,
+                      fillColor: Color(0xFFD9D9D9),
                     ),
+                    items: [
+                      if (_tipoSeleccionado != null &&
+                          !_categorias.any(
+                            (fila) => fila['id'] == _tipoSeleccionado,
+                          ))
+                        DropdownMenuItem(
+                          value: _tipoSeleccionado,
+                          child: Text(_categoriaSeleccionada),
+                        ),
+                      for (final fila in _categorias)
+                        DropdownMenuItem(
+                          value: (fila['id'] as num).toInt(),
+                          child: Text(fila['nombre_tipo'].toString()),
+                        ),
+                    ],
+                    onChanged: _guardando
+                        ? null
+                        : (valor) => setState(() => _tipoSeleccionado = valor),
                   ),
                   const SizedBox(height: 20),
 
@@ -293,8 +281,10 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10, // Conserva las medidas y pasa las acciones a otra fila en Android.
+                    alignment: WrapAlignment.center,
                     children: [
                       Container(
                         width: 300,
@@ -307,10 +297,13 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      ElevatedButton.icon(
+                      CartaNavegacion.accion(
+                        // Conserva las medidas y la función de la acción original.
+                        tipoBoton: 'elevated',
+
                         onPressed: () {
                           setState(() {
-                            _cantidadActual++; // Lógica temporal para aumentar
+                            _cantidadActual++; // Aumenta el stock editable que se persiste al pulsar Guardar
                           });
                         },
                         icon: const Icon(Icons.add, color: Colors.black),
@@ -320,7 +313,7 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
                           style: TextStyle(color: Colors.black),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey[400],
+                          backgroundColor: const Color(0xFFB7B7B7),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 20,
                             vertical: 10,
@@ -338,10 +331,14 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Tabla de historial (con scroll horizontal por si acaso)
+                  if (_errorHistorial != null)
+                    Text(
+                      'No se pudo cargar el historial: $_errorHistorial',
+                    ), // Conserva el error de consulta.
+                  // Tabla de historial con las columnas disponibles.
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
-                    child: DataTable(
+                    child: TablaDatos.desdeCeldas(
                       headingRowColor: WidgetStateProperty.all(Colors.red[400]),
                       border: TableBorder.all(color: Colors.black, width: 2),
                       columns: const [
@@ -349,7 +346,7 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
                           label: Text(
                             'CLIENTE',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: Colors.black,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -358,16 +355,7 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
                           label: Text(
                             'PRECIO',
                             style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        DataColumn(
-                          label: Text(
-                            'FECHA',
-                            style: TextStyle(
-                              color: Colors.white,
+                              color: Colors.black,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -376,52 +364,59 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
                           label: Text(
                             'REVISAR',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: Colors.black,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
                       ],
-                      rows: [
-                        DataRow(
-                          color: WidgetStateProperty.all(Colors.grey[200]),
-                          cells: [
-                            const DataCell(
-                              Text(
-                                'BENJAMÍN\nPESCUEZO',
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
+                      rows: _ventasProducto
+                          .map(
+                            (venta) => DataRow(
+                              cells: [
+                                DataCell(Text(venta.clienteNombre)),
+                                DataCell(
+                                  Text(
+                                    venta.items
+                                        .where(
+                                          (item) =>
+                                              item['codigo'] ==
+                                              widget.producto.id,
+                                        )
+                                        .fold<double>(
+                                          0,
+                                          (total, item) =>
+                                              total +
+                                              (item['total'] as num).toDouble(),
+                                        )
+                                        .toStringAsFixed(0),
+                                  ),
+                                ),
+                                DataCell(
+                                  CartaNavegacion.accion(
+                                    tipoBoton: 'icon',
+                                    child: const Icon(Icons.search, size: 30),
+                                    onPressed: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            PaginaDetalleVenta(
+                                              idVenta: venta.id,
+                                              clienteNombre:
+                                                  venta.clienteNombre,
+                                              vehiculoNombre:
+                                                  venta.vehiculoNombre,
+                                              total: venta.total,
+                                              desdeHistorial: true,
+                                            ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            const DataCell(Text('\$20.000')),
-                            const DataCell(Text('01/02/2002')),
-                            DataCell(
-                              IconButton(
-                                icon: const Icon(Icons.search, size: 30),
-                                onPressed: () {},
-                              ),
-                            ),
-                          ],
-                        ),
-                        DataRow(
-                          color: WidgetStateProperty.all(Colors.grey[300]),
-                          cells: [
-                            const DataCell(
-                              Text(
-                                'LORENZO\nRAPANUI',
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            const DataCell(Text('\$22.000')),
-                            const DataCell(Text('26/09/2001')),
-                            DataCell(
-                              IconButton(
-                                icon: const Icon(Icons.search, size: 30),
-                                onPressed: () {},
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                          )
+                          .toList(),
                     ),
                   ),
                 ],
@@ -439,44 +434,16 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
     TextEditingController controlador,
     bool esPrecio,
   ) {
-    return Column(
-      children: [
-        Text(
-          titulo,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 10),
-        Container(
-          width: 400,
-          color: Colors.grey[300],
-          child: Row(
-            children: [
-              if (esPrecio)
-                const Padding(
-                  padding: EdgeInsets.only(left: 10),
-                  child: Text('\$', style: TextStyle(fontSize: 18)),
-                ),
-              Expanded(
-                child: TextField(
-                  controller: controlador,
-                  textAlign: esPrecio ? TextAlign.left : TextAlign.center,
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 10),
-                  ),
-                  style: const TextStyle(fontSize: 18),
-                  keyboardType: esPrecio
-                      ? TextInputType.number
-                      : TextInputType.text,
-                ),
-              ),
-              Container(
-                color: Colors.grey[400],
-                padding: const EdgeInsets.all(8),
-                child: const Icon(Icons.edit_square, size: 30),
-              ),
-            ],
-          ),
+    // Comparte el formulario manteniendo el ancho anterior del campo.
+    return FormularioDatos(
+      ancho: 400,
+      campos: [
+        CampoFormularioDatos(
+          controlador: controlador,
+          etiqueta: titulo,
+          textoAyuda: esPrecio ? 'Precio' : 'Nombre',
+          tipoTeclado: esPrecio ? TextInputType.number : TextInputType.text,
+          habilitado: !_guardando,
         ),
       ],
     );

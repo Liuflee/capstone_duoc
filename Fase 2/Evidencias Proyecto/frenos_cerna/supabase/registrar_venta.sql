@@ -10,7 +10,7 @@ SET search_path = public
 AS $$
 DECLARE
   v_id_venta integer;
-  v_codigo_producto integer;
+  v_codigo_producto text;
   v_cantidad integer;
   v_precio integer;
   v_stock integer;
@@ -26,7 +26,7 @@ BEGIN
 
   FOR v_detalle IN SELECT value FROM jsonb_array_elements(p_detalles)
   LOOP
-    v_codigo_producto := (v_detalle ->> 'codigo_producto')::integer;
+    v_codigo_producto := v_detalle ->> 'codigo_producto';
     v_cantidad := (v_detalle ->> 'cantidad')::integer;
 
     IF v_cantidad <= 0 THEN

@@ -1,3 +1,11 @@
+// Abre el registro independiente de productos.
+import 'package:frenos_cerna/features/inventario/pagina_crear_producto.dart';
+// Importa la barra superior común a las páginas.
+import 'package:frenos_cerna/shared/widgets/barra_superior.dart';
+// Importa los campos de formulario reutilizables.
+
+// Importa las cartas que conservan las acciones de la página.
+import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
 import 'package:flutter/material.dart';
 import 'package:frenos_cerna/core/data/supabase_database.dart';
 import 'package:frenos_cerna/features/inventario/pagina_edicion_producto.dart';
@@ -15,6 +23,7 @@ class Producto {
   final String categoria;
   final double precio;
   final int cantidad;
+  final int? tipoId; // Conserva la categoría existente del esquema.
 
   Producto({
     required this.id,
@@ -23,6 +32,7 @@ class Producto {
     required this.categoria,
     required this.precio,
     required this.cantidad,
+    this.tipoId, // Permite editar la categoría sin añadir columnas.
   });
 
   factory Producto.fromJson(Map<String, dynamic> json) {
@@ -46,6 +56,7 @@ class Producto {
       precio: double.tryParse(json['precio']?.toString() ?? '0') ?? 0,
 
       cantidad: int.tryParse(json['stock']?.toString() ?? '0') ?? 0,
+      tipoId: (json['tipo'] as num?)?.toInt(), // Usa la clave de tipo_producto.
     );
   }
 }
@@ -68,6 +79,8 @@ class _PaginaInventarioState extends State<PaginaInventario> {
 
   List<Producto> productos = [];
 
+  bool _mostrarFaltantes =
+      false; // Conserva la sección de inventario seleccionada.
   bool _cargando = true;
   String? _error;
 
@@ -176,125 +189,15 @@ class _PaginaInventarioState extends State<PaginaInventario> {
   // ============================================================
 
   Future<void> _agregarProducto() async {
-    final codigoCtrl = TextEditingController();
-
-    final barraCtrl = TextEditingController();
-
-    final stockCtrl = TextEditingController(text: '0');
-
-    final precioCtrl = TextEditingController();
-
-    final valores = await showDialog<Map<String, Object?>>(
-      context: context,
-
-      builder: (context) => AlertDialog(
-        title: const Text('Añadir producto'),
-
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-
-            children: [
-              TextField(
-                controller: codigoCtrl,
-
-                keyboardType: TextInputType.number,
-
-                decoration: const InputDecoration(labelText: 'Código producto'),
-              ),
-
-              TextField(
-                controller: barraCtrl,
-
-                decoration: const InputDecoration(labelText: 'Código de barra'),
-              ),
-
-              TextField(
-                controller: stockCtrl,
-
-                keyboardType: TextInputType.number,
-
-                decoration: const InputDecoration(labelText: 'Stock inicial'),
-              ),
-
-              TextField(
-                controller: precioCtrl,
-
-                keyboardType: TextInputType.number,
-
-                decoration: const InputDecoration(labelText: 'Precio entero'),
-              ),
-            ],
-          ),
-        ),
-
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-
-            child: const Text('Cancelar'),
-          ),
-
-          TextButton(
-            onPressed: () {
-              final codigo = int.tryParse(codigoCtrl.text.trim());
-
-              final stock = int.tryParse(stockCtrl.text.trim());
-
-              final precio = int.tryParse(precioCtrl.text.trim());
-
-              if (codigo == null ||
-                  stock == null ||
-                  precio == null ||
-                  stock < 0 ||
-                  precio < 0) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Revisa los códigos, stock y precio.'),
-                  ),
-                );
-
-                return;
-              }
-
-              Navigator.pop(context, {
-                'codigo_producto': codigo,
-
-                'cod_barra': barraCtrl.text.trim().isEmpty
-                    ? null
-                    : barraCtrl.text.trim(),
-
-                'stock': stock,
-
-                'precio': precio,
-              });
-            },
-
-            child: const Text('Registrar'),
-          ),
-        ],
+    final actualizado = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        settings: const RouteSettings(name: '/products/new'),
+        builder: (context) => const PaginaCrearProducto(),
       ),
-    );
-
-    codigoCtrl.dispose();
-    barraCtrl.dispose();
-    stockCtrl.dispose();
-    precioCtrl.dispose();
-
-    if (valores == null) return;
-
-    try {
-      await SupabaseDatabase.client
-          .from(SupabaseTables.productos)
-          .insert(valores);
-
-      await _cargarProductos();
-    } catch (error) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo añadir el producto: $error')),
-      );
+    ); // Abre la página de registro del prototipo.
+    if (actualizado == true && mounted) {
+      await _cargarProductos(); // Conserva la actualización del inventario.
     }
   }
 
@@ -306,11 +209,14 @@ class _PaginaInventarioState extends State<PaginaInventario> {
   Widget build(BuildContext context) {
     final anchoPantalla = MediaQuery.of(context).size.width;
 
-    final esPantallaGrande = anchoPantalla > 800;
+    final esPantallaGrande =
+        anchoPantalla >=
+        700; // Comparte el punto de adaptación del menú principal.
 
     // Convierte los productos filtrados a registros que entiende TablaDatos.
     // El objeto original se conserva para usarlo al ver/editar el producto.
     final List<Map<String, dynamic>> filasProductos = _productosFiltrados
+        .where((producto) => !_mostrarFaltantes || producto.cantidad == 0)
         .map(
           (producto) => <String, dynamic>{
             'nombre': producto.nombre,
@@ -328,68 +234,18 @@ class _PaginaInventarioState extends State<PaginaInventario> {
       // ========================================================
       // APP BAR
       // ========================================================
-      appBar: AppBar(
-        backgroundColor: Colors.grey[300],
-
-        elevation: 0,
-
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
-          children: [
-            if (esPantallaGrande)
-              Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    color: Colors.grey[500],
-
-                    child: const Icon(
-                      Icons.settings_input_component,
-                      color: Colors.white,
-                    ),
-                  ),
-
-                  const SizedBox(width: 10),
-
-                  const Text(
-                    'Frenos\nCerna',
-
-                    style: TextStyle(color: Colors.black, fontSize: 16),
-                  ),
-                ],
-              ),
-
-            const Text(
-              'Inventario',
-
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
-              ),
-            ),
-
-            Row(
-              children: [
-                if (esPantallaGrande)
-                  const Text(
-                    'Leonardo',
-
-                    style: TextStyle(color: Colors.black, fontSize: 16),
-                  ),
-
-                const SizedBox(width: 10),
-
-                CircleAvatar(
-                  backgroundColor: Colors.red[800],
-
-                  child: const Icon(Icons.build, color: Colors.black),
-                ),
-              ],
-            ),
-          ],
+      appBar: PreferredSize(
+        // Comparte el diez por ciento de altura con la página principal.
+        preferredSize: Size.fromHeight(
+          MediaQuery.sizeOf(context).height * 0.10,
+        ),
+        child: SizedBox(
+          height:
+              MediaQuery.sizeOf(context).height *
+              0.10, // Mantiene la altura común de las barras.
+          child: BarraSuperior(
+            tituloPagina: 'Inventario',
+          ), // Reutiliza el encabezado de Inicio.
         ),
       ),
 
@@ -412,7 +268,10 @@ class _PaginaInventarioState extends State<PaginaInventario> {
           // ======================================================
 
           if (esPantallaGrande)
-            const ContenedorMenuLateral(activo: 'Inventario'),
+            SizedBox(
+              width: MediaQuery.sizeOf(context).width * 0.12,
+              child: MenuLateral(activo: 'Inventario'),
+            ),
 
           // ======================================================
           // CONTENIDO INVENTARIO
@@ -432,7 +291,10 @@ class _PaginaInventarioState extends State<PaginaInventario> {
                   Align(
                     alignment: Alignment.centerRight,
 
-                    child: ElevatedButton.icon(
+                    child: CartaNavegacion.accion(
+                      // Conserva las medidas y la función de la acción original.
+                      tipoBoton: 'elevated',
+
                       onPressed: _agregarProducto,
 
                       icon: const Icon(Icons.add, color: Colors.black),
@@ -462,45 +324,7 @@ class _PaginaInventarioState extends State<PaginaInventario> {
                   // ==================================================
                   // BUSCADOR
                   // ==================================================
-                  Container(
-                    color: Colors.grey[200],
-
-                    padding: const EdgeInsets.only(left: 10),
-
-                    child: Row(
-                      children: [
-                        // ==========================================
-                        // CAMPO DE BÚSQUEDA
-                        // ==========================================
-
-                        Expanded(
-                          child: TextField(
-                            controller: _busquedaController,
-
-                            decoration: const InputDecoration(
-                              hintText: 'BUSCAR PRODUCTO EN INVENTARIO',
-
-                              border: InputBorder.none,
-                            ),
-
-                            // ========================================
-                            // BÚSQUEDA AUTOMÁTICA
-                            // ========================================
-                            onChanged: (_) => setState(() {}),
-                          ),
-                        ),
-
-                        // ==========================================
-                        // LUPA DECORATIVA
-                        // ==========================================
-                        IconButton(
-                          onPressed: null,
-
-                          icon: const Icon(Icons.search, color: Colors.black),
-                        ),
-                      ],
-                    ),
-                  ),
+                  const SizedBox.shrink(),
 
                   // ==================================================
                   // SEPARACIÓN ENTRE BUSCADOR Y TABLA
@@ -511,26 +335,33 @@ class _PaginaInventarioState extends State<PaginaInventario> {
                   // BOTONES DE INVENTARIO
                   // ==================================================
                   Center(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-
+                    child: Wrap(
+                      spacing: 10,
+                      runSpacing: 10, // Conserva las medidas y pasa las acciones a otra fila en Android.
+                      alignment: WrapAlignment.center,
                       children: [
-                        ElevatedButton.icon(
-                          onPressed: () {},
+                        CartaNavegacion.accion(
+                          // Conserva las medidas y la función de la acción original.
+                          tipoBoton: 'elevated',
+
+                          onPressed: () =>
+                              setState(() => _mostrarFaltantes = false),
 
                           icon: const Icon(
                             Icons.cases_outlined,
-                            color: Colors.white,
+                            color: Colors.black,
                           ),
 
                           label: const Text(
                             'PRODUCTOS EN BODEGA',
 
-                            style: TextStyle(color: Colors.white),
+                            style: TextStyle(color: Colors.black),
                           ),
 
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red[700],
+                            backgroundColor: _mostrarFaltantes
+                                ? const Color(0xFFB7B7B7)
+                                : const Color(0xFFB74545),
 
                             padding: const EdgeInsets.symmetric(
                               horizontal: 20,
@@ -541,8 +372,12 @@ class _PaginaInventarioState extends State<PaginaInventario> {
 
                         const SizedBox(width: 10),
 
-                        ElevatedButton.icon(
-                          onPressed: () {},
+                        CartaNavegacion.accion(
+                          // Conserva las medidas y la función de la acción original.
+                          tipoBoton: 'elevated',
+
+                          onPressed: () =>
+                              setState(() => _mostrarFaltantes = true),
 
                           icon: const Icon(
                             Icons.warning_amber_rounded,
@@ -550,13 +385,13 @@ class _PaginaInventarioState extends State<PaginaInventario> {
                           ),
 
                           label: const Text(
-                            'PRODUCTOS FALTANTES',
+                            'PRODUCTOS SIN STOCK',
 
                             style: TextStyle(color: Colors.black),
                           ),
 
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey[400],
+                            backgroundColor: const Color(0xFFB7B7B7),
 
                             padding: const EdgeInsets.symmetric(
                               horizontal: 20,
@@ -640,15 +475,19 @@ class _PaginaInventarioState extends State<PaginaInventario> {
                           4: (context, fila) {
                             final producto = fila['producto'] as Producto;
 
-                            return IconButton(
+                            return CartaNavegacion.accion(
+                              // Conserva las medidas y la función de la acción original.
+                              tipoBoton: 'icon',
+
                               tooltip: 'Ver producto',
-                              icon: const Icon(Icons.search, size: 30),
+                              child: const Icon(Icons.search, size: 30),
                               onPressed: () async {
                                 await Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        PaginaEdicionProducto(producto: producto),
+                                    builder: (context) => PaginaEdicionProducto(
+                                      producto: producto,
+                                    ),
                                   ),
                                 );
 

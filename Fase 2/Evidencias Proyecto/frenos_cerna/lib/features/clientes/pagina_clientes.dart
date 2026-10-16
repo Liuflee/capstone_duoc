@@ -1,3 +1,6 @@
+import 'package:frenos_cerna/features/clientes/pagina_ver_cliente.dart'; // Abre el perfil sin edición.
+// Importa los campos de formulario reutilizables.
+
 // Importaciones necesarias para construir la interfaz y consultar los clientes.
 import 'package:flutter/material.dart';
 
@@ -20,7 +23,6 @@ import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
 
 // Modelo que representa los datos de un cliente en la aplicación.
 class Cliente {
-
   final String id;
 
   final String nombre;
@@ -41,21 +43,22 @@ class Cliente {
 
   // Convierte los campos de Supabase en un objeto Cliente.
   factory Cliente.fromJson(Map<String, dynamic> json) {
-
     return Cliente(
       id: json['rut']?.toString() ?? 'sin-rut',
       nombre: (json['nombre'] ?? 'Sin nombre').toString(),
       numero: (json['fono'] ?? 'Sin teléfono').toString(),
       ultimaVenta: 'No disponible',
-      vehiculo: 'Sin registrar',
+      vehiculo: (json['vehiculo_cliente'] as List? ?? []).isEmpty
+          ? 'Sin registrar'
+          : (json['vehiculo_cliente'] as List)
+                .map((vehiculo) => vehiculo['patente'].toString())
+                .join(', '), // Usa la relación existente de vehículos.
     );
-
   }
 }
 
 // Página de clientes: conserva su estado para mostrar datos y realizar búsquedas.
 class PaginaClientes extends StatefulWidget {
-
   const PaginaClientes({super.key});
 
   @override
@@ -63,7 +66,6 @@ class PaginaClientes extends StatefulWidget {
 }
 
 class _PaginaClientesState extends State<PaginaClientes> {
-
   // Lista de clientes recuperados desde Supabase.
   List<Cliente> clientes = [];
 
@@ -80,7 +82,6 @@ class _PaginaClientesState extends State<PaginaClientes> {
 
   @override
   void initState() {
-
     super.initState();
 
     // Consulta los clientes cuando se abre la página.
@@ -89,7 +90,6 @@ class _PaginaClientesState extends State<PaginaClientes> {
 
   @override
   void dispose() {
-
     // Libera los recursos del campo de búsqueda al cerrar la página.
     _busquedaController.dispose();
 
@@ -98,12 +98,12 @@ class _PaginaClientesState extends State<PaginaClientes> {
 
   // Consulta los clientes en Supabase y los ordena alfabéticamente.
   Future<void> _cargarClientes() async {
-
     try {
-
       final response = await SupabaseDatabase.client
           .from(SupabaseTables.clientes)
-          .select('rut, nombre, fono')
+          .select(
+            'rut, nombre, fono, vehiculo_cliente(patente, modelo_vehiculo(modelo, marca_vehiculo(marca)))',
+          )
           .order('nombre');
 
       final data = response as List<dynamic>;
@@ -113,7 +113,9 @@ class _PaginaClientesState extends State<PaginaClientes> {
 
       // Transforma cada registro recibido en un objeto Cliente.
       final listaClientes = data
-          .map((item) => Cliente.fromJson(Map<String, dynamic>.from(item as Map)))
+          .map(
+            (item) => Cliente.fromJson(Map<String, dynamic>.from(item as Map)),
+          )
           .toList();
 
       setState(() {
@@ -121,9 +123,7 @@ class _PaginaClientesState extends State<PaginaClientes> {
         _cargando = false;
         _error = null;
       });
-
     } catch (error) {
-
       if (!mounted) return;
 
       // Informa a la interfaz que la consulta terminó con un error.
@@ -134,146 +134,62 @@ class _PaginaClientesState extends State<PaginaClientes> {
     }
   }
 
-  // Solicita confirmación antes de eliminar un cliente de Supabase.
-  Future<void> _borrarCliente(Cliente cliente) async {
-
-    final confirmar = await showDialog<bool>(
-      context: context,
-
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.black,
-
-        // Título del cuadro de confirmación.
-        title: const Text(
-          'Borrar cliente',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-
-        // Muestra el nombre del cliente que se pretende eliminar.
-        content: RichText(
-          text: TextSpan(
-            style: const TextStyle(color: Colors.white, fontSize: 16),
-            children: [
-              const TextSpan(text: '¿Borrar a '),
-
-              TextSpan(
-                text: cliente.nombre.toUpperCase(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const TextSpan(text: '?'),
-            ],
-          ),
-        ),
-
-        // Botones para cancelar o confirmar la eliminación.
-        actions: [
-
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context, false);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey[600],
-              foregroundColor: Colors.white,
-            ),
-            child: const Text(
-              'Cancelar',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-            ),
-          ),
-
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context, true);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text(
-              'Borrar',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    // No elimina nada si el usuario cancela o la página ya no existe.
-    if (confirmar != true || !mounted) return;
-
-    try {
-
-      // Elimina el registro cuyo RUT corresponde al cliente seleccionado.
-      await SupabaseDatabase.client
-          .from(SupabaseTables.clientes)
-          .delete()
-          .eq('rut', int.parse(cliente.id));
-
-      // Actualiza la lista para quitar el cliente eliminado de la tabla.
-      await _cargarClientes();
-
-    } catch (error) {
-
-      if (!mounted) return;
-
-      // Muestra un mensaje si Supabase no pudo eliminar el registro.
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo borrar el cliente: $error')),
-      );
-    }
-  }
+  // Permite consultar y editar clientes sin eliminar registros.
 
   @override
   Widget build(BuildContext context) {
-
     // Obtiene el texto ingresado en el buscador sin distinguir mayúsculas.
     final textoBusqueda = _busquedaController.text.trim().toLowerCase();
 
     // Aplica la búsqueda al campo elegido; Todos conserva la búsqueda original.
     final clientesFiltrados = textoBusqueda.isEmpty
         ? clientes // Sin texto se muestran todos los clientes recuperados.
-        : clientes.where((cliente) { // Evalúa cada cliente con la selección actual.
+        : clientes.where((cliente) {
+            // Evalúa cada cliente con la selección actual.
             // Selecciona los valores asociados al identificador del filtro.
             final campos = switch (_filtroSeleccionado) {
               'nombre' => [cliente.nombre], // Busca únicamente en el nombre.
               'numero' => [cliente.numero], // Busca únicamente en el teléfono.
               'rut' => [cliente.id], // Busca únicamente en el RUT.
-              _ => [cliente.nombre, cliente.numero, cliente.id], // Busca en todos los campos.
+              _ => [
+                cliente.nombre,
+                cliente.numero,
+                cliente.id,
+              ], // Busca en todos los campos.
             }; // Finaliza la selección de campos.
             // Comprueba las coincidencias sin distinguir mayúsculas.
-            return campos.any((campo) => campo.toLowerCase().contains(textoBusqueda));
+            return campos.any(
+              (campo) => campo.toLowerCase().contains(textoBusqueda),
+            );
           }).toList(); // Entrega solo los clientes que cumplen la búsqueda.
 
     // Convierte los clientes filtrados a registros que entiende TablaDatos.
-    // El objeto original se conserva para utilizarlo al editar o borrar.
+    // El objeto original se conserva para utilizarlo al editar.
     final List<Map<String, dynamic>> filasClientes = clientesFiltrados
-        .map((cliente) => <String, dynamic>{
-              'nombre': cliente.nombre,
-              'numero': cliente.numero,
-              'rut': cliente.id,
-              'cliente': cliente,
-            })
+        .map(
+          (cliente) => <String, dynamic>{
+            'nombre': cliente.nombre,
+            'numero': cliente.numero,
+            'rut': cliente.id,
+            'cliente': cliente,
+          },
+        )
         .toList();
 
     return Scaffold(
-      backgroundColor: Colors.grey[200],
+      // Conserva la navegación lateral en pantallas pequeñas.
+      drawer: const Drawer(child: MenuLateral(activo: 'Clientes')),
+      backgroundColor: Colors.white,
 
       // Obtiene el ancho y alto disponibles para reproducir la estructura de Inicio.
       body: LayoutBuilder(
         builder: (context, constraints) {
-
           final double ancho = constraints.maxWidth;
 
           final double alto = constraints.maxHeight;
 
           return Column(
             children: [
-
               // Barra superior reutilizable, con el título de esta página.
               SizedBox(
                 width: ancho,
@@ -286,12 +202,12 @@ class _PaginaClientesState extends State<PaginaClientes> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-
                     // Menú lateral reutilizable que marca Clientes como seleccionado.
-                    SizedBox(
-                      width: ancho * 0.12,
-                      child: const MenuLateral(activo: 'Clientes'),
-                    ),
+                    if (ancho >= 700) // Comparte el menú de escritorio y permite usar el desplegable en móvil.
+                      SizedBox(
+                        width: ancho * 0.12,
+                        child: const MenuLateral(activo: 'Clientes'),
+                      ),
 
                     // Contenido principal de la página Clientes.
                     Expanded(
@@ -302,7 +218,6 @@ class _PaginaClientesState extends State<PaginaClientes> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-
                             // Alinea la tarjeta con el borde visible derecho de la tabla.
                             Padding(
                               padding: const EdgeInsets.only(right: 14), // Reserva el mismo espacio lateral que TablaDatos.
@@ -312,15 +227,19 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                 texto: 'AÑADIR CLIENTE', // Describe la acción de navegación.
                                 icono: Icons.person_add_alt_1, // Identifica visualmente el registro de clientes.
                                 color: Colors.grey[400], // Conserva el color de la acción anterior.
-                                alPresionar: () async { // Abre el formulario al pulsar la tarjeta.
-                                  final actualizado = await Navigator.push<bool>(
-                                    context, // Utiliza la navegación de la página actual.
-                                    MaterialPageRoute(
-                                      builder: (context) => const PaginaCrearCliente(), // Construye el formulario de registro.
-                                    ), // Finaliza la ruta del formulario.
-                                  ); // Espera el resultado del registro.
+                                alPresionar: () async {
+                                  // Abre el formulario al pulsar la tarjeta.
+                                  final actualizado =
+                                      await Navigator.push<bool>(
+                                        context, // Utiliza la navegación de la página actual.
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const PaginaCrearCliente(), // Construye el formulario de registro.
+                                        ), // Finaliza la ruta del formulario.
+                                      ); // Espera el resultado del registro.
                                   if (!mounted) return; // Evita recargar una página que ya se cerró.
-                                  if (actualizado == true) { // Comprueba si se registró un cliente.
+                                  if (actualizado == true) {
+                                    // Comprueba si se registró un cliente.
                                     await _cargarClientes(); // Actualiza la tabla conservando la búsqueda y el filtro.
                                   } // Finaliza la actualización condicional.
                                 }, // Finaliza la acción de la tarjeta.
@@ -336,28 +255,52 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                 return Padding(
                                   padding: const EdgeInsets.only(right: 14), // Descuenta el espacio reservado por TablaDatos para el desplazamiento.
                                   child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween, // Ubica los controles en extremos opuestos.
-                                  children: [ // Mantiene ambos controles en una misma fila.
-                                    FiltrosTabla(
-                                      anchoTabla: (restricciones.maxWidth - 14).clamp(0.0, double.infinity).toDouble(), // Calcula el 33 % del ancho visible de la tabla.
-                                      filtroSeleccionado: _filtroSeleccionado, // Refleja una única selección.
-                                      filtros: const [ // Define manualmente las opciones de Clientes.
-                                        OpcionFiltroTabla(id: 'todos', texto: 'Todos los campos'), // Conserva la búsqueda general.
-                                        OpcionFiltroTabla(id: 'nombre', texto: 'Nombre'), // Limita la búsqueda al nombre.
-                                        OpcionFiltroTabla(id: 'numero', texto: 'Número'), // Limita la búsqueda al teléfono.
-                                        OpcionFiltroTabla(id: 'rut', texto: 'RUT'), // Limita la búsqueda al RUT.
-                                      ], // Finaliza las opciones disponibles.
-                                      alSeleccionar: (id) { // Recibe el identificador del filtro elegido.
-                                        setState(() => _filtroSeleccionado = id); // Actualiza las filas con el nuevo criterio.
-                                      }, // Finaliza la selección del filtro.
-                                    ), // Finaliza el selector situado a la izquierda.
-                                    BuscadorTabla(
-                                      anchoTabla: (restricciones.maxWidth - 14).clamp(0.0, double.infinity).toDouble(), // Usa el mismo ancho visible de la tabla que el selector.
-                                      controlador: _busquedaController, // Conserva el texto al cambiar de filtro.
-                                      textoAyuda: 'BUSCAR CLIENTE', // Conserva la indicación del buscador original.
-                                      alCambiar: (_) => setState(() {}), // Actualiza la tabla mientras se escribe.
-                                    ), // Finaliza el buscador situado a la derecha.
-                                  ], // Finaliza los controles superiores de la tabla.
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween, // Ubica los controles en extremos opuestos.
+                                    children: [
+                                      // Mantiene ambos controles en una misma fila.
+                                      FiltrosTabla(
+                                        anchoTabla:
+                                            (restricciones.maxWidth - 14)
+                                                .clamp(0.0, double.infinity)
+                                                .toDouble(), // Calcula el 33 % del ancho visible de la tabla.
+                                        filtroSeleccionado: _filtroSeleccionado, // Refleja una única selección.
+                                        filtros: const [
+                                          // Define manualmente las opciones de Clientes.
+                                          OpcionFiltroTabla(
+                                            id: 'todos',
+                                            texto: 'Todos los campos',
+                                          ), // Conserva la búsqueda general.
+                                          OpcionFiltroTabla(
+                                            id: 'nombre',
+                                            texto: 'Nombre',
+                                          ), // Limita la búsqueda al nombre.
+                                          OpcionFiltroTabla(
+                                            id: 'numero',
+                                            texto: 'Número',
+                                          ), // Limita la búsqueda al teléfono.
+                                          OpcionFiltroTabla(
+                                            id: 'rut',
+                                            texto: 'RUT',
+                                          ), // Limita la búsqueda al RUT.
+                                        ], // Finaliza las opciones disponibles.
+                                        alSeleccionar: (id) {
+                                          // Recibe el identificador del filtro elegido.
+                                          setState(
+                                            () => _filtroSeleccionado = id,
+                                          ); // Actualiza las filas con el nuevo criterio.
+                                        }, // Finaliza la selección del filtro.
+                                      ), // Finaliza el selector situado a la izquierda.
+                                      BuscadorTabla(
+                                        anchoTabla:
+                                            (restricciones.maxWidth - 14)
+                                                .clamp(0.0, double.infinity)
+                                                .toDouble(), // Usa el mismo ancho visible de la tabla que el selector.
+                                        controlador: _busquedaController, // Conserva el texto al cambiar de filtro.
+                                        textoAyuda: 'BUSCAR CLIENTE', // Conserva la indicación del buscador original.
+                                        alCambiar: (_) => setState(() {}), // Actualiza la tabla mientras se escribe.
+                                      ), // Finaliza el buscador situado a la derecha.
+                                    ], // Finaliza los controles superiores de la tabla.
                                   ), // Finaliza la distribución horizontal.
                                 ); // Finaliza la alineación con el borde visible de la tabla.
                               }, // Finaliza el cálculo del ancho disponible.
@@ -372,20 +315,22 @@ class _PaginaClientesState extends State<PaginaClientes> {
                             // Reserva el espacio restante para la tabla o el indicador de carga.
                             if (_cargando)
                               const Expanded(
-                                child: Center(child: CircularProgressIndicator()),
+                                child: Center(
+                                  child: CircularProgressIndicator(),
+                                ),
                               )
                             else
                               Expanded(
                                 // Widget reutilizable de tabla, alimentado por los clientes filtrados.
                                 child: TablaDatos(
-
+                                  mostrarControles: false, // La página ya posiciona sus controles externos encima de la tabla.
                                   // Encabezados visibles de la tabla.
                                   nombresColumnas: const [
                                     'NOMBRE',
                                     'NÚMERO',
                                     'RUT',
                                     'CAMBIAR',
-                                    'BORRAR',
+                                    'VER',
                                   ],
 
                                   // Campos asociados a los valores de cada registro.
@@ -400,7 +345,13 @@ class _PaginaClientesState extends State<PaginaClientes> {
 
                                   // Ancho proporcional de cada columna.
                                   // El widget los ajusta para ocupar el espacio total.
-                                  anchosColumnas: const [330, 150, 150, 120, 120],
+                                  anchosColumnas: const [
+                                    330,
+                                    150,
+                                    150,
+                                    120,
+                                    120,
+                                  ],
 
                                   // Color de cada cabecera (null usa colorEncabezado).
                                   coloresEncabezados: const [
@@ -425,10 +376,10 @@ class _PaginaClientesState extends State<PaginaClientes> {
 
                                   // Personaliza las columnas que contienen widgets.
                                   celdasPersonalizadas: {
-
                                     // Columna 0: nombre con avatar del cliente.
                                     0: (context, fila) {
-                                      final cliente = fila['cliente'] as Cliente;
+                                      final cliente =
+                                          fila['cliente'] as Cliente;
 
                                       return Row(
                                         children: [
@@ -456,19 +407,26 @@ class _PaginaClientesState extends State<PaginaClientes> {
 
                                     // Columna 3: botón de edición del cliente.
                                     3: (context, fila) {
-                                      final cliente = fila['cliente'] as Cliente;
+                                      final cliente =
+                                          fila['cliente'] as Cliente;
 
-                                      return IconButton(
+                                      return CartaNavegacion.accion(
+                                        // Conserva las medidas y la función de la acción original.
+                                        tipoBoton: 'icon',
+
                                         tooltip: 'Editar cliente',
-                                        icon: const Icon(Icons.edit, size: 30),
+                                        child: const Icon(Icons.edit, size: 30),
                                         onPressed: () async {
-                                          final actualizado = await Navigator.push<bool>(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  PaginaEditarCliente(cliente: cliente),
-                                            ),
-                                          );
+                                          final actualizado =
+                                              await Navigator.push<bool>(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      PaginaEditarCliente(
+                                                        cliente: cliente,
+                                                      ),
+                                                ),
+                                              );
 
                                           // Actualiza la tabla si el cliente fue editado.
                                           if (!mounted) return;
@@ -478,23 +436,29 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                         },
                                       );
                                     },
-
-                                    // Columna 4: botón para borrar con confirmación.
-                                    4: (context, fila) {
-                                      final cliente = fila['cliente'] as Cliente;
-
-                                      return IconButton(
-                                        tooltip: 'Borrar cliente',
-                                        icon: const Icon(
-                                          Icons.cancel_outlined,
-                                          color: Colors.red,
-                                          size: 30,
-                                        ),
-                                        onPressed: () {
-                                          _borrarCliente(cliente);
-                                        },
-                                      );
-                                    },
+                                    4: (context, fila) =>
+                                        CartaNavegacion.accion(
+                                          tipoBoton: 'icon',
+                                          tooltip: 'Ver cliente',
+                                          onPressed: () => Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              settings: const RouteSettings(
+                                                name: '/clients/view',
+                                              ),
+                                              builder: (context) =>
+                                                  PaginaVerCliente(
+                                                    cliente:
+                                                        fila['cliente']
+                                                            as Cliente,
+                                                  ),
+                                            ),
+                                          ),
+                                          child: const Icon(
+                                            Icons.search,
+                                            size: 28,
+                                          ),
+                                        ), // Consulta el perfil sin habilitar edición.
                                   },
                                 ),
                               ),
@@ -508,50 +472,6 @@ class _PaginaClientesState extends State<PaginaClientes> {
             ],
           );
         },
-      ),
-    );
-  }
-}
-
-// Campo de texto reutilizable con un icono de edición decorativo.
-// Se conserva porque es una clase pública del archivo original.
-class CampoEditable extends StatelessWidget {
-
-  final TextEditingController? controlador;
-
-  final String? hint;
-
-  const CampoEditable({super.key, this.controlador, this.hint});
-
-  @override
-  Widget build(BuildContext context) {
-
-    return Container(
-      width: 400,
-      color: Colors.grey[300],
-      child: Row(
-        children: [
-
-          // Campo que utiliza el controlador y el texto de ayuda recibidos.
-          Expanded(
-            child: TextField(
-              controller: controlador,
-              decoration: InputDecoration(
-                hintText: hint,
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-              ),
-              style: const TextStyle(fontSize: 18),
-            ),
-          ),
-
-          // Icono que indica visualmente la edición.
-          Container(
-            color: Colors.grey[400],
-            padding: const EdgeInsets.all(8),
-            child: const Icon(Icons.edit_square, size: 30),
-          ),
-        ],
       ),
     );
   }

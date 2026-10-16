@@ -19,7 +19,9 @@ class BuscadorTabla extends StatelessWidget {
     required this.controlador, // Controlador del texto de búsqueda.
     required this.alCambiar, // Acción ejecutada al escribir.
     this.textoAyuda = 'BUSCAR', // Texto predeterminado del buscador.
-  }) : assert(anchoTabla >= 0 && anchoTabla < double.infinity); // Exige un ancho válido.
+  }) : assert(
+         anchoTabla >= 0 && anchoTabla < double.infinity,
+       ); // Exige un ancho válido.
 
   @override // Implementa la construcción visual del widget.
   Widget build(BuildContext context) {
@@ -29,12 +31,16 @@ class BuscadorTabla extends StatelessWidget {
       height: 48, // Comparte la altura con el selector de filtros.
       child: Container(
         color: Colors.grey[300], // Reproduce el fondo del buscador de Clientes.
-        padding: const EdgeInsets.only(left: 10), // Separa el texto del borde izquierdo.
+        padding: const EdgeInsets.only(
+          left: 10,
+        ), // Separa el texto del borde izquierdo.
         child: Row(
-          children: [ // Distribuye el campo y la lupa horizontalmente.
+          children: [
+            // Distribuye el campo y la lupa horizontalmente.
             Expanded(
               child: TextField(
-                controller: controlador, // Muestra el texto administrado por la página.
+                controller:
+                    controlador, // Muestra el texto administrado por la página.
                 onChanged: alCambiar, // Permite filtrar mientras se escribe.
                 decoration: InputDecoration(
                   hintText: textoAyuda, // Describe qué datos se pueden buscar.
@@ -43,8 +49,12 @@ class BuscadorTabla extends StatelessWidget {
               ), // Finaliza el campo editable.
             ), // Asigna al texto el espacio restante.
             const IconButton(
-              onPressed: null, // La búsqueda se realiza automáticamente al escribir.
-              icon: Icon(Icons.search, color: Colors.black), // Conserva la lupa negra.
+              onPressed:
+                  null, // La búsqueda se realiza automáticamente al escribir.
+              icon: Icon(
+                Icons.search,
+                color: Colors.black,
+              ), // Conserva la lupa negra.
             ), // Finaliza el icono del buscador.
           ], // Finaliza los elementos horizontales.
         ), // Finaliza la fila del buscador.

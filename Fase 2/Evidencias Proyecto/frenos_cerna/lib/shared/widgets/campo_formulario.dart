@@ -58,23 +58,25 @@ class _CampoFormularioState extends State<CampoFormulario> {
                 ),
               )
             : null,
-          // Borde normal
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: Colors.grey),
-          ),
+        // Borde normal
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Colors.grey),
+        ),
 
-          // Borde cuando el campo está seleccionado
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(
-              color: Color.fromARGB(255, 183, 58, 58),
-              width: 2,
-            ),
+        // Borde cuando el campo está seleccionado
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(
+            color: Color.fromARGB(255, 183, 58, 58),
+            width: 2,
           ),
+        ),
         filled: true,
         fillColor: Colors.white,
-        floatingLabelStyle: const TextStyle(color: Color.fromARGB(255, 183, 58, 58)),
+        floatingLabelStyle: const TextStyle(
+          color: Color.fromARGB(255, 183, 58, 58),
+        ),
       ),
     );
   }

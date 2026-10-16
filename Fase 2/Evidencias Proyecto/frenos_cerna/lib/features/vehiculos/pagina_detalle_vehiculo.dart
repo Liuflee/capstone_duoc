@@ -1,3 +1,12 @@
+import 'package:frenos_cerna/core/data/supabase_database.dart'; // Consulta el vínculo real entre vehículo y cliente.
+import 'package:frenos_cerna/features/clientes/pagina_clientes.dart'; // Construye el cliente recuperado.
+import 'package:frenos_cerna/features/clientes/pagina_ver_cliente.dart'; // Abre la consulta del cliente vinculado.
+// Importa la tabla compartida para los registros de detalle.
+import 'package:frenos_cerna/shared/widgets/tabla_datos.dart';
+// Importa la barra superior común a las páginas.
+import 'package:frenos_cerna/shared/widgets/barra_superior.dart';
+// Importa las cartas que conservan las acciones de la página.
+import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
 import 'package:flutter/material.dart';
 import 'package:frenos_cerna/features/ventas/data/ventas_repository.dart';
 import 'package:frenos_cerna/features/ventas/presentation/pagina_detalle_venta.dart';
@@ -45,9 +54,48 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
     }
   }
 
+  Future<void> _verCliente() async {
+    // Recupera el cliente por la relación del vehículo seleccionado.
+    try {
+      // Conserva la vista si el vehículo no tiene un cliente válido.
+      final vehiculo = await SupabaseDatabase.client
+          .from(SupabaseTables.vehiculos)
+          .select('rut_cliente')
+          .eq('patente', widget.vehiculo.id)
+          .single(); // Consulta la patente exacta sin buscar por nombres repetidos.
+      final datos = await SupabaseDatabase.client
+          .from(SupabaseTables.clientes)
+          .select('rut, nombre, fono, vehiculo_cliente(patente)')
+          .eq('rut', vehiculo['rut_cliente'])
+          .single(); // Recupera la información del cliente vinculado.
+      if (!mounted) return; // Evita navegar desde una página cerrada.
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          settings: const RouteSettings(name: '/clients/view'),
+          builder: (context) =>
+              PaginaVerCliente(cliente: Cliente.fromJson(datos)),
+        ),
+      ); // Abre la página de consulta sin habilitar edición.
+    } catch (error) {
+      // Informa fallos reales sin abrir otro cliente.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'No se pudo abrir el cliente del vehículo: $error',
+            ),
+          ),
+        ); // Permite volver a intentarlo.
+      }
+    } // Finaliza la recuperación del perfil.
+  } // Finaliza la ruta de Ver cliente.
+
   @override
   Widget build(BuildContext context) {
-    final esPantallaGrande = MediaQuery.of(context).size.width > 800;
+    final esPantallaGrande =
+        MediaQuery.of(context).size.width >=
+        700; // Comparte el punto de adaptación del menú principal.
 
     // Limpiamos los saltos de línea del nombre del vehículo para el título
     final nombreVehiculoLimpio = widget.vehiculo.vehiculoNombre.replaceAll(
@@ -57,59 +105,18 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.grey[300],
-        elevation: 0,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            if (esPantallaGrande)
-              Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    color: Colors.grey[500],
-                    child: const Icon(
-                      Icons.settings_input_component,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'Frenos\nCerna',
-                    style: TextStyle(color: Colors.black, fontSize: 16),
-                  ),
-                ],
-              ),
-            // Título dinámico basado en la imagen
-            Expanded(
-              child: Text(
-                '“$nombreVehiculoLimpio” de “${widget.vehiculo.clienteNombre}”',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            Row(
-              children: [
-                if (esPantallaGrande)
-                  const Text(
-                    'Leonardo',
-                    style: TextStyle(color: Colors.black, fontSize: 16),
-                  ),
-                const SizedBox(width: 10),
-                CircleAvatar(
-                  backgroundColor: Colors.red[800],
-                  child: const Icon(Icons.build, color: Colors.black),
-                ),
-              ],
-            ),
-          ],
+      appBar: PreferredSize(
+        // Comparte el diez por ciento de altura con la página principal.
+        preferredSize: Size.fromHeight(
+          MediaQuery.sizeOf(context).height * 0.10,
+        ),
+        child: SizedBox(
+          height:
+              MediaQuery.sizeOf(context).height *
+              0.10, // Mantiene la altura común de las barras.
+          child: BarraSuperior(
+            tituloPagina: nombreVehiculoLimpio,
+          ), // Reutiliza el encabezado de Inicio.
         ),
       ),
       drawer: esPantallaGrande
@@ -119,7 +126,10 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (esPantallaGrande)
-            const SizedBox(width: 150, child: MenuLateral(activo: 'Vehiculos')),
+            SizedBox(
+              width: MediaQuery.sizeOf(context).width * 0.12,
+              child: const MenuLateral(activo: 'Vehiculos'),
+            ),
 
           Expanded(
             child: SingleChildScrollView(
@@ -161,7 +171,10 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ElevatedButton.icon(
+        CartaNavegacion.accion(
+          // Conserva las medidas y la función de la acción original.
+          tipoBoton: 'elevated',
+
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.keyboard_return, color: Colors.black),
           label: const Text(
@@ -173,7 +186,7 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
             ),
           ),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red[200],
+            backgroundColor: const Color(0xFFF2A0A0),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           ),
         ),
@@ -200,7 +213,7 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
         const SizedBox(height: 40),
 
         const Text(
-          'VENTAS DEL VEHÍCULO',
+          'COMPRAS PARA VEHÍCULO',
           style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 20),
@@ -212,16 +225,16 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
         else
           SizedBox(
             width: double.infinity,
-            child: DataTable(
+            child: TablaDatos.desdeCeldas(
               headingRowColor: WidgetStateProperty.all(Colors.red[400]),
               border: TableBorder.all(color: Colors.black, width: 2),
               dataRowMaxHeight: 60,
               columns: const [
                 DataColumn(
                   label: Text(
-                    'VENTA',
+                    'PRODUCTOS / SERVICIOS',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Colors.black,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -231,7 +244,7 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
                   label: Text(
                     'TOTAL',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Colors.black,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -241,7 +254,7 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
                   label: Text(
                     'VER',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Colors.black,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -258,7 +271,7 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
                   cells: [
                     DataCell(
                       Text(
-                        '#${venta.id}',
+                        venta.productosResumen,
                         style: const TextStyle(fontSize: 16),
                       ),
                     ),
@@ -269,8 +282,11 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
                       ),
                     ),
                     DataCell(
-                      IconButton(
-                        icon: const Icon(
+                      CartaNavegacion.accion(
+                        // Conserva las medidas y la función de la acción original.
+                        tipoBoton: 'icon',
+
+                        child: const Icon(
                           Icons.search,
                           size: 30,
                           color: Colors.black,
@@ -312,7 +328,7 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
       children: [
         CircleAvatar(
           radius: 70,
-          backgroundColor: Colors.red[400],
+          backgroundColor: const Color(0xFFD96363),
           child: const Icon(
             Icons.person_outline,
             size: 80,
@@ -382,21 +398,22 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
         ),
         const SizedBox(height: 30),
 
-        ElevatedButton.icon(
-          onPressed: () {
-            // Lógica para redirigir a la página de edición del cliente
-          },
+        CartaNavegacion.accion(
+          // Conserva las medidas y la función de la acción original.
+          tipoBoton: 'elevated',
+
+          onPressed: _verCliente, // Abre el cliente real del vehículo.
           icon: const Icon(Icons.search, color: Colors.black, size: 30),
           label: const Text(
             'VER CLIENTE',
             style: TextStyle(
               color: Colors.black,
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.grey[400],
+            backgroundColor: const Color(0xFFB7B7B7),
             padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
           ),
         ),

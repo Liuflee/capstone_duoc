@@ -1,3 +1,11 @@
+// Abre el registro conservando el listado debajo de la nueva ruta.
+import 'package:frenos_cerna/features/vehiculos/pagina_crear_vehiculo.dart';
+// Importa la barra superior común a las páginas.
+import 'package:frenos_cerna/shared/widgets/barra_superior.dart';
+// Importa los campos de formulario reutilizables.
+
+// Importa las cartas que conservan las acciones de la página.
+import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
 import 'package:flutter/material.dart';
 import 'package:frenos_cerna/core/data/supabase_database.dart';
 import 'package:frenos_cerna/features/vehiculos/pagina_detalle_vehiculo.dart';
@@ -58,7 +66,8 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
   List<HistorialVehiculo> historial = [];
   bool _cargando = true;
   String? _error;
-  String _busqueda = '';
+  final String _busqueda =
+      ''; // El buscador compartido filtra los registros de la tabla.
 
   // Colores de cabecera que se alternan entre las columnas.
   static const Color _rojoClaro = Color.fromARGB(255, 253, 116, 116);
@@ -128,7 +137,9 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
 
   @override
   Widget build(BuildContext context) {
-    final esPantallaGrande = MediaQuery.of(context).size.width > 800;
+    final esPantallaGrande =
+        MediaQuery.of(context).size.width >=
+        700; // Comparte el punto de adaptación del menú principal.
 
     // Convierte los vehículos filtrados a registros que entiende TablaDatos.
     // El objeto original se conserva para usarlo al revisar el detalle.
@@ -146,54 +157,18 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.grey[300],
-        elevation: 0,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            if (esPantallaGrande)
-              Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    color: Colors.grey[500],
-                    child: const Icon(
-                      Icons.settings_input_component,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'Frenos\nCerna',
-                    style: TextStyle(color: Colors.black, fontSize: 16),
-                  ),
-                ],
-              ),
-            const Text(
-              'Historial Vehículos',
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
-              ),
-            ),
-            Row(
-              children: [
-                if (esPantallaGrande)
-                  const Text(
-                    'Leonardo',
-                    style: TextStyle(color: Colors.black, fontSize: 16),
-                  ),
-                const SizedBox(width: 10),
-                CircleAvatar(
-                  backgroundColor: Colors.red[800],
-                  child: const Icon(Icons.build, color: Colors.black),
-                ),
-              ],
-            ),
-          ],
+      appBar: PreferredSize(
+        // Comparte el diez por ciento de altura con la página principal.
+        preferredSize: Size.fromHeight(
+          MediaQuery.sizeOf(context).height * 0.10,
+        ),
+        child: SizedBox(
+          height:
+              MediaQuery.sizeOf(context).height *
+              0.10, // Mantiene la altura común de las barras.
+          child: BarraSuperior(
+            tituloPagina: 'Vehículos',
+          ), // Reutiliza el encabezado de Inicio.
         ),
       ),
       drawer: esPantallaGrande
@@ -203,34 +178,42 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (esPantallaGrande)
-            const SizedBox(width: 150, child: MenuLateral(activo: 'Vehiculos')),
+            SizedBox(
+              width: MediaQuery.sizeOf(context).width * 0.12,
+              child: const MenuLateral(activo: 'Vehiculos'),
+            ),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Container(
-                    width: 350,
-                    color: Colors.grey[300],
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: TextField(
-                      onChanged: (valor) {
-                        setState(() {
-                          _busqueda = valor;
-                        });
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: CartaNavegacion.accion(
+                      onPressed: () async {
+                        final creado = await Navigator.push<bool>(
+                          context,
+                          MaterialPageRoute(
+                            settings: const RouteSettings(
+                              name: '/vehicles/new',
+                            ),
+                            builder: (context) => const PaginaCrearVehiculo(),
+                          ),
+                        );
+                        if (creado == true && mounted) await _cargarVehiculos();
                       },
-                      decoration: const InputDecoration(
-                        hintText: 'BUSCAR CLIENTE, VEHÍCULO O PATENTE',
-                        border: InputBorder.none,
-                        suffixIcon: Icon(
-                          Icons.search,
-                          color: Colors.black,
-                          size: 30,
-                        ),
+                      icon: const Icon(Icons.add),
+                      label: const Text('REGISTRAR VEHÍCULO'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFB7B7B7),
+                        foregroundColor: Colors.black,
                       ),
                     ),
-                  ),
+                  ), // Abre la nueva vista y actualiza el listado al volver.
+                  const SizedBox(height: 20), // Separa la acción de la tabla.
+
+                  const SizedBox.shrink(),
                   const SizedBox(height: 20),
                   if (_error != null)
                     Text('Error al cargar vehículos: $_error'),
@@ -309,9 +292,12 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                             final registro =
                                 fila['registro'] as HistorialVehiculo;
 
-                            return IconButton(
+                            return CartaNavegacion.accion(
+                              // Conserva las medidas y la función de la acción original.
+                              tipoBoton: 'icon',
+
                               tooltip: 'Revisar vehículo',
-                              icon: const Icon(
+                              child: const Icon(
                                 Icons.search,
                                 size: 35,
                                 color: Colors.black,
@@ -320,8 +306,9 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        PaginaDetalleVehiculo(vehiculo: registro),
+                                    builder: (context) => PaginaDetalleVehiculo(
+                                      vehiculo: registro,
+                                    ),
                                   ),
                                 );
                               },
