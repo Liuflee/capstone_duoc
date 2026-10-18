@@ -4,6 +4,7 @@ import 'package:frenos_cerna/features/ventas/presentation/pagina_detalle_venta.d
 import 'package:frenos_cerna/features/vehiculos/pagina_vehiculos.dart';
 import 'package:frenos_cerna/features/vehiculos/pagina_detalle_vehiculo.dart';
 import 'package:frenos_cerna/shared/widgets/estructura_pagina.dart';
+import 'package:frenos_cerna/features/clientes/widgets/lista_vehiculos_cliente.dart';
 // Importa la distribución reutilizable de campos.
 import 'package:frenos_cerna/shared/widgets/formulario_datos.dart';
 // Importa las cartas que conservan las acciones de la página.
@@ -23,11 +24,13 @@ class PaginaEditarCliente extends StatefulWidget {
 
   final Future<List<VentaRegistro>> Function(String)?
   cargarHistorial; // Permite verificar la consulta sin conexión real.
+  final Future<List<HistorialVehiculo>> Function(String)? cargarVehiculos;
   // Constructor de la página
   const PaginaEditarCliente({
     super.key,
     required this.cliente,
     this.cargarHistorial,
+    this.cargarVehiculos,
   });
 
   @override
@@ -43,6 +46,9 @@ class _PaginaEditarClienteState extends State<PaginaEditarCliente> {
   // Evita que se repitan las operaciones mientras se guarda
   List<VentaRegistro> _ventas = []; // Conserva el historial real.
   String? _errorHistorial; // Conserva los errores de carga.
+  List<HistorialVehiculo> _vehiculos = [];
+  bool _cargandoVehiculos = true;
+  String? _errorVehiculos;
   bool _guardando = false;
 
   @override
@@ -53,6 +59,7 @@ class _PaginaEditarClienteState extends State<PaginaEditarCliente> {
     _nombreCtrl = TextEditingController(text: widget.cliente.nombre);
     _fonoCtrl = TextEditingController(text: widget.cliente.numero);
     _cargarHistorial(); // Consulta las ventas del cliente.
+    _cargarVehiculos();
   }
 
   @override
@@ -125,42 +132,34 @@ class _PaginaEditarClienteState extends State<PaginaEditarCliente> {
     }
   } // Recupera el historial real.
 
-  Future<void> _revisarVehiculo() async {
+  Future<void> _cargarVehiculos() async {
     try {
-      final datos = await SupabaseDatabase.client
-          .from(SupabaseTables.vehiculos)
-          .select(
-            'patente, kilometraje, rut_cliente, cliente(nombre), modelo_vehiculo(modelo, marca_vehiculo(marca))',
-          )
-          .eq('rut_cliente', int.parse(widget.cliente.id))
-          .limit(1);
+      final vehiculos =
+          await (widget.cargarVehiculos?.call(widget.cliente.id) ??
+              cargarVehiculosDeCliente(widget.cliente.id));
       if (!mounted) return;
-      if (datos.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('El cliente aún no tiene una patente registrada.'),
-          ),
-        );
-        return;
-      }
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PaginaDetalleVehiculo(
-            vehiculo: HistorialVehiculo.fromJson(
-              Map<String, dynamic>.from(datos.first),
-            ),
-          ),
-        ),
-      );
+      setState(() {
+        _vehiculos = vehiculos;
+        _errorVehiculos = null;
+        _cargandoVehiculos = false;
+      });
     } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo abrir el vehículo: $error')),
-        );
-      }
+      if (!mounted) return;
+      setState(() {
+        _errorVehiculos = error.toString();
+        _cargandoVehiculos = false;
+      });
     }
-  } // Revisa un vehículo existente sin crear relaciones ficticias.
+  }
+
+  void _abrirVehiculo(HistorialVehiculo vehiculo) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PaginaDetalleVehiculo(vehiculo: vehiculo),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) => EstructuraPagina(
@@ -172,25 +171,6 @@ class _PaginaEditarClienteState extends State<PaginaEditarCliente> {
           final formulario = Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'VEHÍCULO DEL CLIENTE: ${widget.cliente.vehiculo}',
-                style: const TextStyle(fontSize: 20),
-              ), // Consulta el vehículo registrado sin inventar una columna de Cliente.
-              Align(
-                alignment: Alignment.centerLeft,
-                child: CartaNavegacion.accion(
-                  onPressed: _revisarVehiculo,
-                  icon: const Icon(Icons.search),
-                  label: const Text('REVISAR'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFB7B7B7),
-                    foregroundColor: Colors.black,
-                  ),
-                ),
-              ), // Abre el vehículo registrado del cliente.
-              const SizedBox(
-                height: 44,
-              ), // Separa el vehículo de los datos editables.
               FormularioDatos(
                 ancho: 780,
                 campos: [
@@ -209,6 +189,20 @@ class _PaginaEditarClienteState extends State<PaginaEditarCliente> {
                   ), // Conserva la edición de teléfono.
                 ],
               ), // Alinea ambos campos del cliente.
+              const SizedBox(height: 24),
+              ListaVehiculosCliente(
+                vehiculos: _vehiculos,
+                cargando: _cargandoVehiculos,
+                error: _errorVehiculos,
+                alReintentar: () {
+                  setState(() {
+                    _cargandoVehiculos = true;
+                    _errorVehiculos = null;
+                  });
+                  _cargarVehiculos();
+                },
+                alAbrir: _abrirVehiculo,
+              ),
             ],
           ); // Finaliza los datos editables.
           return Column(

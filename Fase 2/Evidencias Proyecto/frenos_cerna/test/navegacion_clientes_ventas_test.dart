@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart'; // Verifica rutas y distribuci�
 import 'package:shared_preferences/shared_preferences.dart'; // Aísla las ventas locales de prueba.
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart'; // Consulta la nueva columna de información.
 import 'package:frenos_cerna/features/clientes/pagina_ver_cliente.dart'; // Verifica la consulta sin edición.
+import 'package:frenos_cerna/features/clientes/pagina_editar_cliente.dart';
 import 'package:frenos_cerna/features/inicio/pagina_inicio.dart'; // Verifica las tarjetas de acceso.
 import 'package:frenos_cerna/features/ventas/data/ventas_repository.dart'; // Conserva fechas y relaciones reales.
 import 'package:frenos_cerna/features/ventas/data/ventas_pendientes_repository.dart'; // Conserva las pendientes de distintos días.
@@ -10,6 +11,8 @@ import 'package:frenos_cerna/features/ventas/presentation/pagina_crear_ventas.da
 import 'package:frenos_cerna/features/ventas/presentation/pagina_detalle_venta.dart'; // Verifica Ver cliente desde ambos historiales.
 import 'package:frenos_cerna/features/ventas/presentation/pagina_ventas.dart'; // Verifica el alcance diario.
 import 'package:frenos_cerna/features/ventas/presentation/pagina_ventas_historial.dart'; // Verifica el historial completo.
+import 'package:frenos_cerna/features/vehiculos/pagina_vehiculos.dart';
+import 'package:frenos_cerna/features/vehiculos/pagina_detalle_vehiculo.dart';
 import 'package:frenos_cerna/shared/widgets/tabla_datos.dart'; // Inspecciona las filas que recibe la tabla compartida.
 
 void main() {
@@ -83,14 +86,14 @@ void main() {
     ); // Coloca la consulta después de editar.
     expect(
       tabla.celdasPersonalizadas.keys,
-      containsAll([3, 4]),
+      containsAll([4, 5]),
     ); // Conserva ambas funciones separadas.
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: Builder(
             builder: (context) =>
-                tabla.celdasPersonalizadas[4]!(context, {'cliente': cliente}),
+                tabla.celdasPersonalizadas[5]!(context, {'cliente': cliente}),
           ),
         ),
       ),
@@ -108,6 +111,159 @@ void main() {
       findsNothing,
     ); // Mantiene la consulta sin cambios.
   }); // Finaliza la verificación de la columna.
+
+  testWidgets('Cliente muestra todos sus vehículos y abre cada detalle', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1440, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final vehiculos = [
+      HistorialVehiculo(
+        id: 'ABCD12',
+        clienteNombre: cliente.nombre,
+        vehiculoNombre: 'Toyota Corolla (ABCD12)',
+        total: 124000,
+        fecha: 'ABCD12',
+      ),
+      HistorialVehiculo(
+        id: 'EFGH34',
+        clienteNombre: cliente.nombre,
+        vehiculoNombre: 'Kia Rio (EFGH34)',
+        total: 87000,
+        fecha: 'EFGH34',
+      ),
+    ];
+    final clienteConVehiculos = Cliente.fromJson({
+      'rut': '123',
+      'nombre': cliente.nombre,
+      'fono': cliente.numero,
+      'vehiculo_cliente': [
+        {
+          'patente': 'ABCD12',
+          'modelo_vehiculo': {
+            'modelo': 'Corolla',
+            'marca_vehiculo': {'marca': 'Toyota'},
+          },
+        },
+        {
+          'patente': 'EFGH34',
+          'modelo_vehiculo': {
+            'modelo': 'Rio',
+            'marca_vehiculo': {'marca': 'Kia'},
+          },
+        },
+      ],
+    });
+    expect(clienteConVehiculos.vehiculos, [
+      'Toyota Corolla (ABCD12)',
+      'Kia Rio (EFGH34)',
+    ]);
+    expect(clienteConVehiculos.patentesVehiculos, ['ABCD12', 'EFGH34']);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PaginaVerCliente(
+          cliente: clienteConVehiculos,
+          cargarHistorial: (_) async => [],
+          cargarVehiculos: (_) async => vehiculos,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('2 vehículos'), findsOneWidget);
+    expect(find.text('Toyota Corolla (ABCD12)'), findsOneWidget);
+    expect(find.text('Kia Rio (EFGH34)'), findsOneWidget);
+    await tester.tap(find.byTooltip('Ver detalle de EFGH34'));
+    await tester.pumpAndSettle();
+    expect(find.byType(PaginaDetalleVehiculo), findsOneWidget);
+    expect(
+      tester.widget<PaginaDetalleVehiculo>(
+        find.byType(PaginaDetalleVehiculo),
+      ).vehiculo.id,
+      'EFGH34',
+    );
+    expect(tester.takeException(), isNull);
+
+  });
+
+  testWidgets('Edición de cliente muestra todos sus vehículos', (tester) async {
+    final vehiculos = [
+      HistorialVehiculo(
+        id: 'ABCD12',
+        clienteNombre: cliente.nombre,
+        vehiculoNombre: 'Toyota Corolla (ABCD12)',
+        total: 124000,
+        fecha: 'ABCD12',
+      ),
+      HistorialVehiculo(
+        id: 'EFGH34',
+        clienteNombre: cliente.nombre,
+        vehiculoNombre: 'Kia Rio (EFGH34)',
+        total: 87000,
+        fecha: 'EFGH34',
+      ),
+    ];
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PaginaEditarCliente(
+          cliente: cliente,
+          cargarHistorial: (_) async => [],
+          cargarVehiculos: (_) async => vehiculos,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('2 vehículos'), findsOneWidget);
+    expect(find.text('Toyota Corolla (ABCD12)'), findsOneWidget);
+    expect(find.text('Kia Rio (EFGH34)'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Venta permite elegir entre las patentes del cliente', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1440, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final clienteConVehiculos = Cliente(
+      id: '123',
+      nombre: cliente.nombre,
+      numero: cliente.numero,
+      ultimaVenta: '',
+      vehiculo: 'ABCD12, EFGH34',
+      vehiculos: const ['Toyota Corolla (ABCD12)', 'Kia Rio (EFGH34)'],
+      patentesVehiculos: const ['ABCD12', 'EFGH34'],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PaginaCrearVenta(
+          cargarClientes: () async => [clienteConVehiculos],
+          cargarProductos: () async => [],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('SELECCIONAR CLIENTE'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cliente consultado · RUT: 123'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ActionChip), findsNWidgets(2));
+    await tester.tap(find.widgetWithText(ActionChip, 'EFGH34'));
+    await tester.pump();
+    expect(
+      tester.widget<TextFormField>(find.byType(TextFormField).first).controller!.text,
+      'EFGH34',
+    );
+    expect(tester.takeException(), isNull);
+  });
 
   for (final pendiente in [false, true]) {
     // Comprueba el botón compartido por ambos historiales.
@@ -249,6 +405,7 @@ void main() {
         find.text('REGISTRAR\nVENTA NUEVA'),
         findsNothing,
       ); // Retira el botón grande de registro.
+      expect(find.text('AGREGAR VENTA'), findsOneWidget);
       await tester.pumpWidget(
         MaterialApp(
           home: PaginaVentasHistorial(
@@ -266,6 +423,7 @@ void main() {
         find.text('REGISTRAR\nVENTA NUEVA'),
         findsNothing,
       ); // El historial tampoco ofrece registrar una venta nueva.
+      expect(find.text('AGREGAR VENTA'), findsNothing);
       expect(tester.takeException(), isNull); // Exige una distribución válida.
     },
   ); // Finaliza la comparación entre día e historial.

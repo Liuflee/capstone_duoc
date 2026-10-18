@@ -55,6 +55,22 @@ class HistorialVehiculo {
   }
 }
 
+Future<List<HistorialVehiculo>> cargarVehiculosDeCliente(String rut) async {
+  final respuesta = await SupabaseDatabase.client
+      .from(SupabaseTables.vehiculos)
+      .select(
+        'patente, kilometraje, rut_cliente, cliente(nombre), '
+        'modelo_vehiculo(modelo, marca_vehiculo(marca))',
+      )
+      .eq('rut_cliente', int.parse(rut))
+      .order('patente');
+  return respuesta
+      .map(
+        (fila) => HistorialVehiculo.fromJson(Map<String, dynamic>.from(fila)),
+      )
+      .toList();
+}
+
 class PaginaVehiculos extends StatefulWidget {
   const PaginaVehiculos({super.key});
 

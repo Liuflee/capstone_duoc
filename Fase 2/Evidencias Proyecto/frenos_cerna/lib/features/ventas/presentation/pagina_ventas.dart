@@ -8,6 +8,7 @@ import 'package:frenos_cerna/shared/widgets/barra_superior.dart';
 import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
 import 'package:flutter/material.dart';
 import 'package:frenos_cerna/features/ventas/data/ventas_repository.dart';
+import 'package:frenos_cerna/features/ventas/presentation/pagina_crear_ventas.dart';
 import 'package:frenos_cerna/features/ventas/presentation/pagina_detalle_venta.dart';
 import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
 import 'package:frenos_cerna/shared/widgets/tabla_datos.dart';
@@ -92,6 +93,17 @@ class _PaginaVentasState extends State<PaginaVentas> {
       _cargando = false;
     }); // Conserva las pendientes aunque no haya conexión.
   } // Finaliza la carga combinada.
+
+  Future<void> _agregarVenta() async {
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute(
+        settings: const RouteSettings(name: '/sales/new'),
+        builder: (context) => const PaginaCrearVenta(),
+      ),
+    ); // Abre el registro desde las ventas del día.
+    if (mounted) await _cargarVentas(); // Actualiza la tabla al volver.
+  } // Finaliza el registro de una venta diaria.
 
   Widget _controlesVentas() => Padding(
     padding: const EdgeInsets.only(left: 14, bottom: 20),
@@ -254,14 +266,48 @@ class _PaginaVentasState extends State<PaginaVentas> {
                   // ==================================================
                   // TÍTULO
                   // ==================================================
-                  Text(
-                    widget.mostrarHistorial ? 'HISTORIAL DE VENTAS' : 'VENTAS',
+                  if (widget.mostrarHistorial)
+                    const Text(
+                      'HISTORIAL DE VENTAS',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  else
+                    LayoutBuilder(
+                      builder: (context, limites) {
+                        final titulo = const Text(
+                          'VENTAS',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        );
+                        final botonAgregar = CartaNavegacion.accion(
+                          onPressed: _agregarVenta,
+                          icon: const Icon(Icons.add),
+                          label: const Text('AGREGAR VENTA'),
+                        );
 
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                        if (limites.maxWidth >= 600) {
+                          return Row(
+                            children: [
+                              Expanded(child: titulo),
+                              botonAgregar,
+                            ],
+                          );
+                        }
+                        return Column(
+                          children: [
+                            titulo,
+                            const SizedBox(height: 12),
+                            botonAgregar,
+                          ],
+                        );
+                      },
                     ),
-                  ),
 
                   const SizedBox(height: 20),
 

@@ -32,6 +32,8 @@ class Cliente {
   final String ultimaVenta;
 
   final String vehiculo;
+  final List<String> vehiculos;
+  final List<String> patentesVehiculos;
 
   Cliente({
     required this.id,
@@ -39,10 +41,27 @@ class Cliente {
     required this.numero,
     required this.ultimaVenta,
     required this.vehiculo,
+    this.vehiculos = const [],
+    this.patentesVehiculos = const [],
   });
 
   // Convierte los campos de Supabase en un objeto Cliente.
   factory Cliente.fromJson(Map<String, dynamic> json) {
+    final vehiculos = (json['vehiculo_cliente'] as List? ?? [])
+        .whereType<Map>()
+        .map((fila) {
+          final patente = fila['patente']?.toString() ?? 'Sin patente';
+          final modelo = fila['modelo_vehiculo'];
+          final marca = modelo is Map ? modelo['marca_vehiculo'] : null;
+          final partes = [
+            if (marca is Map) marca['marca'],
+            if (modelo is Map) modelo['modelo'],
+          ].where((parte) => parte != null && parte.toString().isNotEmpty);
+          return partes.isEmpty
+              ? patente
+              : '${partes.join(' ')} ($patente)';
+        })
+        .toList();
     return Cliente(
       id: json['rut']?.toString() ?? 'sin-rut',
       nombre: (json['nombre'] ?? 'Sin nombre').toString(),
@@ -53,6 +72,12 @@ class Cliente {
           : (json['vehiculo_cliente'] as List)
                 .map((vehiculo) => vehiculo['patente'].toString())
                 .join(', '), // Usa la relación existente de vehículos.
+      vehiculos: vehiculos,
+      patentesVehiculos: (json['vehiculo_cliente'] as List? ?? [])
+          .whereType<Map>()
+          .map((fila) => fila['patente']?.toString() ?? '')
+          .where((patente) => patente.isNotEmpty)
+          .toList(),
     );
   }
 }
@@ -151,10 +176,12 @@ class _PaginaClientesState extends State<PaginaClientes> {
               'nombre' => [cliente.nombre], // Busca únicamente en el nombre.
               'numero' => [cliente.numero], // Busca únicamente en el teléfono.
               'rut' => [cliente.id], // Busca únicamente en el RUT.
+              'vehiculos' => cliente.vehiculos,
               _ => [
                 cliente.nombre,
                 cliente.numero,
                 cliente.id,
+                ...cliente.vehiculos,
               ], // Busca en todos los campos.
             }; // Finaliza la selección de campos.
             // Comprueba las coincidencias sin distinguir mayúsculas.
@@ -171,6 +198,9 @@ class _PaginaClientesState extends State<PaginaClientes> {
             'nombre': cliente.nombre,
             'numero': cliente.numero,
             'rut': cliente.id,
+            'vehiculos': cliente.vehiculos.isEmpty
+                ? 'Sin vehículos'
+                : cliente.vehiculos.join('\n'),
             'cliente': cliente,
           },
         )
@@ -283,6 +313,10 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                             id: 'rut',
                                             texto: 'RUT',
                                           ), // Limita la búsqueda al RUT.
+                                          OpcionFiltroTabla(
+                                            id: 'vehiculos',
+                                            texto: 'Vehículos',
+                                          ),
                                         ], // Finaliza las opciones disponibles.
                                         alSeleccionar: (id) {
                                           // Recibe el identificador del filtro elegido.
@@ -329,6 +363,7 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                     'NOMBRE',
                                     'NÚMERO',
                                     'RUT',
+                                    'VEHÍCULOS',
                                     'CAMBIAR',
                                     'VER',
                                   ],
@@ -339,6 +374,7 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                     'nombre',
                                     'numero',
                                     'rut',
+                                    'vehiculos',
                                     '',
                                     '',
                                   ],
@@ -349,6 +385,7 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                     330,
                                     150,
                                     150,
+                                    260,
                                     120,
                                     120,
                                   ],
@@ -358,12 +395,14 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                     Color.fromARGB(255, 253, 116, 116),
                                     Color.fromARGB(255, 207, 81, 81),
                                     Color.fromARGB(255, 253, 116, 116),
-                                    Color.fromARGB(255, 207, 81, 81),
                                     Color.fromARGB(255, 253, 116, 116),
+                                    Color.fromARGB(255, 253, 116, 116),
+                                    Color.fromARGB(255, 207, 81, 81),
                                   ],
 
                                   // Color del texto de cada cabecera (null usa blanco).
                                   coloresTextoEncabezados: const [
+                                    null,
                                     null,
                                     null,
                                     null,
@@ -405,8 +444,18 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                       );
                                     },
 
-                                    // Columna 3: botón de edición del cliente.
-                                    3: (context, fila) {
+                                    3: (context, fila) => Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 8,
+                                      ),
+                                      child: Text(
+                                        fila['vehiculos'] as String,
+                                        maxLines: 4,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    // Columna 4: botón de edición del cliente.
+                                    4: (context, fila) {
                                       final cliente =
                                           fila['cliente'] as Cliente;
 
@@ -436,7 +485,7 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                         },
                                       );
                                     },
-                                    4: (context, fila) =>
+                                    5: (context, fila) =>
                                         CartaNavegacion.accion(
                                           tipoBoton: 'icon',
                                           tooltip: 'Ver cliente',

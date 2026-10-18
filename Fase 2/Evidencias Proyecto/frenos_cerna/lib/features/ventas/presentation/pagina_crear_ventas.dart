@@ -142,7 +142,9 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
     }
     final filas = await SupabaseDatabase.client
         .from(SupabaseTables.clientes)
-        .select('rut, nombre, fono')
+        .select(
+          'rut, nombre, fono, vehiculo_cliente(patente, modelo_vehiculo(modelo, marca_vehiculo(marca)))',
+        )
         .order('nombre'); // Consulta las columnas existentes.
     return filas
         .map((fila) => Cliente.fromJson(Map<String, dynamic>.from(fila)))
@@ -191,16 +193,80 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Limita el tamaño del menú.
-                  FormularioDatos(
-                    campos: [
-                      CampoFormularioDatos(
-                        controlador: _busquedaCliente,
-                        etiqueta: 'BUSCAR CLIENTE',
-                        textoAyuda: 'Nombre o RUT',
-                        alCambiar: (_) => setState(() {}),
-                      ),
-                    ],
-                  ), // Usa el formulario compartido.
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final campoBusqueda = SizedBox(
+                        height: 56,
+                        child: FormularioDatos.campo(
+                          controller: _busquedaCliente,
+                          decoration: const InputDecoration(
+                            hintText: 'Nombre o RUT',
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 16,
+                            ),
+                          ),
+                          onChanged: (_) => setState(() {}),
+                        ),
+                      );
+                      final botonCrear = SizedBox(
+                        width: 240,
+                        height: 56,
+                        child: CartaNavegacion.accion(
+                          onPressed: _crearCliente,
+                          icon: const Icon(Icons.person_add_alt_1),
+                          label: const Text('CREAR CLIENTE'),
+                          conservarEstiloOriginal: true,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFBDBDBD),
+                            foregroundColor: Colors.black,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            textStyle: Theme.of(context).textTheme.labelLarge
+                                ?.copyWith(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                          ),
+                        ),
+                      );
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Text(
+                            'BUSCAR CLIENTE',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          if (constraints.maxWidth >= 520)
+                            Row(
+                              children: [
+                                Expanded(child: campoBusqueda),
+                                const SizedBox(width: 12),
+                                botonCrear,
+                              ],
+                            )
+                          else ...[
+                            campoBusqueda,
+                            const SizedBox(height: 12),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: botonCrear,
+                            ),
+                          ],
+                        ],
+                      );
+                    },
+                  ), // Mantiene el buscador largo y el botón a su lado.
+                  const SizedBox(height: 12), // Separa la búsqueda de los resultados.
                   Expanded(
                     child: FutureBuilder<List<Cliente>>(
                       future: _clientes,
@@ -243,48 +309,62 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
                             ),
                           ); // Ofrece registrar el cliente ausente.
                         }
-                        return ListView(
-                          children: [
-                            for (final cliente in resultados)
-                              MenuItemButton(
-                                style: ButtonStyle(
-                                  foregroundColor: const WidgetStatePropertyAll(
-                                    Colors.black,
-                                  ),
-                                  overlayColor: const WidgetStatePropertyAll(
-                                    Color(0x22000000),
-                                  ),
-                                  backgroundColor:
-                                      WidgetStateProperty.resolveWith(
-                                        (estados) =>
-                                            estados.contains(
-                                                  WidgetState.hovered,
-                                                ) ||
-                                                estados.contains(
-                                                  WidgetState.focused,
-                                                )
-                                            ? const Color(0xFFB7B7B7)
-                                            : const Color(0xFFE0E0E0),
-                                      ),
-                                ), // Mantiene selección y foco dentro de la paleta gris.
-                                onPressed: () {
-                                  setState(() => _cliente = cliente);
-                                  _menuClientes.close();
-                                },
-                                child: Text(
-                                  '${cliente.nombre} · RUT: ${cliente.id}',
+                        return ListView.separated(
+                          itemCount: resultados.length,
+                          separatorBuilder: (context, index) => const Divider(
+                            height: 1,
+                            thickness: 1,
+                            color: Color(0x33000000),
+                          ),
+                          itemBuilder: (context, index) {
+                            final cliente = resultados[index];
+                            return MenuItemButton(
+                              style: ButtonStyle(
+                                foregroundColor: const WidgetStatePropertyAll(
+                                  Colors.black,
                                 ),
+                                overlayColor: const WidgetStatePropertyAll(
+                                  Color(0x22000000),
+                                ),
+                                backgroundColor:
+                                    WidgetStateProperty.resolveWith(
+                                      (estados) =>
+                                          estados.contains(
+                                                WidgetState.hovered,
+                                              ) ||
+                                              estados.contains(
+                                                WidgetState.focused,
+                                              )
+                                          ? const Color(0xFFB7B7B7)
+                                          : const Color(0xFFE0E0E0),
+                                    ),
+                              ), // Mantiene selección y foco dentro de la paleta gris.
+                              onPressed: () {
+                                setState(() => _cliente = cliente);
+                                _menuClientes.close();
+                              },
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    '${cliente.nombre} · RUT: ${cliente.id}',
+                                  ),
+                                  if (cliente.vehiculos.isNotEmpty)
+                                    Text(
+                                      'Vehículos: ${cliente.vehiculos.join(', ')}',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                ],
                               ),
-                          ],
-                        ); // Selecciona sin perder la venta.
+                            );
+                          },
+                        ); // Separa las opciones sin cambiar la selección.
                       },
                     ),
                   ), // Finaliza los resultados.
-                  CartaNavegacion.accion(
-                    onPressed: _crearCliente,
-                    icon: const Icon(Icons.person_add_alt_1),
-                    label: const Text('CREAR CLIENTE'),
-                  ), // Abre el registro y regresa con el resultado.
                 ],
               ),
             ),
@@ -703,6 +783,29 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
             ), // Conserva la patente opcional.
           ], // Finaliza los campos alineados.
         ), // Finaliza el formulario reutilizable.
+        if (_cliente?.vehiculos.isNotEmpty ?? false) ...[
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const Text('Vehículos del cliente:'),
+                for (final patente in _cliente!.patentesVehiculos)
+                  ActionChip(
+                    label: Text(patente),
+                    onPressed: _guardando
+                        ? null
+                        : () => setState(
+                            () => _patenteVehiculoCtrl.text = patente,
+                          ),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }

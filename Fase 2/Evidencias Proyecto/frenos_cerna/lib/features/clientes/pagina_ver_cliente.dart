@@ -3,6 +3,7 @@ import 'package:frenos_cerna/features/ventas/data/ventas_repository.dart';
 import 'package:frenos_cerna/features/ventas/presentation/pagina_detalle_venta.dart';
 import 'package:frenos_cerna/features/vehiculos/pagina_vehiculos.dart';
 import 'package:frenos_cerna/features/vehiculos/pagina_detalle_vehiculo.dart';
+import 'package:frenos_cerna/features/clientes/widgets/lista_vehiculos_cliente.dart';
 import 'package:frenos_cerna/shared/widgets/estructura_pagina.dart';
 // Importa la distribución reutilizable de campos.
 import 'package:frenos_cerna/shared/widgets/formulario_datos.dart';
@@ -11,7 +12,6 @@ import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
 // Importaciones de Flutter y los componentes del proyecto
 import 'package:flutter/material.dart';
 
-import 'package:frenos_cerna/core/data/supabase_database.dart';
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart';
 
 import 'package:frenos_cerna/shared/widgets/tabla_datos.dart';
@@ -23,11 +23,13 @@ class PaginaVerCliente extends StatefulWidget {
 
   final Future<List<VentaRegistro>> Function(String)?
   cargarHistorial; // Permite verificar la consulta sin conexión real.
+  final Future<List<HistorialVehiculo>> Function(String)? cargarVehiculos;
   // Constructor de la página
   const PaginaVerCliente({
     super.key,
     required this.cliente,
     this.cargarHistorial,
+    this.cargarVehiculos,
   });
 
   @override
@@ -43,6 +45,10 @@ class _PaginaVerClienteState extends State<PaginaVerCliente> {
   // Evita que se repitan las operaciones mientras se guarda
   List<VentaRegistro> _ventas = []; // Conserva el historial real.
   String? _errorHistorial; // Conserva los errores de carga.
+  bool _cargandoHistorial = true;
+  List<HistorialVehiculo> _vehiculos = [];
+  bool _cargandoVehiculos = true;
+  String? _errorVehiculos;
 
   @override
   void initState() {
@@ -52,6 +58,7 @@ class _PaginaVerClienteState extends State<PaginaVerCliente> {
     _nombreCtrl = TextEditingController(text: widget.cliente.nombre);
     _fonoCtrl = TextEditingController(text: widget.cliente.numero);
     _cargarHistorial(); // Consulta las ventas del cliente.
+    _cargarVehiculos();
   }
 
   @override
@@ -71,48 +78,51 @@ class _PaginaVerClienteState extends State<PaginaVerCliente> {
       final ventas =
           await (widget.cargarHistorial?.call(widget.cliente.id) ??
               VentaRegistro.obtenerPorCliente(widget.cliente.id));
-      if (mounted) setState(() => _ventas = ventas);
+      if (mounted) {
+        setState(() {
+          _ventas = ventas;
+          _errorHistorial = null;
+          _cargandoHistorial = false;
+        });
+      }
     } catch (error) {
-      if (mounted) setState(() => _errorHistorial = error.toString());
+      if (mounted) {
+        setState(() {
+          _errorHistorial = error.toString();
+          _cargandoHistorial = false;
+        });
+      }
     }
   } // Recupera el historial real.
 
-  Future<void> _revisarVehiculo() async {
+  Future<void> _cargarVehiculos() async {
     try {
-      final datos = await SupabaseDatabase.client
-          .from(SupabaseTables.vehiculos)
-          .select(
-            'patente, kilometraje, rut_cliente, cliente(nombre), modelo_vehiculo(modelo, marca_vehiculo(marca))',
-          )
-          .eq('rut_cliente', int.parse(widget.cliente.id))
-          .limit(1);
+      final vehiculos =
+          await (widget.cargarVehiculos?.call(widget.cliente.id) ??
+              cargarVehiculosDeCliente(widget.cliente.id));
       if (!mounted) return;
-      if (datos.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('El cliente aún no tiene una patente registrada.'),
-          ),
-        );
-        return;
-      }
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PaginaDetalleVehiculo(
-            vehiculo: HistorialVehiculo.fromJson(
-              Map<String, dynamic>.from(datos.first),
-            ),
-          ),
-        ),
-      );
+      setState(() {
+        _vehiculos = vehiculos;
+        _errorVehiculos = null;
+        _cargandoVehiculos = false;
+      });
     } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo abrir el vehículo: $error')),
-        );
-      }
+      if (!mounted) return;
+      setState(() {
+        _errorVehiculos = error.toString();
+        _cargandoVehiculos = false;
+      });
     }
-  } // Revisa un vehículo existente sin crear relaciones ficticias.
+  }
+
+  void _abrirVehiculo(HistorialVehiculo vehiculo) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PaginaDetalleVehiculo(vehiculo: vehiculo),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) => EstructuraPagina(
@@ -121,48 +131,60 @@ class _PaginaVerClienteState extends State<PaginaVerCliente> {
     child: SingleChildScrollView(
       child: LayoutBuilder(
         builder: (context, espacio) {
-          final formulario = Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'VEHÍCULO DEL CLIENTE: ${widget.cliente.vehiculo}',
-                style: const TextStyle(fontSize: 20),
-              ), // Consulta el vehículo registrado sin inventar una columna de Cliente.
-              Align(
-                alignment: Alignment.centerLeft,
-                child: CartaNavegacion.accion(
-                  onPressed: _revisarVehiculo,
-                  icon: const Icon(Icons.search),
-                  label: const Text('REVISAR'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFB7B7B7),
-                    foregroundColor: Colors.black,
-                  ),
+          final formulario = Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF7F7F7),
+              border: Border.all(color: const Color(0xFFE0E0E0)),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'DATOS DEL CLIENTE',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
-              ), // Abre el vehículo registrado del cliente.
-              const SizedBox(
-                height: 44,
-              ), // Separa el vehículo de los datos editables.
-              FormularioDatos(
-                ancho: 780,
-                campos: [
-                  CampoFormularioDatos(
-                    controlador: _nombreCtrl,
-                    etiqueta: 'NOMBRE:',
-                    textoAyuda: 'Nombre del cliente',
-                    habilitado: false,
-                  ), // Conserva la edición de nombre.
-                  CampoFormularioDatos(
-                    controlador: _fonoCtrl,
-                    etiqueta: 'NÚMERO:',
-                    textoAyuda: 'Teléfono del cliente',
-                    tipoTeclado: TextInputType.phone,
-                    habilitado: false,
-                  ), // Conserva la edición de teléfono.
-                ],
-              ), // Alinea ambos campos del cliente.
-            ],
-          ); // Finaliza los datos editables.
+                const SizedBox(height: 16),
+                FormularioDatos(
+                  ancho: espacio.maxWidth >= 900
+                      ? espacio.maxWidth * 0.68
+                      : espacio.maxWidth,
+                  campos: [
+                    CampoFormularioDatos(
+                      controlador: _nombreCtrl,
+                      etiqueta: 'NOMBRE:',
+                      textoAyuda: 'Nombre del cliente',
+                      habilitado: false,
+                    ),
+                    CampoFormularioDatos(
+                      controlador: _fonoCtrl,
+                      etiqueta: 'NÚMERO:',
+                      textoAyuda: 'Teléfono del cliente',
+                      tipoTeclado: TextInputType.phone,
+                      habilitado: false,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                const Divider(height: 1),
+                const SizedBox(height: 16),
+                ListaVehiculosCliente(
+                  vehiculos: _vehiculos,
+                  cargando: _cargandoVehiculos,
+                  error: _errorVehiculos,
+                  alReintentar: () {
+                    setState(() {
+                      _cargandoVehiculos = true;
+                      _errorVehiculos = null;
+                    });
+                    _cargarVehiculos();
+                  },
+                  alAbrir: _abrirVehiculo,
+                ),
+              ],
+            ),
+          ); // Agrupa los datos y acciones del cliente.
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -189,63 +211,8 @@ class _PaginaVerClienteState extends State<PaginaVerCliente> {
                 const SizedBox(height: 28),
                 _resumenCliente(),
               ], // Apila los datos sin reducir acciones en Android.
-              const SizedBox(height: 24), // Separa las acciones del historial.
-              Align(
-                alignment: Alignment.centerRight,
-                child: const SizedBox.shrink(),
-              ), // Conserva el espacio de la composición original.
-              const SizedBox(height: 28), // Separa la acción del historial.
-              const Text(
-                'HISTORIAL DE VENTAS',
-                style: TextStyle(fontSize: 22),
-              ), // Conserva el título de Figma.
-              const SizedBox(height: 18), // Separa la tabla del título.
-              if (_errorHistorial != null)
-                Text(
-                  'No se pudo cargar el historial: $_errorHistorial',
-                ), // Informa errores reales.
-              SizedBox(
-                height: 400,
-                child: TablaDatos(
-                  nombresColumnas: const ['NOMBRE PRODUCTO', 'EXPANDIR'],
-                  camposColumnas: const ['producto', ''],
-                  anchosColumnas: const [
-                    550,
-                    130,
-                  ], // Conserva el ancho y las proporciones del historial.
-                  filas: _ventas
-                      .map(
-                        (venta) => <String, dynamic>{
-                          'producto': venta.productosResumen,
-                          'fecha': venta.fecha,
-                          'venta': venta,
-                        },
-                      )
-                      .toList(), // Sustituye los ejemplos por el historial del cliente.
-                  celdasPersonalizadas: {
-                    1: (context, fila) => CartaNavegacion.accion(
-                      tipoBoton: 'icon',
-                      child: const Icon(Icons.arrow_drop_down, size: 40),
-                      onPressed: () {
-                        final venta = fila['venta'] as VentaRegistro;
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => PaginaDetalleVenta(
-                              idVenta: venta.id,
-                              clienteNombre: venta.clienteNombre,
-                              vehiculoNombre: venta.vehiculoNombre,
-                              total: venta.total,
-                              fecha: venta.fecha,
-                              desdeHistorial: true,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  }, // Abre el detalle de la venta correcta.
-                ),
-              ), // Mantiene los filtros encima de las filas.
+              const SizedBox(height: 28),
+              _historialVentas(),
             ],
           ); // Finaliza la distribución del cliente.
         },
@@ -253,30 +220,140 @@ class _PaginaVerClienteState extends State<PaginaVerCliente> {
     ), // Permite desplazar la página.
   ); // Finaliza el marco común.
 
-  // Construye el resumen del cliente sin usar fotografías.
-  Widget _resumenCliente() => Column(
+  Widget _historialVentas() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      CircleAvatar(
-        radius: 60,
-        backgroundColor: const Color(0xFFFF6D6D),
-        child: const Icon(Icons.person_outline, size: 80, color: Colors.black),
-      ), // Conserva el avatar del prototipo sin imagen de cliente.
-      const SizedBox(height: 16), // Separa el avatar del nombre.
-      Text(
-        widget.cliente.nombre,
-        textAlign: TextAlign.center,
-        style: const TextStyle(fontSize: 22),
-      ), // Conserva la identidad original.
-      Text(
-        'RUT: ${widget.cliente.id}',
-      ), // Muestra el identificador del cliente consultado.
-      Text(
-        widget.cliente.numero,
-        textAlign: TextAlign.center,
-        style: const TextStyle(fontSize: 20),
-      ), // Conserva el teléfono.
-      const SizedBox(height: 30), // Separa la acción de guardar.
-      const SizedBox.shrink(), // Guarda los datos editados sin eliminar el cliente.
+      Row(
+        children: [
+          const Expanded(
+            child: Text(
+              'HISTORIAL DE VENTAS',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+          ),
+          Text(
+            '${_ventas.length} ${_ventas.length == 1 ? 'venta' : 'ventas'}',
+            style: const TextStyle(color: Color(0xFF616161)),
+          ),
+        ],
+      ),
+      const SizedBox(height: 16),
+      if (_cargandoHistorial)
+        const SizedBox(
+          height: 220,
+          child: Center(child: CircularProgressIndicator()),
+        )
+      else if (_errorHistorial != null)
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF3F3),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Column(
+            children: [
+              Text('No se pudo cargar el historial: $_errorHistorial'),
+              const SizedBox(height: 12),
+              CartaNavegacion.accion(
+                onPressed: () {
+                  setState(() => _cargandoHistorial = true);
+                  _cargarHistorial();
+                },
+                child: const Text('REINTENTAR'),
+              ),
+            ],
+          ),
+        )
+      else if (_ventas.isEmpty)
+        Container(
+          height: 140,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF7F7F7),
+            border: Border.all(color: const Color(0xFFE0E0E0)),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Text('Este cliente aún no tiene ventas registradas.'),
+        )
+      else
+        SizedBox(
+          height: 400,
+          child: TablaDatos(
+            nombresColumnas: const ['NOMBRE PRODUCTO', 'EXPANDIR'],
+            camposColumnas: const ['producto', ''],
+            anchosColumnas: const [550, 130],
+            filas: _ventas
+                .map(
+                  (venta) => <String, dynamic>{
+                    'producto': venta.productosResumen,
+                    'fecha': venta.fecha,
+                    'venta': venta,
+                  },
+                )
+                .toList(),
+            celdasPersonalizadas: {
+              1: (context, fila) => CartaNavegacion.accion(
+                tipoBoton: 'icon',
+                tooltip: 'Ver detalle de venta',
+                child: const Icon(Icons.arrow_drop_down, size: 40),
+                onPressed: () {
+                  final venta = fila['venta'] as VentaRegistro;
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PaginaDetalleVenta(
+                        idVenta: venta.id,
+                        clienteNombre: venta.clienteNombre,
+                        vehiculoNombre: venta.vehiculoNombre,
+                        total: venta.total,
+                        fecha: venta.fecha,
+                        desdeHistorial: true,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            },
+          ),
+        ),
     ],
-  ); // Finaliza el resumen.
+  );
+
+  // Resume la identidad del cliente sin fotografías.
+  Widget _resumenCliente() => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF7F7F7),
+      border: Border.all(color: const Color(0xFFE0E0E0)),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Column(
+      children: [
+        CircleAvatar(
+          radius: 52,
+          backgroundColor: const Color(0xFFFF6D6D),
+          child: const Icon(
+            Icons.person_outline,
+            size: 68,
+            color: Colors.black,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          widget.cliente.nombre,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        Text('RUT: ${widget.cliente.id}'),
+        const SizedBox(height: 4),
+        Text(
+          widget.cliente.numero,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 18),
+        ),
+      ],
+    ),
+  );
 }
