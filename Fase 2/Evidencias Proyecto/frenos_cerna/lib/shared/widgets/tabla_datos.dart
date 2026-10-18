@@ -199,8 +199,7 @@ class TablaDatos extends StatefulWidget {
     required this.camposColumnas,
     required this.anchosColumnas,
     required this.filas,
-    this.mostrarControles =
-        true, // Integra el buscador encima de la cabecera.
+    this.mostrarControles = true, // Integra el buscador encima de la cabecera.
     this.celdasPersonalizadas = const {},
     this.coloresEncabezados,
     this.coloresTextoEncabezados,
@@ -261,7 +260,7 @@ class _TablaDatosState extends State<TablaDatos> {
 
         // Se reserva un espacio a la derecha para la barra de scroll.
         // Así el desplazamiento no tapa el contenido de la última columna.
-        const double espacioScroll = 14;
+        const double espacioScroll = margenDesplazamientoTabla; // Comparte el margen con los filtros externos.
         final double anchoTabla = (restricciones.maxWidth - espacioScroll)
             .clamp(0.0, double.infinity)
             .toDouble();
@@ -290,16 +289,17 @@ class _TablaDatosState extends State<TablaDatos> {
         // Normaliza el texto de búsqueda sin distinguir tildes ni mayúsculas.
         final consulta = normalizarFiltro(_buscador.text.trim());
         // Busca en todos los campos visibles de cada fila a la vez.
-        final camposBusqueda = widget.camposColumnas
-            .where((campo) => campo.isNotEmpty);
+        final camposBusqueda = widget.camposColumnas.where(
+          (campo) => campo.isNotEmpty,
+        );
         final filasVisibles = !widget.mostrarControles || consulta.isEmpty
             ? widget.filas
             : widget.filas
                   .where(
                     (fila) => camposBusqueda.any(
-                      (campo) => normalizarFiltro(
-                        fila[campo]?.toString() ?? '',
-                      ).contains(consulta),
+                      (campo) =>
+                          normalizarFiltro(fila[campo]?.toString() ?? '')
+                              .contains(consulta),
                     ),
                   )
                   .toList(); // Filtra los datos mostrados sin modificar los originales.

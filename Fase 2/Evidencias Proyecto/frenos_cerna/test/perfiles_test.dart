@@ -198,6 +198,19 @@ void main() {
             ),
           );
           await tester.pumpAndSettle(); // Construye una vista independiente.
+          final centroIcono = tester
+              .getCenter(
+                find.byWidgetPredicate(
+                  (widget) => widget is CircleAvatar && widget.radius == 44,
+                ),
+              )
+              .dx; // Identifica el eje del encabezado del perfil.
+          for (final campo in find.byType(TextFormField).evaluate()) {
+            expect(
+              tester.getCenter(find.byWidget(campo.widget)).dx,
+              closeTo(centroIcono, 0.01),
+            ); // Exige campos centrados en todos los modos y plataformas.
+          }
           final campos = tester
               .widgetList<TextFormField>(find.byType(TextFormField))
               .toList(); // Obtiene los campos del formulario real.

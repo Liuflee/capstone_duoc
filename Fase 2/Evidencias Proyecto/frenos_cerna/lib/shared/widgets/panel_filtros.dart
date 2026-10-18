@@ -1,6 +1,9 @@
 // Importa los controles visuales de Flutter.
 import 'package:flutter/material.dart';
 
+// Comparte el espacio reservado al desplazamiento para alinear controles y tabla.
+const double margenDesplazamientoTabla = 14;
+
 // Normaliza un texto convirtiéndolo a minúsculas y quitando los acentos.
 // Permite comparar búsquedas y valores sin importar tildes ni mayúsculas.
 String normalizarFiltro(String texto) {
@@ -141,7 +144,8 @@ class PanelFiltros<T> extends StatefulWidget {
     super.key, // Conserva la identidad del widget dentro de Flutter.
     required this.datos, // Datos completos de la página.
     required this.camposBusqueda, // Campos que revisa el buscador.
-    this.categorias = const [], // Las páginas sin categorías usan solo búsqueda.
+    this.categorias =
+        const [], // Las páginas sin categorías usan solo búsqueda.
     this.textoAyuda = 'BUSCAR', // Indicación predeterminada del buscador.
     required this.child, // Contenido que recibe los datos filtrados.
   });
@@ -170,8 +174,12 @@ class _PanelFiltrosState<T> extends State<PanelFiltros<T>> {
     final textos = <String, String>{}; // Recuerda el texto visible original.
     for (final dato in widget.datos) {
       final valor = categoria.valor(dato);
-      if (valor.trim().isEmpty) continue; // Ignora datos sin valor de categoría.
-      final clave = normalizarFiltro(valor); // Compara sin tildes ni mayúsculas.
+      if (valor.trim().isEmpty) {
+        continue; // Ignora datos sin valor de categoría.
+      } // Descarta valores vacíos antes de calcular las opciones.
+      final clave = normalizarFiltro(
+        valor,
+      ); // Compara sin tildes ni mayúsculas.
       conteos[clave] = (conteos[clave] ?? 0) + 1; // Suma una coincidencia más.
       // Muestra la traducción personalizada cuando la página la define.
       textos[clave] = categoria.etiquetas?[valor] ?? valor;
@@ -197,9 +205,9 @@ class _PanelFiltrosState<T> extends State<PanelFiltros<T>> {
   Set<String> _seleccionValida(CategoriaFiltro<T> categoria) {
     final elegidos = _selecciones[categoria.id] ?? const <String>{};
     if (elegidos.isEmpty) return elegidos; // Una categoría vacía no filtra.
-    final disponibles = _opcionesDe(
-      categoria,
-    ).map((opcion) => opcion.valor).toSet();
+    final disponibles = _opcionesDe(categoria)
+        .map((opcion) => opcion.valor)
+        .toSet();
     return elegidos.intersection(
       disponibles,
     ); // Descarta valores que desaparecieron.
@@ -266,97 +274,102 @@ class _PanelFiltrosState<T> extends State<PanelFiltros<T>> {
         // Primera fila: buscador general, contador de resultados y limpieza.
 
         // Primera fila: buscador ocupando todo el ancho disponible.
-        CampoBusqueda(
-          controlador: _busqueda,
-          textoAyuda: widget.textoAyuda,
-          alCambiar: (_) => setState(() {}),
+        Padding(
+          padding: const EdgeInsets.only(
+            right: margenDesplazamientoTabla,
+          ), // Iguala el borde derecho visible de la tabla.
+          child: CampoBusqueda(
+            controlador: _busqueda,
+            textoAyuda: widget.textoAyuda,
+            alCambiar: (_) => setState(() {}),
+          ), // Conserva el diseño y la búsqueda del panel.
         ),
 
         const SizedBox(height: 12),
 
         // Segunda fila: filtros a la izquierda y resultados a la derecha.
-        LayoutBuilder(
-          builder: (context, limites) {
-            final chips = Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                for (final categoria in categoriasVisibles)
-                  _ChipCategoria<T>(
-                    categoria: categoria,
-                    opciones: _opcionesDe(categoria),
-                    elegidos: _seleccionValida(categoria),
-                    alCambiar: (nuevos) => setState(
-                      () => _selecciones[categoria.id] = nuevos,
+        Padding(
+          padding: const EdgeInsets.only(
+            right: margenDesplazamientoTabla,
+          ), // Alinea filtros y contador con los extremos de la tabla.
+          child: LayoutBuilder(
+            builder: (context, limites) {
+              final chips = Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  for (final categoria in categoriasVisibles)
+                    _ChipCategoria<T>(
+                      categoria: categoria,
+                      opciones: _opcionesDe(categoria),
+                      elegidos: _seleccionValida(categoria),
+                      alCambiar: (nuevos) =>
+                          setState(() => _selecciones[categoria.id] = nuevos),
+                    ),
+                ],
+              ); // Las fichas se acomodan solas en pantallas angostas.
+
+              final contador = Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${filtrados.length} DE ${widget.datos.length}',
+                    style: TextStyle(
+                      fontFamily: 'Courier',
+                      fontSize: 13,
+                      color: Colors.grey[700],
                     ),
                   ),
-              ],
-            ); // Las fichas se acomodan solas en pantallas angostas.
 
-            final contador = Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '${filtrados.length} DE ${widget.datos.length}',
-                  style: TextStyle(
-                    fontFamily: 'Courier',
-                    fontSize: 13,
-                    color: Colors.grey[700],
-                  ),
-                ),
-
-                if (_hayFiltroActivo) ...[
-                  const SizedBox(width: 4),
-                  TextButton.icon(
-                    onPressed: _limpiarTodo,
-                    icon: const Icon(
-                      Icons.filter_alt_off,
-                      size: 18,
-                      color: Colors.black,
-                    ),
-                    label: const Text(
-                      'LIMPIAR',
-                      style: TextStyle(
-                        fontFamily: 'Courier',
-                        fontSize: 13,
+                  if (_hayFiltroActivo) ...[
+                    const SizedBox(width: 4),
+                    TextButton.icon(
+                      onPressed: _limpiarTodo,
+                      icon: const Icon(
+                        Icons.filter_alt_off,
+                        size: 18,
                         color: Colors.black,
                       ),
+                      label: const Text(
+                        'LIMPIAR',
+                        style: TextStyle(
+                          fontFamily: 'Courier',
+                          fontSize: 13,
+                          color: Colors.black,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
-            ); // Mantiene el contador y la limpieza juntos.
+              ); // Mantiene el contador y la limpieza juntos.
 
-            // En pantallas angostas el contador baja debajo de las fichas:
-            // así ninguna ficha queda estrangulada ni desborda.
-            if (limites.maxWidth < 560) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              // En pantallas angostas el contador baja debajo de las fichas:
+              // así ninguna ficha queda estrangulada ni desborda.
+              if (limites.maxWidth < 560) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [chips, const SizedBox(height: 10), contador],
+                );
+              } // Finaliza la distribución apilada.
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  chips,
-                  const SizedBox(height: 10),
+                  // Los chips ocupan el espacio disponible a la izquierda.
+                  Expanded(child: chips),
+
+                  const SizedBox(width: 12),
+
+                  // Contador y limpieza permanecen al extremo derecho.
                   contador,
                 ],
-              );
-            } // Finaliza la distribución apilada.
-
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Los chips ocupan el espacio disponible a la izquierda.
-                Expanded(child: chips),
-
-                const SizedBox(width: 12),
-
-                // Contador y limpieza permanecen al extremo derecho.
-                contador,
-              ],
-            ); // Finaliza la distribución de escritorio.
-          },
-        ),
+              ); // Finaliza la distribución de escritorio.
+            },
+          ), // Conserva la distribución adaptable de filtros y contador.
+        ), // Aplica el margen solo a los controles.
 
         const SizedBox(height: 20),
- // Separa los filtros del contenido.
+        // Separa los filtros del contenido.
 
         // Contenido de la página construido con los datos ya filtrados.
         Expanded(
@@ -429,10 +442,10 @@ class _ChipCategoriaState<T> extends State<_ChipCategoria<T>> {
       ), // Finaliza el diseño del desplegable.
       menuChildren: [
         // Mantiene el menú abierto para elegir varias opciones seguidas.
-        for (final opcion in widget.opciones) // Recorre las opciones calculadas.
+        for (final opcion
+            in widget.opciones) // Recorre las opciones calculadas.
           MenuItemButton(
-            closeOnActivate:
-                false, // No cierra el menú al marcar una casilla.
+            closeOnActivate: false, // No cierra el menú al marcar una casilla.
             onPressed: () {
               // Alterna el valor: lo agrega si falta y lo quita si existe.
               final nuevos = Set<String>.from(widget.elegidos);
@@ -453,7 +466,8 @@ class _ChipCategoriaState<T> extends State<_ChipCategoria<T>> {
                 const SizedBox(width: 8), // Separa la casilla del texto.
                 Expanded(
                   child: Text(
-                    opcion.texto.toUpperCase(), // Muestra la opción en mayúsculas.
+                    opcion.texto
+                        .toUpperCase(), // Muestra la opción en mayúsculas.
                     style: const TextStyle(fontFamily: 'Courier', fontSize: 14),
                   ), // Finaliza el texto de la opción.
                 ), // Ajusta textos largos al ancho del menú.
@@ -468,10 +482,10 @@ class _ChipCategoriaState<T> extends State<_ChipCategoria<T>> {
               ], // Finaliza los elementos de la opción.
             ), // Finaliza la opción seleccionable.
           ), // Finaliza cada opción del menú.
-
         // Reinicia la categoría completa sin tocar los demás filtros.
         MenuItemButton(
-          onPressed: () => widget.alCambiar(<String>{}), // Vacía esta categoría.
+          onPressed: () =>
+              widget.alCambiar(<String>{}), // Vacía esta categoría.
           child: Row(
             children: [
               const Icon(

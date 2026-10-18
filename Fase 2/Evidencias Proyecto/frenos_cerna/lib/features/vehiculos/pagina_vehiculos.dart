@@ -53,10 +53,9 @@ class HistorialVehiculo {
       vehiculoNombre: partesVehiculo.isEmpty
           ? patente
           : '${partesVehiculo.join(' ')} ($patente)',
-      marca:
-          marcaMap is Map
-              ? (marcaMap['marca']?.toString() ?? '')
-              : '', // Usa la marca desnormalizada del esquema.
+      marca: marcaMap is Map
+          ? (marcaMap['marca']?.toString() ?? '')
+          : '', // Usa la marca desnormalizada del esquema.
       total: double.tryParse(json['kilometraje']?.toString() ?? '0') ?? 0,
       fecha: patente,
     );
@@ -176,30 +175,39 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: CartaNavegacion.accion(
-                      onPressed: () async {
-                        final creado = await Navigator.push<bool>(
-                          context,
-                          MaterialPageRoute(
-                            settings: const RouteSettings(
-                              name: '/vehicles/new',
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      right: margenDesplazamientoTabla,
+                    ), // Alinea la acción con el borde visible de la tabla.
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: CartaNavegacion.accion(
+                        onPressed: () async {
+                          final creado = await Navigator.push<bool>(
+                            context,
+                            MaterialPageRoute(
+                              settings: const RouteSettings(
+                                name: '/vehicles/new',
+                              ),
+                              builder: (context) => const PaginaCrearVehiculo(),
                             ),
-                            builder: (context) => const PaginaCrearVehiculo(),
-                          ),
-                        );
-                        if (creado == true && mounted) await _cargarVehiculos();
-                      },
-                      icon: const Icon(Icons.add),
-                      label: const Text('REGISTRAR VEHÍCULO'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFB7B7B7),
-                        foregroundColor: Colors.black,
+                          );
+                          if (creado == true && mounted) {
+                            await _cargarVehiculos(); // Actualiza la tabla al registrar un vehículo.
+                          }
+                        },
+                        icon: const Icon(Icons.add),
+                        label: const Text('REGISTRAR VEHÍCULO'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFB7B7B7),
+                          foregroundColor: Colors.black,
+                        ),
                       ),
-                    ),
-                  ), // Abre la nueva vista y actualiza el listado al volver.
-                  const SizedBox(height: 20), // Separa la acción de los filtros.
+                    ), // Abre la nueva vista y actualiza el listado al volver.
+                  ), // Conserva el tamaño y la función del botón.
+                  const SizedBox(
+                    height: 20,
+                  ), // Separa la acción de los filtros.
 
                   if (_error != null)
                     Text('Error al cargar vehículos: $_error'),
@@ -211,16 +219,14 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                     Expanded(
                       child: PanelFiltros<HistorialVehiculo>(
                         datos: historial, // Filtra todos los vehículos registrados.
-                        textoAyuda:
-                            'BUSCAR CLIENTE, VEHÍCULO O PATENTE', // Describe la búsqueda disponible.
+                        textoAyuda: 'BUSCAR CLIENTE, VEHÍCULO O PATENTE', // Describe la búsqueda disponible.
                         camposBusqueda: [
                           (registro) =>
                               registro.clienteNombre, // Busca en el cliente.
-                          (registro) =>
-                              registro.vehiculoNombre, // Busca en marca, modelo o patente.
-                          (registro) =>
-                              registro.total
-                                  .toStringAsFixed(0), // Permite buscar por kilometraje.
+                          (registro) => registro.vehiculoNombre, // Busca en marca, modelo o patente.
+                          (registro) => registro.total.toStringAsFixed(
+                            0,
+                          ), // Permite buscar por kilometraje.
                           (registro) => registro.fecha, // Busca en la patente.
                         ],
                         categorias: [
@@ -241,106 +247,108 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                                 (registro) => <String, dynamic>{
                                   'cliente': registro.clienteNombre,
                                   'vehiculo': registro.vehiculoNombre,
-                                  'kilometraje': registro.total.toStringAsFixed(0),
+                                  'kilometraje': registro.total.toStringAsFixed(
+                                    0,
+                                  ),
                                   'patente': registro.fecha,
                                   'registro': registro,
                                 },
                               )
                               .toList();
                           return TablaDatos(
-                            mostrarControles:
-                                false, // El panel ya muestra el buscador y las categorías.
+                            mostrarControles: false, // El panel ya muestra el buscador y las categorías.
                             // Encabezados visibles de la tabla.
-                        nombresColumnas: const [
-                          'CLIENTE',
-                          'VEHÍCULO',
-                          'KILOMETRAJE',
-                          'PATENTE',
-                          'REVISAR',
-                        ],
+                            nombresColumnas: const [
+                              'CLIENTE',
+                              'VEHÍCULO',
+                              'KILOMETRAJE',
+                              'PATENTE',
+                              'REVISAR',
+                            ],
 
-                        // Campos de cada columna (vacío si la celda es personalizada).
-                        camposColumnas: const [
-                          'cliente',
-                          'vehiculo',
-                          'kilometraje',
-                          'patente',
-                          '',
-                        ],
+                            // Campos de cada columna (vacío si la celda es personalizada).
+                            camposColumnas: const [
+                              'cliente',
+                              'vehiculo',
+                              'kilometraje',
+                              'patente',
+                              '',
+                            ],
 
-                        // Ancho proporcional de cada columna.
-                        anchosColumnas: const [300, 230, 150, 150, 120],
+                            // Ancho proporcional de cada columna.
+                            anchosColumnas: const [300, 230, 150, 150, 120],
 
-                        // Colores de cabecera alternando entre los dos rojos.
-                        coloresEncabezados: const [
-                          _rojoClaro,
-                          _rojoOscuro,
-                          _rojoClaro,
-                          _rojoOscuro,
-                          _rojoClaro,
-                        ],
+                            // Colores de cabecera alternando entre los dos rojos.
+                            coloresEncabezados: const [
+                              _rojoClaro,
+                              _rojoOscuro,
+                              _rojoClaro,
+                              _rojoOscuro,
+                              _rojoClaro,
+                            ],
 
-                        filas: filasVehiculos,
+                            filas: filasVehiculos,
 
-                        celdasPersonalizadas: {
-                          // Columna 0: cliente con avatar.
-                          0: (context, fila) {
-                            final registro =
-                                fila['registro'] as HistorialVehiculo;
+                            celdasPersonalizadas: {
+                              // Columna 0: cliente con avatar.
+                              0: (context, fila) {
+                                final registro =
+                                    fila['registro'] as HistorialVehiculo;
 
-                            return Row(
-                              children: [
-                                CircleAvatar(
-                                  backgroundColor: Colors.red[300],
-                                  child: const Icon(
-                                    Icons.person_outline,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    registro.clienteNombre,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
+                                return Row(
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundColor: Colors.red[300],
+                                      child: const Icon(
+                                        Icons.person_outline,
+                                        color: Colors.black,
+                                      ),
                                     ),
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-
-                          // Columna 4: botón para revisar el detalle del vehículo.
-                          4: (context, fila) {
-                            final registro =
-                                fila['registro'] as HistorialVehiculo;
-
-                            return CartaNavegacion.accion(
-                              // Conserva las medidas y la función de la acción original.
-                              tipoBoton: 'icon',
-
-                              tooltip: 'Revisar vehículo',
-                              child: const Icon(
-                                Icons.search,
-                                size: 35,
-                                color: Colors.black,
-                              ),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => PaginaDetalleVehiculo(
-                                      vehiculo: registro,
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        registro.clienteNombre,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 );
                               },
-                            );
-                          },
-                        },
+
+                              // Columna 4: botón para revisar el detalle del vehículo.
+                              4: (context, fila) {
+                                final registro =
+                                    fila['registro'] as HistorialVehiculo;
+
+                                return CartaNavegacion.accion(
+                                  // Conserva las medidas y la función de la acción original.
+                                  tipoBoton: 'icon',
+
+                                  tooltip: 'Revisar vehículo',
+                                  child: const Icon(
+                                    Icons.search,
+                                    size: 35,
+                                    color: Colors.black,
+                                  ),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            PaginaDetalleVehiculo(
+                                              vehiculo: registro,
+                                            ),
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                            },
                           ); // Finaliza la tabla construida con los vehículos filtrados.
                         }, // Finaliza la construcción del contenido.
                       ), // Finaliza el panel de filtros reutilizable.

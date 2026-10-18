@@ -26,6 +26,117 @@ import 'package:frenos_cerna/features/ventas/presentation/pagina_crear_ventas.da
 import 'package:frenos_cerna/shared/widgets/panel_filtros.dart'; // Comprueba el buscador del selector.
 
 void main() {
+  testWidgets(
+    'calidad depende de categoría y ambos catálogos permiten añadir con confirmación',
+    (tester) async {
+      tester.view.physicalSize = const Size(
+        1440,
+        1200,
+      ); // Muestra el formulario de producto completo.
+      tester.view.devicePixelRatio = 1; // Usa coordenadas lógicas.
+      addTearDown(tester.view.resetPhysicalSize); // Restablece el tamaño.
+      addTearDown(tester.view.resetDevicePixelRatio); // Restablece la escala.
+      await tester.pumpWidget(
+        MaterialApp(
+          home: PaginaCrearProducto(
+            cargarCatalogos: () async => {
+              'categorias': [
+                {'id': 1, 'nombre_tipo': 'PASTILLAS'},
+                {'id': 2, 'nombre_tipo': 'DISCOS'},
+              ],
+              'calidades': [
+                {'id': 10, 'nombre_calidad': 'CERÁMICA'},
+                {'id': 20, 'nombre_calidad': 'VENTILADO'},
+              ],
+              'relaciones': [
+                {'id_tipo': 1, 'id_calidad': 10},
+                {'id_tipo': 2, 'id_calidad': 20},
+              ],
+            },
+          ),
+        ),
+      ); // Aísla los datos sin escrituras reales.
+      await tester.pumpAndSettle(); // Carga las relaciones.
+      final selectores = find.byType(
+        DropdownButton<Object>,
+      ); // Localiza categoría y calidad.
+      expect(
+        tester.widget<DropdownButton<Object>>(selectores.at(1)).onChanged,
+        isNull,
+      ); // Bloquea calidades sin categoría.
+      await tester.enterText(
+        find.byType(TextFormField).first,
+        'SP0-01223',
+      ); // Conserva el código mientras se usan los catálogos.
+      await tester.ensureVisible(selectores.first); // Muestra categoría.
+      await tester.tap(selectores.first);
+      await tester.pumpAndSettle(); // Abre sus opciones.
+      await tester.tap(find.text('PASTILLAS').last);
+      await tester.pumpAndSettle(); // Selecciona una categoría existente.
+      var calidad = tester.widget<DropdownButton<Object>>(
+        selectores.at(1),
+      ); // Examina solo sus calidades.
+      expect(calidad.items!.map((item) => item.value), [
+        10,
+        -1,
+      ]); // Excluye las calidades de discos.
+      await tester.tap(selectores.at(1));
+      await tester.pumpAndSettle(); // Abre las calidades permitidas.
+      await tester.tap(find.text('CERÁMICA').last);
+      await tester.pumpAndSettle(); // Selecciona una calidad.
+      await tester.tap(selectores.first);
+      await tester.pumpAndSettle(); // Cambia la categoría.
+      await tester.tap(find.text('DISCOS').last);
+      await tester.pumpAndSettle(); // Selecciona discos.
+      calidad = tester.widget<DropdownButton<Object>>(selectores.at(1));
+      expect(
+        calidad.value,
+        isNull,
+      ); // Descarta la selección anterior incompatible.
+      expect(calidad.items!.map((item) => item.value), [
+        20,
+        -1,
+      ]); // Muestra solo las calidades vinculadas a discos.
+      for (final esCalidad in [false, true]) {
+        await tester.ensureVisible(
+          selectores.at(esCalidad ? 1 : 0),
+        ); // Hace visible el selector.
+        await tester.tap(selectores.at(esCalidad ? 1 : 0));
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.text(esCalidad ? 'AÑADIR CALIDAD' : 'AÑADIR CATEGORÍA').last,
+        );
+        await tester.pumpAndSettle(); // Abre la creación en la misma página.
+        await tester.enterText(
+          find.descendant(
+            of: find.byType(AlertDialog),
+            matching: find.byType(TextFormField),
+          ),
+          'Opción de prueba',
+        ); // Introduce el nombre.
+        await tester.tap(find.text('CONTINUAR'));
+        await tester.pumpAndSettle(); // Pide confirmar antes de guardar.
+        expect(
+          find.text(esCalidad ? 'CONFIRMAR CALIDAD' : 'CONFIRMAR CATEGORÍA'),
+          findsOneWidget,
+        ); // Verifica el paso obligatorio.
+        await tester.tap(find.text('CANCELAR'));
+        await tester.pumpAndSettle(); // Cancela sin escribir en Supabase.
+      }
+      expect(
+        tester
+            .widget<TextFormField>(find.byType(TextFormField).first)
+            .controller!
+            .text,
+        'SP0-01223',
+      ); // Conserva los datos del producto.
+      expect(
+        tester.takeException(),
+        isNull,
+      ); // Descarta errores de reconstrucción o diálogos.
+    },
+  );
+
   testWidgets('venta busca cliente y conserva la venta al crear otro', (
     tester,
   ) async {

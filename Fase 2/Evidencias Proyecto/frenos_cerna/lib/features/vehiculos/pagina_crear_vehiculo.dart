@@ -262,7 +262,14 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
       // Muestra errores sin perder la información ingresada.
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo añadir el registro: $error')),
+          SnackBar(
+            content: Text(
+              error.toString().contains('23505') &&
+                      error.toString().contains('_pkey')
+                  ? 'El contador de IDs del catálogo está desactualizado. Ejecuta supabase/reparar_secuencias_catalogos.sql en Supabase.'
+                  : 'No se pudo añadir el registro: $error',
+            ),
+          ), // Distingue un contador desactualizado de un nombre existente.
         ); // Informa el fallo de guardado.
       }
     } finally {

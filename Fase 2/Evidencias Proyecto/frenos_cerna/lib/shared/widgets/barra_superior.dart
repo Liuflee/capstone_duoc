@@ -1,16 +1,78 @@
 import 'package:flutter/material.dart'; // Construye la identidad, el título y las acciones de la barra compartida.
 
-class BarraSuperior extends StatelessWidget {
+import 'package:frenos_cerna/core/data/supabase_database.dart'; // Identifica la sesión conectada.
+import 'package:frenos_cerna/features/autenticacion/data/autenticacion_repository.dart'; // Recupera el nombre real del perfil.
+
+class BarraSuperior extends StatefulWidget {
+  final String tituloPagina; // Conserva el título de la vista.
+  final String?
+  nombreUsuario; // Permite proporcionar el perfil ya cargado en Inicio.
+  final String? rolUsuario; // Conserva el rol visible.
+  final Future<void> Function()?
+  onCerrarSesion; // Conserva la salida existente.
+  const BarraSuperior({
+    super.key,
+    required this.tituloPagina,
+    this.nombreUsuario,
+    this.rolUsuario,
+    this.onCerrarSesion,
+  }); // Evita nombres personales predeterminados.
+  @override
+  State<BarraSuperior> createState() => _BarraSuperiorState(); // Conserva la consulta mientras la barra esté montada.
+}
+
+class _BarraSuperiorState extends State<BarraSuperior> {
+  late Future<PerfilUsuario?>
+  _perfil; // Reutiliza la consulta entre reconstrucciones.
+  Future<PerfilUsuario?> _cargarPerfil() async {
+    if (!SupabaseDatabase.isConfigured) {
+      return null; // Permite usar el modo de prueba sin conexión.
+    } // Consulta únicamente cuando la conexión está configurada.
+    final usuario = SupabaseDatabase
+        .client
+        .auth
+        .currentUser; // Obtiene la identidad autenticada.
+    if (usuario == null) return null; // Evita consultar sin sesión.
+    return AutenticacionRepository().obtenerPerfil(
+      usuario.id,
+    ); // Lee el nombre registrado para esa cuenta.
+  }
+
+  @override
+  void initState() {
+    super.initState(); // Inicializa el estado visual.
+    _perfil = widget.nombreUsuario == null
+        ? _cargarPerfil()
+        : Future.value(null); // Aprovecha el perfil proporcionado por Inicio.
+  }
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<PerfilUsuario?>(
+    future: _perfil, // Mantiene una sola consulta por barra.
+    builder: (context, estado) => _ContenidoBarraSuperior(
+      tituloPagina: widget.tituloPagina, // Conserva el título de cada vista.
+      nombreUsuario:
+          widget.nombreUsuario ??
+          estado.data?.nombre ??
+          'Usuario', // Usa el perfil real y un texto neutro durante la carga.
+      rolUsuario:
+          widget.rolUsuario, // Conserva la presentación del rol existente.
+      onCerrarSesion:
+          widget.onCerrarSesion, // Mantiene el comportamiento de cierre.
+    ),
+  );
+}
+
+class _ContenidoBarraSuperior extends StatelessWidget {
   // Mantiene una única presentación para todas las páginas.
   final String tituloPagina; // Identifica la vista actual.
   final String nombreUsuario; // Presenta al usuario activo.
   final String? rolUsuario; // Describe su rol cuando está disponible.
   final Future<void> Function()?
   onCerrarSesion; // Conserva la salida de la sesión existente.
-  const BarraSuperior({
-    super.key,
+  const _ContenidoBarraSuperior({
     required this.tituloPagina,
-    this.nombreUsuario = 'Leonardo',
+    this.nombreUsuario = 'Usuario',
     this.rolUsuario,
     this.onCerrarSesion,
   }); // Conserva los constructores utilizados por las páginas.

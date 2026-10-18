@@ -12,8 +12,14 @@ enum ModoPerfil {
   eliminar,
 } // Distingue funciones sin mezclar consulta y modificación.
 
-extension RutaModoPerfil on ModoPerfil { // Conserva las rutas de Flutter en inglés.
-  String get ruta => switch (this) { ModoPerfil.ver => 'view', ModoPerfil.crear => 'new', ModoPerfil.editar => 'edit', ModoPerfil.eliminar => 'remove' }; // Relaciona cada vista con su ruta.
+extension RutaModoPerfil on ModoPerfil {
+  // Conserva las rutas de Flutter en inglés.
+  String get ruta => switch (this) {
+    ModoPerfil.ver => 'view',
+    ModoPerfil.crear => 'new',
+    ModoPerfil.editar => 'edit',
+    ModoPerfil.eliminar => 'remove',
+  }; // Relaciona cada vista con su ruta.
 } // Finaliza los nombres de navegación.
 
 class PaginaSeleccionarPerfil extends StatefulWidget {
@@ -371,56 +377,65 @@ class _PaginaGestionPerfilState extends State<PaginaGestionPerfil> {
                     ),
                   ), // Identifica el rol de la persona.
                   const SizedBox(height: 24), // Separa el rol de los campos.
-                  FormularioDatos(
-                    claveFormulario: _formulario,
-                    campos: [
-                      CampoFormularioDatos(
-                        controlador: _nombre,
-                        etiqueta: 'NOMBRE:',
-                        textoAyuda: 'Nombre del perfil',
-                        habilitado:
-                            _editable &&
-                            !_guardando &&
-                            _actual?.tipo == TipoPerfil.dueno,
-                        validador: (valor) => (valor ?? '').trim().isEmpty
-                            ? 'Ingresa el nombre'
-                            : null,
-                      ),
-                      if (widget.modo == ModoPerfil.crear) ...[
-                        CampoFormularioDatos(
-                          controlador: _correo,
-                          etiqueta: 'CORREO:',
-                          textoAyuda: 'Correo de la cuenta nueva',
-                          tipoTeclado: TextInputType.emailAddress,
-                          habilitado:
-                              !_guardando && _actual?.tipo == TipoPerfil.dueno,
-                          validador: (valor) =>
-                              RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-                                  .hasMatch((valor ?? '').trim())
-                              ? null
-                              : 'Ingresa un correo válido',
-                        ),
-                        CampoFormularioDatos(
-                          controlador: _contrasena,
-                          etiqueta: 'CONTRASEÑA:',
-                          textoAyuda: 'Al menos 6 caracteres',
-                          esContrasena: true,
-                          habilitado:
-                              !_guardando && _actual?.tipo == TipoPerfil.dueno,
-                          validador: (valor) => (valor ?? '').length >= 6
-                              ? null
-                              : 'Usa al menos 6 caracteres',
-                        ),
-                      ],
-                      if (widget.modo != ModoPerfil.crear &&
-                          _perfil?.correo != null)
-                        CampoFormularioDatos(
-                          controlador: _correo,
-                          etiqueta: 'CORREO:',
-                          habilitado: false,
-                        ),
-                    ],
-                  ), // Mantiene campos vacíos al crear y datos de solo lectura al ver o eliminar.
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 400), // Centra los campos bajo el icono sin extenderlos por toda la página.
+                      child: FormularioDatos(
+                        ajustarAlAnchoDisponible: true, // Mantiene todos los campos centrados también en móvil.
+                        ancho: 400, // Comparte el ancho entre todos los campos del perfil.
+                        claveFormulario: _formulario,
+                        campos: [
+                          CampoFormularioDatos(
+                            controlador: _nombre,
+                            etiqueta: 'NOMBRE:',
+                            textoAyuda: 'Nombre del perfil',
+                            habilitado:
+                                _editable &&
+                                !_guardando &&
+                                _actual?.tipo == TipoPerfil.dueno,
+                            validador: (valor) => (valor ?? '').trim().isEmpty
+                                ? 'Ingresa el nombre'
+                                : null,
+                          ),
+                          if (widget.modo == ModoPerfil.crear) ...[
+                            CampoFormularioDatos(
+                              controlador: _correo,
+                              etiqueta: 'CORREO:',
+                              textoAyuda: 'Correo de la cuenta nueva',
+                              tipoTeclado: TextInputType.emailAddress,
+                              habilitado:
+                                  !_guardando &&
+                                  _actual?.tipo == TipoPerfil.dueno,
+                              validador: (valor) =>
+                                  RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                                      .hasMatch((valor ?? '').trim())
+                                  ? null
+                                  : 'Ingresa un correo válido',
+                            ),
+                            CampoFormularioDatos(
+                              controlador: _contrasena,
+                              etiqueta: 'CONTRASEÑA:',
+                              textoAyuda: 'Al menos 6 caracteres',
+                              esContrasena: true,
+                              habilitado:
+                                  !_guardando &&
+                                  _actual?.tipo == TipoPerfil.dueno,
+                              validador: (valor) => (valor ?? '').length >= 6
+                                  ? null
+                                  : 'Usa al menos 6 caracteres',
+                            ),
+                          ],
+                          if (widget.modo != ModoPerfil.crear &&
+                              _perfil?.correo != null)
+                            CampoFormularioDatos(
+                              controlador: _correo,
+                              etiqueta: 'CORREO:',
+                              habilitado: false,
+                            ),
+                        ],
+                      ), // Mantiene los permisos de cada campo según la operación.
+                    ), // Limita el ancho del bloque del formulario.
+                  ), // Centra el formulario de ver, crear, editar y eliminar.
                   const SizedBox(
                     height: 24,
                   ), // Separa los campos de las acciones.

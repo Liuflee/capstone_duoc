@@ -7,7 +7,12 @@ import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
 
 // Presenta el registro como página independiente.
 class PaginaCrearProducto extends StatefulWidget {
-  const PaginaCrearProducto({super.key}); // Crea el registro.
+  final Future<Map<String, List<Map<String, dynamic>>>> Function()?
+  cargarCatalogos; // Permite verificar la relación con datos controlados.
+  const PaginaCrearProducto({
+    super.key,
+    this.cargarCatalogos,
+  }); // Crea el registro con la conexión habitual por defecto.
   @override // Crea el estado del formulario.
   State<PaginaCrearProducto> createState() => _PaginaCrearProductoState();
 } // Finaliza la página pública.
@@ -21,6 +26,10 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
     text: '0',
   ); // Conserva las existencias iniciales.
   final _clave = GlobalKey<FormState>(); // Valida el formulario.
+  bool _editandoCatalogo =
+      false; // Bloquea cambios durante la creación de opciones.
+  List<Map<String, dynamic>> _relacionesCalidad =
+      []; // Vincula las calidades con las categorías permitidas.
   Object? _calidad; // Conserva la calidad seleccionada del catálogo existente.
   List<Map<String, dynamic>> _calidades =
       []; // Almacena las calidades disponibles.
@@ -36,13 +45,33 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
 
   Future<void> _cargarCategorias() async {
     try {
+      if (widget.cargarCatalogos != null) {
+        final catalogos = await widget.cargarCatalogos!(); // Obtiene los tres catálogos de una misma fuente.
+        if (!mounted) return; // Evita actualizar un formulario cerrado.
+        setState(() {
+          _categorias =
+              catalogos['categorias'] ??
+              []; // Conserva las categorías recibidas.
+          _calidades =
+              catalogos['calidades'] ?? []; // Conserva las calidades recibidas.
+          _relacionesCalidad =
+              catalogos['relaciones'] ?? []; // Aplica las asociaciones reales.
+        });
+        return; // Evita mezclar la fuente controlada con Supabase.
+      }
       final respuesta = await SupabaseDatabase.client
           .from(SupabaseTables.tiposProducto)
           .select();
       final calidades = await SupabaseDatabase.client
           .from(SupabaseTables.calidadesProducto)
           .select(); // Consulta las calidades existentes.
+      final relaciones = await SupabaseDatabase.client
+          .from('tipo_calidad_producto')
+          .select('id_tipo, id_calidad'); // Consulta las asociaciones reales, sin ofrecer calidades de otras categorías.
       if (mounted) {
+        _relacionesCalidad = List<Map<String, dynamic>>.from(
+          relaciones,
+        ); // Conserva las asociaciones existentes.
         _calidades = List<Map<String, dynamic>>.from(
           calidades,
         ); // Conserva sus identificadores.
@@ -54,6 +83,166 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
       if (mounted) setState(() => _errorCategorias = error.toString());
     } // Conserva los errores de consulta.
   }
+
+  Future<void> _agregarCatalogo({required bool esCalidad}) async {
+    // Añade un registro desde el formulario del producto.
+    if (_editandoCatalogo || (esCalidad && _categoria == null)) {
+      return; // Evita solicitudes inválidas o repetidas.
+    }
+    setState(
+      () => _editandoCatalogo = true,
+    ); // Bloquea cambios de categoría durante la creación.
+    final controlador =
+        TextEditingController(); // Conserva el nombre escrito en el diálogo.
+    final tipo = esCalidad
+        ? 'CALIDAD'
+        : 'CATEGORÍA'; // Describe el registro solicitado.
+    final idCategoria = _categoria; // Conserva la relación de la calidad con la categoría elegida.
+    try {
+      // Mantiene el formulario ante cancelaciones y errores.
+      final nombre = await showDialog<String>(
+        // Solicita el nombre sin navegar a otra página.
+        context: context, // Presenta el diálogo sobre el producto.
+        builder: (dialogo) => AlertDialog(
+          // Contiene únicamente los datos del nuevo registro.
+          title: Text('AÑADIR $tipo'), // Identifica el catálogo.
+          content: SizedBox(
+            width: 360,
+            child: FormularioDatos(
+              campos: [
+                CampoFormularioDatos(
+                  controlador: controlador,
+                  etiqueta: tipo,
+                  textoAyuda: 'Nombre',
+                ),
+              ],
+            ),
+          ), // Reutiliza el formulario del proyecto.
+          actions: [
+            // Permite cancelar o revisar la creación.
+            CartaNavegacion.accion(
+              onPressed: () => Navigator.pop(dialogo),
+              child: const Text('CANCELAR'),
+            ), // Cancela sin guardar.
+            CartaNavegacion.accion(
+              onPressed: () {
+                if (controlador.text.trim().isNotEmpty) {
+                  Navigator.pop(dialogo, controlador.text.trim());
+                }
+              },
+              child: const Text('CONTINUAR'),
+            ), // Exige un nombre no vacío.
+          ], // Finaliza las acciones del nombre.
+        ), // Finaliza el diálogo de entrada.
+      ); // Espera el nombre ingresado.
+      if (nombre == null || !mounted) {
+        return; // Conserva todos los datos si se cancela.
+      }
+      final confirmado = await showDialog<bool>(
+        // Pide confirmación antes de escribir en la base.
+        context: context, // Mantiene el producto debajo del diálogo.
+        builder: (dialogo) => AlertDialog(
+          // Presenta el nombre que se guardará.
+          title: Text('CONFIRMAR $tipo'), // Identifica la operación.
+          content: Text(
+            '¿Confirmas añadir ${tipo.toLowerCase()} "$nombre"?',
+          ), // Permite revisar el valor exacto.
+          actions: [
+            // Ofrece aceptar o cancelar explícitamente.
+            CartaNavegacion.accion(
+              onPressed: () => Navigator.pop(dialogo, false),
+              child: const Text('CANCELAR'),
+            ), // Descarta la creación.
+            CartaNavegacion.accion(
+              onPressed: () => Navigator.pop(dialogo, true),
+              child: const Text('AÑADIR'),
+            ), // Autoriza guardar el registro.
+          ], // Finaliza las acciones de confirmación.
+        ), // Finaliza la confirmación.
+      ); // Espera la decisión.
+      if (confirmado != true || !mounted) {
+        return; // No realiza escrituras sin confirmar.
+      }
+      final columna = esCalidad
+          ? 'nombre_calidad'
+          : 'nombre_tipo'; // Identifica el nombre del catálogo.
+      final Map<String, dynamic>
+      registro; // Conserva la opción creada o reutilizada.
+      if (esCalidad) {
+        final respuesta = await SupabaseDatabase.client.rpc(
+          'crear_calidad_categoria',
+          params: {'p_id_tipo': idCategoria, 'p_nombre': nombre},
+        ); // Crea la calidad y su relación de forma atómica.
+        registro = Map<String, dynamic>.from(
+          (respuesta as List).single as Map,
+        ); // Recupera el identificador real.
+      } else {
+        final actuales = await SupabaseDatabase.client
+            .from(SupabaseTables.tiposProducto)
+            .select(); // Evita duplicados por espacios o mayúsculas.
+        final coincidencias = actuales.where(
+          (fila) =>
+              fila[columna].toString().trim().toLowerCase() ==
+              nombre.toLowerCase(),
+        ); // Busca una categoría existente.
+        registro = coincidencias.isNotEmpty
+            ? Map<String, dynamic>.from(coincidencias.first)
+            : await SupabaseDatabase.client
+                  .from(SupabaseTables.tiposProducto)
+                  .insert({columna: nombre})
+                  .select()
+                  .single(); // Deja que la base asigne el ID.
+      }
+      if (!mounted) return; // Evita actualizar una página cerrada.
+      setState(() {
+        // Selecciona inmediatamente el registro creado o encontrado.
+        final lista = esCalidad
+            ? _calidades
+            : _categorias; // Elige el catálogo local correspondiente.
+        lista.removeWhere(
+          (fila) => fila['id'] == registro['id'],
+        ); // Evita duplicarlo en el menú.
+        lista.add(registro); // Incluye el registro confirmado.
+        lista.sort(
+          (a, b) => a[columna].toString().compareTo(b[columna].toString()),
+        ); // Conserva el orden alfabético.
+        if (esCalidad) {
+          _relacionesCalidad.removeWhere(
+            (fila) =>
+                fila['id_tipo'] == idCategoria &&
+                fila['id_calidad'] == registro['id'],
+          ); // Evita repetir la asociación local.
+          _relacionesCalidad.add({
+            'id_tipo': idCategoria,
+            'id_calidad': registro['id'],
+          }); // Habilita la nueva calidad solo en la categoría elegida.
+          _calidad = (registro['id'] as num).toInt();
+        } else {
+          _categoria = (registro['id'] as num).toInt();
+          _calidad = null;
+        } // Selecciona la clave y restablece la dependencia.
+      }); // Conserva los demás datos del producto y del cliente.
+    } catch (error) {
+      // Muestra errores sin perder la información ingresada.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo añadir el registro: $error')),
+        ); // Informa el fallo de guardado.
+      }
+    } finally {
+      // Restablece la edición aun cuando se cancela.
+      if (mounted) {
+        setState(
+          () => _editandoCatalogo = false,
+        ); // Habilita nuevamente los selectores.
+      }
+      await Future<void>.delayed(
+        const Duration(milliseconds: 300),
+      ); // Espera a que termine la salida del diálogo.
+      controlador
+          .dispose(); // Libera el controlador después de retirar su campo.
+    } // Finaliza la recuperación del estado.
+  } // Finaliza la creación dentro del registro.
 
   bool _guardando = false; // Evita registros simultáneos.
   @override // Libera los recursos.
@@ -70,7 +259,7 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
       ? 'Ingresa un entero igual o mayor que cero'
       : null; // Valida los datos numéricos.
   Future<void> _registrar() async {
-    if (_guardando || !_clave.currentState!.validate()) {
+    if (_guardando || _editandoCatalogo || !_clave.currentState!.validate()) {
       return; // Evita registros inválidos.
     }
     setState(() => _guardando = true); // Indica el guardado.
@@ -186,38 +375,82 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
                     const SizedBox(
                       height: 10,
                     ), // Separa el título del selector.
-                    DropdownButtonFormField<Object>(
-                      initialValue: esCalidad ? _calidad : _categoria,
-                      isExpanded: true, // Respeta el ancho del formulario también en móvil.
+                    InputDecorator(
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: const Color(0xFFD9D9D9),
-                        hintText: esCalidad ? 'Calidad' : 'Categoría',
-                      ),
-                      items: [
-                        for (final fila
-                            in (esCalidad ? _calidades : _categorias).where(
-                              (fila) => fila['id'] != null,
-                            ))
-                          DropdownMenuItem(
-                            value: fila['id'],
-                            child: Text(
-                              fila[esCalidad ? 'nombre_calidad' : 'nombre_tipo']
-                                      ?.toString() ??
-                                  'Sin nombre',
-                            ),
+                        enabled:
+                            !_guardando &&
+                            !_editandoCatalogo &&
+                            (!esCalidad || _categoria != null),
+                      ), // Conserva el diseño y el orden obligatorio.
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<Object>(
+                          value: esCalidad ? _calidad : _categoria, // Usa una selección controlada para restablecer la calidad al cambiar de categoría.
+                          isExpanded: true,
+                          menuMaxHeight:
+                              300, // Permite desplazar catálogos extensos.
+                          hint: Text(
+                            esCalidad && _categoria == null
+                                ? 'SELECCIONA PRIMERO UNA CATEGORÍA'
+                                : esCalidad
+                                ? 'Calidad'
+                                : 'Categoría',
                           ),
-                      ], // Usa las opciones reales de cada catálogo.
-                      onChanged: _guardando
-                          ? null
-                          : (valor) => setState(() {
-                              if (esCalidad) {
-                                _calidad = valor;
-                              } else {
-                                _categoria = valor;
-                              }
-                            }), // Mantiene ambas selecciones independientes.
-                    ),
+                          items: [
+                            for (final fila
+                                in (esCalidad
+                                    ? _calidades.where(
+                                        (calidad) => _relacionesCalidad.any(
+                                          (relacion) =>
+                                              relacion['id_tipo'] ==
+                                                  _categoria &&
+                                              relacion['id_calidad'] ==
+                                                  calidad['id'],
+                                        ),
+                                      )
+                                    : _categorias))
+                              DropdownMenuItem(
+                                value: fila['id'],
+                                child: Text(
+                                  fila[esCalidad
+                                              ? 'nombre_calidad'
+                                              : 'nombre_tipo']
+                                          ?.toString() ??
+                                      'Sin nombre',
+                                ),
+                              ),
+                            DropdownMenuItem(
+                              value: -1,
+                              child: Text(
+                                esCalidad
+                                    ? 'AÑADIR CALIDAD'
+                                    : 'AÑADIR CATEGORÍA',
+                              ),
+                            ), // Abre el registro sin abandonar el producto.
+                          ],
+                          onChanged:
+                              _guardando ||
+                                  _editandoCatalogo ||
+                                  (esCalidad && _categoria == null)
+                              ? null
+                              : (valor) {
+                                  if (valor == -1) {
+                                    _agregarCatalogo(esCalidad: esCalidad); // Pide nombre y confirmación antes de guardar.
+                                  } else {
+                                    setState(() {
+                                      if (esCalidad) {
+                                        _calidad = valor;
+                                      } else {
+                                        _categoria = valor;
+                                        _calidad = null;
+                                      }
+                                    }); // Descarta la calidad de la categoría anterior.
+                                  }
+                                },
+                        ),
+                      ),
+                    ), // Mantiene categoría y calidad dependientes.
                     const SizedBox(
                       height: 28,
                     ), // Conserva la separación de los campos.
@@ -245,7 +478,7 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
           Align(
             alignment: Alignment.centerRight,
             child: CartaNavegacion.accion(
-              onPressed: _guardando ? null : _registrar,
+              onPressed: _guardando || _editandoCatalogo ? null : _registrar,
               icon: const Icon(Icons.download),
               label: Text(_guardando ? 'GUARDANDO...' : 'REGISTRAR'),
               style: ElevatedButton.styleFrom(

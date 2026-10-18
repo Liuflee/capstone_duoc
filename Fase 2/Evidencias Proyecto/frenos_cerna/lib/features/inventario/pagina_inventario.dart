@@ -225,39 +225,44 @@ class _PaginaInventarioState extends State<PaginaInventario> {
                   // BOTÓN AÑADIR PRODUCTO
                   // ==================================================
 
-                  Align(
-                    alignment: Alignment.centerRight,
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      right: margenDesplazamientoTabla,
+                    ), // Alinea la acción con el borde visible de la tabla.
+                    child: Align(
+                      alignment: Alignment.centerRight,
 
-                    child: CartaNavegacion.accion(
-                      // Conserva las medidas y la función de la acción original.
-                      tipoBoton: 'elevated',
+                      child: CartaNavegacion.accion(
+                        // Conserva las medidas y la función de la acción original.
+                        tipoBoton: 'elevated',
 
-                      onPressed: _agregarProducto,
+                        onPressed: _agregarProducto,
 
-                      icon: const Icon(Icons.add, color: Colors.black),
+                        icon: const Icon(Icons.add, color: Colors.black),
 
-                      label: const Text(
-                        'AÑADIR PRODUCTO',
+                        label: const Text(
+                          'AÑADIR PRODUCTO',
 
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
 
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey[300],
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[300],
 
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 15,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 15,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-
-                  const SizedBox(height: 20), // Separa la acción de los filtros.
-
+                  ), // Conserva el tamaño y la función del botón.
+                  const SizedBox(
+                    height: 20,
+                  ), // Separa la acción de los filtros.
                   // ==================================================
                   // MENSAJE DE ERROR
                   // ==================================================
@@ -275,17 +280,18 @@ class _PaginaInventarioState extends State<PaginaInventario> {
                     Expanded(
                       child: PanelFiltros<Producto>(
                         datos: productos, // Filtra el inventario completo.
-                        textoAyuda:
-                            'BUSCAR PRODUCTO, CÓDIGO O CATEGORÍA', // Describe la búsqueda disponible.
+                        textoAyuda: 'BUSCAR PRODUCTO, CÓDIGO O CATEGORÍA', // Describe la búsqueda disponible.
                         camposBusqueda: [
                           (producto) => producto.nombre, // Busca en el nombre.
+                          (producto) => producto
+                              .codigoBarra, // Busca en el código de barras.
                           (producto) =>
-                              producto.codigoBarra, // Busca en el código de barras.
-                          (producto) => producto.id, // Busca en el código interno.
-                          (producto) => producto.categoria, // Busca en la categoría.
+                              producto.id, // Busca en el código interno.
                           (producto) =>
-                              producto.precio
-                                  .toStringAsFixed(0), // Permite buscar por precio.
+                              producto.categoria, // Busca en la categoría.
+                          (producto) => producto.precio.toStringAsFixed(
+                            0,
+                          ), // Permite buscar por precio.
                         ],
                         categorias: [
                           // Permite separar productos sin stock de los que están en bodega.
@@ -319,85 +325,85 @@ class _PaginaInventarioState extends State<PaginaInventario> {
                               )
                               .toList();
                           return TablaDatos(
-                            mostrarControles:
-                                false, // El panel ya muestra el buscador y las categorías.
+                            mostrarControles: false, // El panel ya muestra el buscador y las categorías.
                             // Encabezados visibles de la tabla.
-                        nombresColumnas: const [
-                          'PRODUCTO',
-                          'CATEGORÍA',
-                          'PRECIO',
-                          'CANTIDAD',
-                          'VER',
-                        ],
+                            nombresColumnas: const [
+                              'PRODUCTO',
+                              'CATEGORÍA',
+                              'PRECIO',
+                              'CANTIDAD',
+                              'VER',
+                            ],
 
-                        // Campos de cada columna (vacío si la celda es personalizada).
-                        camposColumnas: const [
-                          'nombre',
-                          'categoria',
-                          'precio',
-                          'cantidad',
-                          '',
-                        ],
+                            // Campos de cada columna (vacío si la celda es personalizada).
+                            camposColumnas: const [
+                              'nombre',
+                              'categoria',
+                              'precio',
+                              'cantidad',
+                              '',
+                            ],
 
-                        // Ancho proporcional de cada columna.
-                        anchosColumnas: const [450, 180, 130, 130, 100],
+                            // Ancho proporcional de cada columna.
+                            anchosColumnas: const [450, 180, 130, 130, 100],
 
-                        // Colores de cabecera alternando entre los dos rojos.
-                        coloresEncabezados: const [
-                          _rojoClaro,
-                          _rojoOscuro,
-                          _rojoClaro,
-                          _rojoOscuro,
-                          _rojoClaro,
-                        ],
+                            // Colores de cabecera alternando entre los dos rojos.
+                            coloresEncabezados: const [
+                              _rojoClaro,
+                              _rojoOscuro,
+                              _rojoClaro,
+                              _rojoOscuro,
+                              _rojoClaro,
+                            ],
 
-                        filas: filasProductos,
+                            filas: filasProductos,
 
-                        celdasPersonalizadas: {
-                          // Columna 0: nombre del producto en negrita.
-                          0: (context, fila) {
-                            final producto = fila['producto'] as Producto;
+                            celdasPersonalizadas: {
+                              // Columna 0: nombre del producto en negrita.
+                              0: (context, fila) {
+                                final producto = fila['producto'] as Producto;
 
-                            return Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                producto.nombre,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            );
-                          },
-
-                          // Columna 4: botón para ver/editar el producto.
-                          4: (context, fila) {
-                            final producto = fila['producto'] as Producto;
-
-                            return CartaNavegacion.accion(
-                              // Conserva las medidas y la función de la acción original.
-                              tipoBoton: 'icon',
-
-                              tooltip: 'Ver producto',
-                              child: const Icon(Icons.search, size: 30),
-                              onPressed: () async {
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => PaginaEdicionProducto(
-                                      producto: producto,
+                                return Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    producto.nombre,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 );
-
-                                // Recarga los productos después de editar.
-                                if (!mounted) return;
-                                await _cargarProductos();
                               },
-                            );
-                          },
-                        },
+
+                              // Columna 4: botón para ver/editar el producto.
+                              4: (context, fila) {
+                                final producto = fila['producto'] as Producto;
+
+                                return CartaNavegacion.accion(
+                                  // Conserva las medidas y la función de la acción original.
+                                  tipoBoton: 'icon',
+
+                                  tooltip: 'Ver producto',
+                                  child: const Icon(Icons.search, size: 30),
+                                  onPressed: () async {
+                                    await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            PaginaEdicionProducto(
+                                              producto: producto,
+                                            ),
+                                      ),
+                                    );
+
+                                    // Recarga los productos después de editar.
+                                    if (!mounted) return;
+                                    await _cargarProductos();
+                                  },
+                                );
+                              },
+                            },
                           ); // Finaliza la tabla construida con los productos filtrados.
                         }, // Finaliza la construcción del contenido.
                       ), // Finaliza el panel de filtros reutilizable.

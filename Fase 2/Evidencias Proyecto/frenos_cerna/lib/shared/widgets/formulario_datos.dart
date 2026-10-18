@@ -45,6 +45,7 @@ class FormularioDatos extends StatelessWidget {
   final int? filas;
   // Ancho exterior opcional del formulario.
   final double? ancho;
+  final bool ajustarAlAnchoDisponible; // Permite adaptar formularios de una columna al espacio de la página.
   // Alto exterior opcional; habilita desplazamiento vertical cuando es necesario.
   final double? alto;
   // Ancho mínimo compartido por los campos, incluso cuando sus textos son cortos.
@@ -67,6 +68,7 @@ class FormularioDatos extends StatelessWidget {
     this.columnas = 1, // Utiliza una sola columna de forma predeterminada.
     this.filas, // Calcula las filas automáticamente cuando no se especifican.
     this.ancho, // Adapta el ancho al contenido y al espacio disponible por defecto.
+    this.ajustarAlAnchoDisponible = false, // Conserva las dimensiones originales salvo indicación explícita.
     this.alto, // Utiliza la altura necesaria para todas las filas por defecto.
     this.anchoMinimoCampo =
         280, // Evita que los campos cortos resulten demasiado pequeños.
@@ -217,7 +219,13 @@ class FormularioDatos extends StatelessWidget {
               ? restricciones.maxWidth
               : anchoNatural;
           // Mantiene las columnas legibles si el ancho solicitado es demasiado pequeño.
-          final anchoCuadricula = anchoSolicitado > anchoNatural
+          final anchoCuadricula =
+              ajustarAlAnchoDisponible &&
+                  columnas == 1 &&
+                  restricciones.hasBoundedWidth
+              ? restricciones
+                    .maxWidth // Evita que las ayudas largas desplacen el formulario de perfil.
+              : anchoSolicitado > anchoNatural
               ? anchoSolicitado
               : anchoNatural;
           // Reparte el ancho de la cuadrícula en campos exactamente iguales.
