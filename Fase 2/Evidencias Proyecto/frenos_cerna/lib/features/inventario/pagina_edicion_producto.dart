@@ -96,18 +96,15 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
 
     setState(() => _guardando = true);
     try {
-      await SupabaseDatabase.client
-          .from(SupabaseTables.productos)
-          .update({
-            'cod_barra': _nombreController.text.trim().isEmpty
-                ? null
-                : _nombreController.text.trim(),
-            'precio': precio,
-            'stock': _cantidadActual,
-            if (_tipoSeleccionado != null)
-              'tipo': _tipoSeleccionado, // Guarda la categoría seleccionada.
-          })
-          .eq('codigo_producto', widget.producto.id);
+      await SupabaseDatabase.client.from(SupabaseTables.productos).update({
+        'cod_barra': _nombreController.text.trim().isEmpty
+            ? null
+            : _nombreController.text.trim(),
+        'precio': precio,
+        'stock': _cantidadActual,
+        if (_tipoSeleccionado != null)
+          'tipo': _tipoSeleccionado, // Guarda la categoría seleccionada.
+      }).eq('codigo_producto', widget.producto.id);
       if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Producto actualizado.')));
@@ -122,11 +119,58 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
     }
   }
 
+  Future<void> _eliminarProducto() async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (dialogo) => AlertDialog(
+        title: const Text('ELIMINAR PRODUCTO'),
+        content: Text('¿Eliminar el producto ${widget.producto.id}?'),
+        actions: [
+          CartaNavegacion.accion(
+            onPressed: () => Navigator.pop(dialogo, false),
+            child: const Text('CANCELAR'),
+          ),
+          CartaNavegacion.accion(
+            onPressed: () => Navigator.pop(dialogo, true),
+            child: const Text('ELIMINAR'),
+          ),
+        ],
+      ),
+    );
+    if (confirmar != true || !mounted) return;
+    setState(() => _guardando = true);
+    try {
+      final detalles = await SupabaseDatabase.client
+          .from(SupabaseTables.detallesVentaProducto)
+          .select('id')
+          .eq('codigo_producto', widget.producto.id)
+          .limit(1);
+      if (detalles.isNotEmpty) {
+        throw StateError(
+          'No se puede eliminar: el producto aparece en ventas registradas.',
+        );
+      }
+      await SupabaseDatabase.client
+          .from(SupabaseTables.productos)
+          .delete()
+          .eq('codigo_producto', widget.producto.id)
+          .select('codigo_producto')
+          .single();
+      if (mounted) Navigator.pop(context, true);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo eliminar el producto: $error')),
+      );
+    } finally {
+      if (mounted) setState(() => _guardando = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final anchoPantalla = MediaQuery.of(context).size.width;
-    final esPantallaGrande =
-        anchoPantalla >=
+    final esPantallaGrande = anchoPantalla >=
         700; // Comparte el punto de adaptación del menú principal.
 
     return Scaffold(
@@ -137,8 +181,7 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
           MediaQuery.sizeOf(context).height * 0.10,
         ),
         child: SizedBox(
-          height:
-              MediaQuery.sizeOf(context).height *
+          height: MediaQuery.sizeOf(context).height *
               0.10, // Mantiene la altura común de las barras.
           child: BarraSuperior(
             tituloPagina: 'Edición de producto',
@@ -193,7 +236,8 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
                   // Acción para guardar los cambios
                   Wrap(
                     spacing: 10,
-                    runSpacing: 10, // Conserva las medidas y pasa las acciones a otra fila en Android.
+                    runSpacing:
+                        10, // Conserva las medidas y pasa las acciones a otra fila en Android.
                     alignment: WrapAlignment.center,
                     children: [
                       CartaNavegacion.accion(
@@ -217,7 +261,28 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
                           ),
                         ),
                       ),
-                      const SizedBox.shrink(),
+                      CartaNavegacion.accion(
+                        tipoBoton: 'elevated',
+                        onPressed: _guardando ? null : _eliminarProducto,
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          color: Colors.black,
+                        ),
+                        label: const Text(
+                          'ELIMINAR',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFD96363),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 30,
+                            vertical: 15,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 40),
@@ -283,7 +348,8 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
                   const SizedBox(height: 10),
                   Wrap(
                     spacing: 10,
-                    runSpacing: 10, // Conserva las medidas y pasa las acciones a otra fila en Android.
+                    runSpacing:
+                        10, // Conserva las medidas y pasa las acciones a otra fila en Android.
                     alignment: WrapAlignment.center,
                     children: [
                       Container(
@@ -401,14 +467,12 @@ class _PaginaEdicionProductoState extends State<PaginaEdicionProducto> {
                                       MaterialPageRoute(
                                         builder: (context) =>
                                             PaginaDetalleVenta(
-                                              idVenta: venta.id,
-                                              clienteNombre:
-                                                  venta.clienteNombre,
-                                              vehiculoNombre:
-                                                  venta.vehiculoNombre,
-                                              total: venta.total,
-                                              desdeHistorial: true,
-                                            ),
+                                          idVenta: venta.id,
+                                          clienteNombre: venta.clienteNombre,
+                                          vehiculoNombre: venta.vehiculoNombre,
+                                          total: venta.total,
+                                          desdeHistorial: true,
+                                        ),
                                       ),
                                     ),
                                   ),
