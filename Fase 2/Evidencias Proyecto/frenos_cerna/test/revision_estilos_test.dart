@@ -158,7 +158,7 @@ void main() {
   ); // Finaliza la comparación de acciones.
 
   testWidgets(
-    'Productos en bodega usa texto negro y el tamaño de Añadir cliente',
+    'Añadir producto usa texto negro y el tamaño de Añadir cliente',
     (tester) async {
       // Protege la discrepancia señalada por el usuario.
       tester.view.physicalSize = const Size(1440, 1000);
@@ -169,12 +169,12 @@ void main() {
       await tester.pumpWidget(const MaterialApp(home: PaginaInventario()));
       await tester.pumpAndSettle(); // Abre el inventario real sin escrituras.
       final texto = find.text(
-        'PRODUCTOS EN BODEGA',
+        'AÑADIR PRODUCTO',
       ); // Obtiene la etiqueta corregida.
       expect(
         tester.widget<Text>(texto).style!.color,
         Colors.black,
-      ); // Retira el texto blanco anterior.
+      ); // Conserva el texto negro de la referencia.
       expect(
         tester.getSize(
           find.ancestor(of: texto, matching: find.byType(ElevatedButton)),

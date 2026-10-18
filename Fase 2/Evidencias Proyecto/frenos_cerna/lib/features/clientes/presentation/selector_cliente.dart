@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:frenos_cerna/core/data/supabase_database.dart';
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart';
 import 'package:frenos_cerna/shared/widgets/tabla_datos.dart';
-import 'package:frenos_cerna/shared/widgets/filtros_tabla.dart';
 import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
 
 // Abre un buscador de clientes existentes y devuelve el cliente elegido.
@@ -79,10 +78,6 @@ Future<Cliente?> seleccionarClienteExistente(
                         2,
                         2,
                       ], // Permite buscar por nombre o RUT.
-                      filtros: const [
-                        OpcionFiltroTabla(id: 'nombre', texto: 'NOMBRE'),
-                        OpcionFiltroTabla(id: 'rut', texto: 'RUT'),
-                      ], // Configura los criterios pedidos.
                       filas: estado.data!
                           .map(
                             (cliente) => <String, dynamic>{

@@ -6,9 +6,7 @@ import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
 // Importa un widget compartido para verificar su comportamiento.
 import 'package:frenos_cerna/shared/widgets/formulario_datos.dart';
 // Importa un widget compartido para verificar su comportamiento.
-import 'package:frenos_cerna/shared/widgets/filtros_tabla.dart';
-// Importa un widget compartido para verificar su comportamiento.
-import 'package:frenos_cerna/shared/widgets/buscador_tabla.dart';
+import 'package:frenos_cerna/shared/widgets/panel_filtros.dart';
 // Importa un widget compartido para verificar su comportamiento.
 import 'package:frenos_cerna/shared/widgets/tabla_datos.dart';
 // Importa una página para verificar su distribución en ambas plataformas.
@@ -256,10 +254,8 @@ void main() {
     } // Finaliza el recorrido de páginas.
   } // Finaliza las dimensiones comprobadas.
 
-  // Comprueba que la búsqueda respete el campo seleccionado y mantenga abierto el menú.
-  testWidgets('tabla combina búsqueda y filtro sin cerrar el menú', (
-    tester,
-  ) async {
+  // Comprueba que la tabla nueva busca en todos los campos a la vez.
+  testWidgets('tabla combina búsqueda en todos los campos', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -271,7 +267,7 @@ void main() {
             camposColumnas: const [
               'nombre',
               'rut',
-            ], // Asocia filtros a los datos reales.
+            ], // Asocia la búsqueda a los datos reales.
             anchosColumnas: const [
               2,
               1,
@@ -283,21 +279,14 @@ void main() {
           ),
         ),
       ),
-    ); // Construye la tabla con sus controles.
-    final anchoTabla =
-        tester.getSize(find.byType(TablaDatos)).width -
-        14; // Obtiene el ancho visible sin el desplazamiento.
+    ); // Construye la tabla con su buscador integrado.
     expect(
-      tester.getSize(find.byType(BuscadorTabla)).width,
-      closeTo(anchoTabla * 0.33, 0.01),
-    ); // Comprueba el ancho del buscador.
-    expect(
-      tester.getSize(find.byType(FiltrosTabla)).width,
-      closeTo(anchoTabla * 0.33, 0.01),
-    ); // Comprueba el ancho del filtro.
+      find.byType(CampoBusqueda),
+      findsOneWidget,
+    ); // Comprueba el buscador reutilizable.
     await tester.enterText(
       find.descendant(
-        of: find.byType(BuscadorTabla),
+        of: find.byType(CampoBusqueda),
         matching: find.byType(TextField),
       ),
       'Ana',
@@ -315,42 +304,47 @@ void main() {
       find.text('Luis'),
       findsNothing,
     ); // Oculta los registros que no coinciden.
-    await tester.tap(
-      find.byType(FiltrosTabla),
-    ); // Abre las opciones del filtro.
-    await tester.pumpAndSettle(); // Espera la apertura del menú superpuesto.
-    await tester.tap(find.text('FILTRO : RUT')); // Limita la búsqueda al RUT.
-    await tester
-        .pumpAndSettle(); // Actualiza los resultados sin cerrar el menú.
+    await tester.enterText(
+      find.descendant(
+        of: find.byType(CampoBusqueda),
+        matching: find.byType(TextField),
+      ),
+      '22',
+    ); // Busca ahora por el RUT de Luis.
+    await tester.pumpAndSettle(); // Aplica la búsqueda sobre todos los campos.
     expect(
-      find.text('No hay registros para mostrar'),
-      findsOneWidget,
-    ); // Exige que se aplique el campo seleccionado.
+      find.byWidgetPredicate(
+        (widget) => widget is Text && widget.data == 'Ana',
+      ),
+      findsNothing,
+    ); // El RUT ya no coincide con el nombre anterior.
     expect(
-      find.text('FILTRO : NOMBRE'),
+      find.byWidgetPredicate(
+        (widget) => widget is Text && widget.data == 'Luis',
+      ),
       findsOneWidget,
-    ); // Comprueba que el menú siga abierto.
+    ); // Recupera el registro cuyo RUT coincide.
     await tester.tap(
-      find.text('FILTRO : NOMBRE'),
-    ); // Cambia al campo de nombre.
-    await tester.pumpAndSettle(); // Actualiza la selección y las filas.
+      find.byTooltip('Limpiar búsqueda'),
+    ); // Borra el texto de un solo toque.
+    await tester.pumpAndSettle(); // Restaura todos los registros.
     expect(
       find.byWidgetPredicate(
         (widget) => widget is Text && widget.data == 'Ana',
       ),
       findsOneWidget,
-    ); // Recupera el registro que coincide.
-    await tester.tapAt(const Offset(780, 580)); // Pulsa fuera del menú.
-    await tester.pumpAndSettle(); // Espera el cierre.
+    ); // Vuelve a mostrar el primer registro.
     expect(
-      find.text('FILTRO : RUT'),
-      findsNothing,
-    ); // Comprueba que se cerraron las opciones.
+      find.byWidgetPredicate(
+        (widget) => widget is Text && widget.data == 'Luis',
+      ),
+      findsOneWidget,
+    ); // Vuelve a mostrar el segundo registro.
     expect(
       tester.takeException(),
       isNull,
     ); // Exige ausencia de errores de interacción.
-  }); // Finaliza la prueba conjunta de búsqueda y filtros.
+  }); // Finaliza la prueba de búsqueda general.
 
   // Comprueba distribuciones rectangulares y cuadradas con campos uniformes.
   for (final distribucion in [(2, 2), (3, 3), (2, 3), (3, 2), (5, 5)]) {

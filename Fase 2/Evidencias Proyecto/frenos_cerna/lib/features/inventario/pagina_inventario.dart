@@ -11,6 +11,8 @@ import 'package:frenos_cerna/core/data/supabase_database.dart';
 import 'package:frenos_cerna/features/inventario/pagina_edicion_producto.dart';
 import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
 import 'package:frenos_cerna/shared/widgets/tabla_datos.dart';
+// Importa el panel reutilizable que combina buscador y categorías.
+import 'package:frenos_cerna/shared/widgets/panel_filtros.dart';
 
 // ============================================================
 // MODELO PRODUCTO
@@ -79,12 +81,8 @@ class _PaginaInventarioState extends State<PaginaInventario> {
 
   List<Producto> productos = [];
 
-  bool _mostrarFaltantes =
-      false; // Conserva la sección de inventario seleccionada.
   bool _cargando = true;
   String? _error;
-
-  final TextEditingController _busquedaController = TextEditingController();
 
   // Colores de cabecera que se alternan entre las columnas.
   static const Color _rojoClaro = Color.fromARGB(255, 253, 116, 116);
@@ -98,52 +96,6 @@ class _PaginaInventarioState extends State<PaginaInventario> {
   void initState() {
     super.initState();
     _cargarProductos();
-  }
-
-  // ==========================================================
-  // LIBERAR CONTROLADORES
-  // ==========================================================
-
-  @override
-  void dispose() {
-    _busquedaController.dispose();
-    super.dispose();
-  }
-
-  // ==========================================================
-  // NORMALIZAR TEXTO PARA BÚSQUEDA
-  // ==========================================================
-
-  String _normalizarTexto(String texto) {
-    return texto
-        .toLowerCase()
-        .replaceAll('á', 'a')
-        .replaceAll('é', 'e')
-        .replaceAll('í', 'i')
-        .replaceAll('ó', 'o')
-        .replaceAll('ú', 'u')
-        .replaceAll('ü', 'u')
-        .replaceAll('ñ', 'n');
-  }
-
-  List<Producto> get _productosFiltrados {
-    final texto = _normalizarTexto(_busquedaController.text.trim());
-
-    if (texto.isEmpty) return productos;
-
-    return productos.where((producto) {
-      final nombre = _normalizarTexto(producto.nombre);
-      final codigoBarra = _normalizarTexto(producto.codigoBarra);
-      final id = _normalizarTexto(producto.id);
-      final categoria = _normalizarTexto(producto.categoria);
-      final precio = producto.precio.toStringAsFixed(0);
-
-      return nombre.contains(texto) ||
-          codigoBarra.contains(texto) ||
-          id.contains(texto) ||
-          categoria.contains(texto) ||
-          precio.contains(texto);
-    }).toList();
   }
 
   // ==========================================================
@@ -212,21 +164,6 @@ class _PaginaInventarioState extends State<PaginaInventario> {
     final esPantallaGrande =
         anchoPantalla >=
         700; // Comparte el punto de adaptación del menú principal.
-
-    // Convierte los productos filtrados a registros que entiende TablaDatos.
-    // El objeto original se conserva para usarlo al ver/editar el producto.
-    final List<Map<String, dynamic>> filasProductos = _productosFiltrados
-        .where((producto) => !_mostrarFaltantes || producto.cantidad == 0)
-        .map(
-          (producto) => <String, dynamic>{
-            'nombre': producto.nombre,
-            'categoria': producto.categoria,
-            'precio': '\$${producto.precio.toStringAsFixed(0)}',
-            'cantidad': producto.cantidad.toString(),
-            'producto': producto,
-          },
-        )
-        .toList();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -319,91 +256,7 @@ class _PaginaInventarioState extends State<PaginaInventario> {
                     ),
                   ),
 
-                  const SizedBox(height: 20),
-
-                  // ==================================================
-                  // BUSCADOR
-                  // ==================================================
-                  const SizedBox.shrink(),
-
-                  // ==================================================
-                  // SEPARACIÓN ENTRE BUSCADOR Y TABLA
-                  // ==================================================
-                  const SizedBox(height: 20),
-
-                  // ==================================================
-                  // BOTONES DE INVENTARIO
-                  // ==================================================
-                  Center(
-                    child: Wrap(
-                      spacing: 10,
-                      runSpacing: 10, // Conserva las medidas y pasa las acciones a otra fila en Android.
-                      alignment: WrapAlignment.center,
-                      children: [
-                        CartaNavegacion.accion(
-                          // Conserva las medidas y la función de la acción original.
-                          tipoBoton: 'elevated',
-
-                          onPressed: () =>
-                              setState(() => _mostrarFaltantes = false),
-
-                          icon: const Icon(
-                            Icons.cases_outlined,
-                            color: Colors.black,
-                          ),
-
-                          label: const Text(
-                            'PRODUCTOS EN BODEGA',
-
-                            style: TextStyle(color: Colors.black),
-                          ),
-
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _mostrarFaltantes
-                                ? const Color(0xFFB7B7B7)
-                                : const Color(0xFFB74545),
-
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 15,
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(width: 10),
-
-                        CartaNavegacion.accion(
-                          // Conserva las medidas y la función de la acción original.
-                          tipoBoton: 'elevated',
-
-                          onPressed: () =>
-                              setState(() => _mostrarFaltantes = true),
-
-                          icon: const Icon(
-                            Icons.warning_amber_rounded,
-                            color: Colors.black,
-                          ),
-
-                          label: const Text(
-                            'PRODUCTOS SIN STOCK',
-
-                            style: TextStyle(color: Colors.black),
-                          ),
-
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFB7B7B7),
-
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 15,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 20), // Separa la acción de los filtros.
 
                   // ==================================================
                   // MENSAJE DE ERROR
@@ -420,8 +273,55 @@ class _PaginaInventarioState extends State<PaginaInventario> {
                     )
                   else
                     Expanded(
-                      child: TablaDatos(
-                        // Encabezados visibles de la tabla.
+                      child: PanelFiltros<Producto>(
+                        datos: productos, // Filtra el inventario completo.
+                        textoAyuda:
+                            'BUSCAR PRODUCTO, CÓDIGO O CATEGORÍA', // Describe la búsqueda disponible.
+                        camposBusqueda: [
+                          (producto) => producto.nombre, // Busca en el nombre.
+                          (producto) =>
+                              producto.codigoBarra, // Busca en el código de barras.
+                          (producto) => producto.id, // Busca en el código interno.
+                          (producto) => producto.categoria, // Busca en la categoría.
+                          (producto) =>
+                              producto.precio
+                                  .toStringAsFixed(0), // Permite buscar por precio.
+                        ],
+                        categorias: [
+                          // Permite separar productos sin stock de los que están en bodega.
+                          CategoriaFiltro<Producto>(
+                            id: 'stock',
+                            etiqueta: 'STOCK',
+                            valor: (producto) => producto.cantidad == 0
+                                ? 'SIN STOCK'
+                                : 'EN BODEGA',
+                          ),
+                          // Muestra las categorías reales del inventario sin configurarlas a mano.
+                          CategoriaFiltro<Producto>(
+                            id: 'categoria',
+                            etiqueta: 'CATEGORÍA',
+                            valor: (producto) => producto.categoria,
+                          ),
+                        ],
+                        child: (filtrados) {
+                          // Convierte los productos filtrados a registros de TablaDatos.
+                          // El objeto original se conserva para usarlo al ver/editar el producto.
+                          final filasProductos = filtrados
+                              .map(
+                                (producto) => <String, dynamic>{
+                                  'nombre': producto.nombre,
+                                  'categoria': producto.categoria,
+                                  'precio':
+                                      '\$${producto.precio.toStringAsFixed(0)}',
+                                  'cantidad': producto.cantidad.toString(),
+                                  'producto': producto,
+                                },
+                              )
+                              .toList();
+                          return TablaDatos(
+                            mostrarControles:
+                                false, // El panel ya muestra el buscador y las categorías.
+                            // Encabezados visibles de la tabla.
                         nombresColumnas: const [
                           'PRODUCTO',
                           'CATEGORÍA',
@@ -498,8 +398,10 @@ class _PaginaInventarioState extends State<PaginaInventario> {
                             );
                           },
                         },
-                      ),
-                    ),
+                          ); // Finaliza la tabla construida con los productos filtrados.
+                        }, // Finaliza la construcción del contenido.
+                      ), // Finaliza el panel de filtros reutilizable.
+                    ), // Finaliza el espacio restante de la página.
                 ],
               ),
             ),

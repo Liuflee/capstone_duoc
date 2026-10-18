@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-// Reutiliza los controles superiores con las dimensiones del ancho visible.
-import 'package:frenos_cerna/shared/widgets/buscador_tabla.dart';
-// Reutiliza las opciones de selección única para cada tabla.
-import 'package:frenos_cerna/shared/widgets/filtros_tabla.dart';
+// Reutiliza el buscador del panel de filtros reutilizable.
+import 'package:frenos_cerna/shared/widgets/panel_filtros.dart';
 
 // Define cómo construir una celda especial a partir de los datos de una fila.
 // Permite mostrar iconos, botones, imágenes o cualquier otro widget.
@@ -160,8 +158,6 @@ class TablaDatos extends StatefulWidget {
 
   // Permite que la página conserve controles externos si ya los administra.
   final bool mostrarControles;
-  // Opciones configurables; cada identificador corresponde a un campo de datos.
-  final List<OpcionFiltroTabla>? filtros;
 
   // Títulos visibles en el encabezado, en el orden de las columnas.
   final List<String> nombresColumnas;
@@ -204,8 +200,7 @@ class TablaDatos extends StatefulWidget {
     required this.anchosColumnas,
     required this.filas,
     this.mostrarControles =
-        true, // Integra buscador y filtros encima de la cabecera.
-    this.filtros, // Genera opciones desde las columnas cuando no se personalizan.
+        true, // Integra el buscador encima de la cabecera.
     this.celdasPersonalizadas = const {},
     this.coloresEncabezados,
     this.coloresTextoEncabezados,
@@ -233,8 +228,6 @@ class TablaDatos extends StatefulWidget {
 class _TablaDatosState extends State<TablaDatos> {
   // Conserva el texto de búsqueda de esta tabla independientemente de otras tablas.
   final TextEditingController _buscador = TextEditingController();
-  // Una selección nula busca en todos los campos visibles.
-  String? _filtro;
 
   // Controla el desplazamiento vertical de las filas.
   final ScrollController _controladorScroll = ScrollController();
@@ -294,37 +287,19 @@ class _TablaDatosState extends State<TablaDatos> {
           anchoAsignado += anchoColumna;
         }
 
-        // Genera una sola opción por campo, excluyendo las columnas de acciones.
-        final opciones =
-            widget.filtros ??
-            [
-              for (final campo
-                  in widget.camposColumnas
-                      .where((campo) => campo.isNotEmpty)
-                      .toSet()) // Recorre los campos visibles sin duplicados.
-                OpcionFiltroTabla(
-                  id: campo,
-                  texto: widget
-                      .nombresColumnas[widget.camposColumnas.indexOf(campo)],
-                ), // Asocia cada opción a su dato real.
-            ]; // Finaliza las opciones propias de la tabla.
-        final seleccion = opciones.any((opcion) => opcion.id == _filtro)
-            ? _filtro
-            : null; // Descarta selecciones que ya no pertenecen a las columnas actuales.
-        final consulta = _buscador.text
-            .trim()
-            .toLowerCase(); // Normaliza el texto de búsqueda.
-        final camposBusqueda = seleccion == null
-            ? widget.camposColumnas.where((campo) => campo.isNotEmpty)
-            : [seleccion]; // Selecciona el campo o todos los campos visibles.
+        // Normaliza el texto de búsqueda sin distinguir tildes ni mayúsculas.
+        final consulta = normalizarFiltro(_buscador.text.trim());
+        // Busca en todos los campos visibles de cada fila a la vez.
+        final camposBusqueda = widget.camposColumnas
+            .where((campo) => campo.isNotEmpty);
         final filasVisibles = !widget.mostrarControles || consulta.isEmpty
             ? widget.filas
             : widget.filas
                   .where(
                     (fila) => camposBusqueda.any(
-                      (campo) => (fila[campo]?.toString() ?? '')
-                          .toLowerCase()
-                          .contains(consulta),
+                      (campo) => normalizarFiltro(
+                        fila[campo]?.toString() ?? '',
+                      ).contains(consulta),
                     ),
                   )
                   .toList(); // Filtra los datos mostrados sin modificar los originales.
@@ -332,38 +307,20 @@ class _TablaDatosState extends State<TablaDatos> {
         // El encabezado queda fuera del ListView para permanecer fijo.
         return Column(
           children: [
-            if (widget.mostrarControles) // Mantiene los controles fuera del espacio de la cabecera y las filas.
+            if (widget.mostrarControles) // Mantiene el buscador fuera del espacio de la cabecera y las filas.
               Padding(
                 padding: const EdgeInsets.only(
                   right: espacioScroll,
                   bottom: 20,
-                ), // Alinea ambos extremos con el ancho visible de la tabla.
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween, // Coloca los filtros a la izquierda y la búsqueda a la derecha.
-                  children: [
-                    FiltrosTabla(
-                      anchoTabla: anchoTabla, // Comparte el ancho visible con el buscador.
-                      filtroSeleccionado:
-                          seleccion ??
-                          '__todos__', // Mantiene una selección única.
-                      filtros: [
-                        const OpcionFiltroTabla(
-                          id: '__todos__',
-                          texto: 'TODOS LOS CAMPOS',
-                        ),
-                        ...opciones,
-                      ], // Incluye la búsqueda general y los filtros de la página.
-                      alSeleccionar: (id) => setState(
-                        () => _filtro = id == '__todos__' ? null : id,
-                      ), // Actualiza el campo de búsqueda sin cerrar el menú.
-                    ), // Finaliza el selector reutilizable.
-                    BuscadorTabla(
-                      anchoTabla: anchoTabla,
-                      controlador: _buscador,
-                      alCambiar: (_) => setState(() {}),
-                    ), // Actualiza las filas mientras se escribe.
-                  ], // Finaliza los controles superiores.
-                ), // Finaliza la distribución horizontal.
+                ), // Alinea el buscador con el ancho visible de la tabla.
+                child: CampoBusqueda(
+                  controlador: _buscador,
+                  textoAyuda:
+                      'BUSCAR EN LA TABLA', // Describe la búsqueda general.
+                  alCambiar: (_) => setState(
+                    () {},
+                  ), // Actualiza las filas mientras se escribe.
+                ), // Finaliza el buscador reutilizable.
               ), // Finaliza la zona independiente de controles.
             // Encabezado de las columnas.
             Padding(

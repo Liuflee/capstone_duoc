@@ -1,7 +1,6 @@
 import 'package:frenos_cerna/features/ventas/data/ventas_pendientes_repository.dart'; // Integra las ventas todavía locales.
 import 'package:frenos_cerna/features/ventas/presentation/pagina_detalle_venta_pendiente.dart'; // Abre el historial de una venta sin pago.
-import 'package:frenos_cerna/shared/widgets/filtros_tabla.dart'; // Filtra las ventas por estado.
-import 'package:frenos_cerna/shared/widgets/buscador_tabla.dart'; // Conserva la búsqueda de la tabla.
+import 'package:frenos_cerna/shared/widgets/panel_filtros.dart'; // Filtra las ventas por estado, periodo y búsqueda.
 // Importa la barra superior común a las páginas.
 import 'package:frenos_cerna/shared/widgets/barra_superior.dart';
 // Importa las cartas que conservan las acciones de la página.
@@ -39,19 +38,12 @@ class PaginaVentas extends StatefulWidget {
 
 class _PaginaVentasState extends State<PaginaVentas> {
   List<VentaEnProceso> ventasActivas = [];
-  final _busqueda = TextEditingController(); // Conserva la búsqueda de Ventas.
-  String _estado = 'todas'; // Muestra inicialmente todos los estados.
   List<VentaPendiente> _pendientes =
       []; // Conserva las ventas guardadas localmente.
   VentasPendientesRepository get _repositorio =>
       widget.repositorioPendientes ??
       VentasPendientesRepository
           .instancia; // Usa el mismo catálogo al crear y editar.
-  @override // Libera los recursos al salir de Ventas.
-  void dispose() {
-    _busqueda.dispose();
-    super.dispose();
-  } // Evita conservar el controlador de una página cerrada.
 
   bool _cargando = true;
   String? _error;
@@ -105,43 +97,6 @@ class _PaginaVentasState extends State<PaginaVentas> {
     if (mounted) await _cargarVentas(); // Actualiza la tabla al volver.
   } // Finaliza el registro de una venta diaria.
 
-  Widget _controlesVentas() => Padding(
-    padding: const EdgeInsets.only(left: 14, bottom: 20),
-    child: LayoutBuilder(
-      builder: (context, limites) {
-        // Alinea los controles con el ancho visible de la tabla.
-        final ancho = (limites.maxWidth - 14).clamp(
-          0.0,
-          double.infinity,
-        ); // Excluye el espacio del scrollbar.
-        return Padding(
-          padding: const EdgeInsets.only(right: 14),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Conserva filtros y búsqueda en sus extremos.
-              FiltrosTabla(
-                anchoTabla: ancho,
-                filtros: const [
-                  OpcionFiltroTabla(id: 'todas', texto: 'TODAS LAS VENTAS'),
-                  OpcionFiltroTabla(id: 'cerrada', texto: 'VENTA CERRADA'),
-                  OpcionFiltroTabla(id: 'pendiente', texto: 'VENTA EN PROCESO'),
-                ],
-                filtroSeleccionado: _estado,
-                alSeleccionar: (valor) => setState(() => _estado = valor),
-              ), // Filtra por el origen real de la venta.
-              BuscadorTabla(
-                anchoTabla: ancho,
-                controlador: _busqueda,
-                alCambiar: (_) => setState(() {}),
-              ), // Busca por cliente, vehículo o producto sin cambiar el estado.
-            ],
-          ),
-        ); // Finaliza los controles de la tabla.
-      },
-    ),
-  ); // Finaliza la adaptación del ancho.
-
   @override
   Widget build(BuildContext context) {
     final esPantallaGrande =
@@ -153,51 +108,58 @@ class _PaginaVentasState extends State<PaginaVentas> {
 
     final hoy = (widget.ahora?.call() ?? DateTime.now())
         .toLocal(); // Compara los días en la misma zona horaria.
+    // Comprueba si dos fechas pertenecen al mismo día.
+    bool mismoDia(DateTime a, DateTime b) =>
+        a.year == b.year && a.month == b.month && a.day == b.day;
     bool esDeHoy(DateTime? fecha) =>
         fecha != null &&
-        fecha.toLocal().year == hoy.year &&
-        fecha.toLocal().month == hoy.month &&
-        fecha.toLocal().day ==
-            hoy.day; // Excluye ventas sin fecha conocida de la vista diaria.
-    final consulta = _busqueda.text
-        .trim()
-        .toLowerCase(); // Normaliza la búsqueda.
-    final List<Map<String, dynamic>> filasVentas =
-        [
-              // Combina ambos estados sin alterar las tablas.
-              for (final pendiente in _pendientes.where(
-                (venta) =>
-                    widget.mostrarHistorial || esDeHoy(venta.fechaCreacion),
-              )) // Recorre las ventas guardadas en este dispositivo.
-                {
-                  'cliente': pendiente.nombreCliente,
-                  'vehiculo': pendiente.registro.vehiculoNombre,
-                  'productos': pendiente.registro.productosResumen,
-                  'venta': pendiente.registro,
-                  'pendiente': pendiente,
-                  'estado': 'pendiente',
-                }, // Conserva el borrador detrás de la fila.
-              for (final venta in ventasActivas.where(
-                (venta) =>
-                    widget.mostrarHistorial || esDeHoy(venta.fechaRegistro),
-              )) // Recorre únicamente ventas concretadas en Supabase.
-                {
-                  'cliente': venta.clienteNombre,
-                  'vehiculo': venta.vehiculoNombre,
-                  'productos': venta.productosResumen,
-                  'venta': venta,
-                  'estado': 'cerrada',
-                }, // Distingue el historial cerrado.
-            ]
-            .where(
-              (fila) =>
-                  (_estado == 'todas' || fila['estado'] == _estado) &&
-                  ['cliente', 'vehiculo', 'productos'].any(
-                    (campo) =>
-                        fila[campo].toString().toLowerCase().contains(consulta),
-                  ),
-            )
-            .toList(); // Combina estado y búsqueda.
+        mismoDia(
+          fecha.toLocal(),
+          hoy,
+        ); // Excluye ventas sin fecha conocida de la vista diaria.
+    // Clasifica cada venta en un periodo sencillo para el filtro del historial.
+    String periodoDe(DateTime? fecha) {
+      final local = fecha?.toLocal();
+      if (local == null) {
+        return 'SIN FECHA'; // Conserva las ventas antiguas sin fecha.
+      }
+      if (mismoDia(local, hoy)) return 'HOY';
+      if (local.isAfter(hoy.subtract(const Duration(days: 7)))) {
+        return 'ÚLTIMOS 7 DÍAS';
+      }
+      if (local.year == hoy.year && local.month == hoy.month) {
+        return 'ESTE MES';
+      }
+      return 'ANTERIORES'; // Agrupa lo más antiguo de una sola vez.
+    }
+
+    // Prepara todas las ventas visibles; el panel aplica estado, periodo y texto.
+    final List<Map<String, dynamic>> filasVentas = [
+      // Combina ambos estados sin alterar las tablas.
+      for (final pendiente in _pendientes.where(
+        (venta) => widget.mostrarHistorial || esDeHoy(venta.fechaCreacion),
+      )) // Recorre las ventas guardadas en este dispositivo.
+        {
+          'cliente': pendiente.nombreCliente,
+          'vehiculo': pendiente.registro.vehiculoNombre,
+          'productos': pendiente.registro.productosResumen,
+          'venta': pendiente.registro,
+          'pendiente': pendiente,
+          'estado': 'pendiente',
+          'fecha': pendiente.fechaCreacion, // Permite filtrar por periodo.
+        }, // Conserva el borrador detrás de la fila.
+      for (final venta in ventasActivas.where(
+        (venta) => widget.mostrarHistorial || esDeHoy(venta.fechaRegistro),
+      )) // Recorre únicamente ventas concretadas en Supabase.
+        {
+          'cliente': venta.clienteNombre,
+          'vehiculo': venta.vehiculoNombre,
+          'productos': venta.productosResumen,
+          'venta': venta,
+          'estado': 'cerrada',
+          'fecha': venta.fechaRegistro, // Permite filtrar por periodo.
+        }, // Distingue el historial cerrado.
+    ]; // Finaliza la lista completa de ventas visibles.
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -324,7 +286,6 @@ class _PaginaVentasState extends State<PaginaVentas> {
                       'Las ventas sin fecha conocida están disponibles en el historial completo.',
                     ), // Mantiene consultables las ventas antiguas.
                   if (_error != null) Text(_error!),
-                  _controlesVentas(), // Mantiene el filtro por estado encima de la tabla.
                   // ==================================================
                   // CARGANDO
                   // ==================================================
@@ -341,8 +302,43 @@ class _PaginaVentasState extends State<PaginaVentas> {
                         // Compensa los 14 px que TablaDatos reserva a la
                         // derecha para el scrollbar, así queda centrada.
                         padding: const EdgeInsets.only(left: 14),
-                        child: TablaDatos(
-                          mostrarControles: false, // La página aplica el filtro por estado y la búsqueda.
+                        child: PanelFiltros<Map<String, dynamic>>(
+                          datos:
+                              filasVentas, // Todas las ventas visibles de la página.
+                          textoAyuda:
+                              'BUSCAR CLIENTE, VEHÍCULO O PRODUCTO', // Describe la búsqueda disponible.
+                          camposBusqueda: [
+                            (fila) => fila['cliente'].toString(), // Busca en el cliente.
+                            (fila) => fila['vehiculo'].toString(), // Busca en el vehículo.
+                            (fila) =>
+                                fila['productos'].toString(), // Busca en los productos.
+                          ],
+                          categorias: [
+                            // Permite elegir ventas cerradas, en proceso o ambas.
+                            CategoriaFiltro<Map<String, dynamic>>(
+                              id: 'estado',
+                              etiqueta: 'ESTADO',
+                              valor: (fila) => fila['estado'] == 'cerrada'
+                                  ? 'VENTA CERRADA'
+                                  : 'VENTA EN PROCESO',
+                            ),
+
+                            CategoriaFiltro<Map<String, dynamic>>(
+                                id: 'cliente',
+                                etiqueta: 'CLIENTE',
+                                valor: (fila) => fila['cliente'].toString(),
+                              ),
+                            // El historial completo también se filtra por periodo.
+                            if (widget.mostrarHistorial)
+                              CategoriaFiltro<Map<String, dynamic>>(
+                                id: 'periodo',
+                                etiqueta: 'PERIODO',
+                                valor: (fila) =>
+                                    periodoDe(fila['fecha'] as DateTime?),
+                              ),
+                          ],
+                          child: (filtrados) => TablaDatos(
+                          mostrarControles: false, // El panel ya aplica estado, periodo y búsqueda.
                           // Encabezados visibles de la tabla.
                           nombresColumnas: const [
                             'CLIENTE',
@@ -373,7 +369,7 @@ class _PaginaVentasState extends State<PaginaVentas> {
                           // Las filas de ventas son más altas que el valor por defecto.
                           altoFila: 120,
 
-                          filas: filasVentas,
+                          filas: filtrados, // Muestra las ventas que pasan los filtros.
 
                           celdasPersonalizadas: {
                             // Columna 0: cliente con avatar.
@@ -482,9 +478,10 @@ class _PaginaVentasState extends State<PaginaVentas> {
                               );
                             },
                           },
-                        ),
-                      ),
-                    ),
+                            ), // Finaliza la tabla construida con las ventas filtradas.
+                          ), // Finaliza el panel de filtros reutilizable.
+                        ), // Finaliza la compensación del scrollbar.
+                      ), // Finaliza el espacio restante de la página.
                 ],
               ),
             ),

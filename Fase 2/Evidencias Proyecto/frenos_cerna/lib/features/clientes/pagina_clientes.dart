@@ -14,10 +14,8 @@ import 'package:frenos_cerna/shared/widgets/barra_superior.dart';
 
 import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
 import 'package:frenos_cerna/shared/widgets/tabla_datos.dart';
-// Importa el buscador reutilizable que se coloca encima de la tabla.
-import 'package:frenos_cerna/shared/widgets/buscador_tabla.dart';
-// Importa el selector y las opciones configurables de filtrado.
-import 'package:frenos_cerna/shared/widgets/filtros_tabla.dart';
+// Importa el panel reutilizable que combina buscador y categorías.
+import 'package:frenos_cerna/shared/widgets/panel_filtros.dart';
 // Importa la tarjeta reutilizable para abrir el registro de clientes.
 import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
 
@@ -99,26 +97,12 @@ class _PaginaClientesState extends State<PaginaClientes> {
 
   String? _error;
 
-  // Controlador del campo de búsqueda.
-  final TextEditingController _busquedaController = TextEditingController();
-
-  // Identifica los campos en los que se aplica el texto de búsqueda.
-  String _filtroSeleccionado = 'todos';
-
   @override
   void initState() {
     super.initState();
 
     // Consulta los clientes cuando se abre la página.
     _cargarClientes();
-  }
-
-  @override
-  void dispose() {
-    // Libera los recursos del campo de búsqueda al cerrar la página.
-    _busquedaController.dispose();
-
-    super.dispose();
   }
 
   // Consulta los clientes en Supabase y los ordena alfabéticamente.
@@ -163,49 +147,6 @@ class _PaginaClientesState extends State<PaginaClientes> {
 
   @override
   Widget build(BuildContext context) {
-    // Obtiene el texto ingresado en el buscador sin distinguir mayúsculas.
-    final textoBusqueda = _busquedaController.text.trim().toLowerCase();
-
-    // Aplica la búsqueda al campo elegido; Todos conserva la búsqueda original.
-    final clientesFiltrados = textoBusqueda.isEmpty
-        ? clientes // Sin texto se muestran todos los clientes recuperados.
-        : clientes.where((cliente) {
-            // Evalúa cada cliente con la selección actual.
-            // Selecciona los valores asociados al identificador del filtro.
-            final campos = switch (_filtroSeleccionado) {
-              'nombre' => [cliente.nombre], // Busca únicamente en el nombre.
-              'numero' => [cliente.numero], // Busca únicamente en el teléfono.
-              'rut' => [cliente.id], // Busca únicamente en el RUT.
-              'vehiculos' => cliente.vehiculos,
-              _ => [
-                cliente.nombre,
-                cliente.numero,
-                cliente.id,
-                ...cliente.vehiculos,
-              ], // Busca en todos los campos.
-            }; // Finaliza la selección de campos.
-            // Comprueba las coincidencias sin distinguir mayúsculas.
-            return campos.any(
-              (campo) => campo.toLowerCase().contains(textoBusqueda),
-            );
-          }).toList(); // Entrega solo los clientes que cumplen la búsqueda.
-
-    // Convierte los clientes filtrados a registros que entiende TablaDatos.
-    // El objeto original se conserva para utilizarlo al editar.
-    final List<Map<String, dynamic>> filasClientes = clientesFiltrados
-        .map(
-          (cliente) => <String, dynamic>{
-            'nombre': cliente.nombre,
-            'numero': cliente.numero,
-            'rut': cliente.id,
-            'vehiculos': cliente.vehiculos.isEmpty
-                ? 'Sin vehículos'
-                : cliente.vehiculos.join('\n'),
-            'cliente': cliente,
-          },
-        )
-        .toList();
-
     return Scaffold(
       // Conserva la navegación lateral en pantallas pequeñas.
       drawer: const Drawer(child: MenuLateral(activo: 'Clientes')),
@@ -278,70 +219,6 @@ class _PaginaClientesState extends State<PaginaClientes> {
 
                             const SizedBox(height: 20),
 
-                            // Obtiene el ancho del mismo contenedor que ocupa TablaDatos.
-                            LayoutBuilder(
-                              builder: (context, restricciones) {
-                                // Distribuye los controles fuera del espacio de la tabla.
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 14), // Descuenta el espacio reservado por TablaDatos para el desplazamiento.
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween, // Ubica los controles en extremos opuestos.
-                                    children: [
-                                      // Mantiene ambos controles en una misma fila.
-                                      FiltrosTabla(
-                                        anchoTabla:
-                                            (restricciones.maxWidth - 14)
-                                                .clamp(0.0, double.infinity)
-                                                .toDouble(), // Calcula el 33 % del ancho visible de la tabla.
-                                        filtroSeleccionado: _filtroSeleccionado, // Refleja una única selección.
-                                        filtros: const [
-                                          // Define manualmente las opciones de Clientes.
-                                          OpcionFiltroTabla(
-                                            id: 'todos',
-                                            texto: 'Todos los campos',
-                                          ), // Conserva la búsqueda general.
-                                          OpcionFiltroTabla(
-                                            id: 'nombre',
-                                            texto: 'Nombre',
-                                          ), // Limita la búsqueda al nombre.
-                                          OpcionFiltroTabla(
-                                            id: 'numero',
-                                            texto: 'Número',
-                                          ), // Limita la búsqueda al teléfono.
-                                          OpcionFiltroTabla(
-                                            id: 'rut',
-                                            texto: 'RUT',
-                                          ), // Limita la búsqueda al RUT.
-                                          OpcionFiltroTabla(
-                                            id: 'vehiculos',
-                                            texto: 'Vehículos',
-                                          ),
-                                        ], // Finaliza las opciones disponibles.
-                                        alSeleccionar: (id) {
-                                          // Recibe el identificador del filtro elegido.
-                                          setState(
-                                            () => _filtroSeleccionado = id,
-                                          ); // Actualiza las filas con el nuevo criterio.
-                                        }, // Finaliza la selección del filtro.
-                                      ), // Finaliza el selector situado a la izquierda.
-                                      BuscadorTabla(
-                                        anchoTabla:
-                                            (restricciones.maxWidth - 14)
-                                                .clamp(0.0, double.infinity)
-                                                .toDouble(), // Usa el mismo ancho visible de la tabla que el selector.
-                                        controlador: _busquedaController, // Conserva el texto al cambiar de filtro.
-                                        textoAyuda: 'BUSCAR CLIENTE', // Conserva la indicación del buscador original.
-                                        alCambiar: (_) => setState(() {}), // Actualiza la tabla mientras se escribe.
-                                      ), // Finaliza el buscador situado a la derecha.
-                                    ], // Finaliza los controles superiores de la tabla.
-                                  ), // Finaliza la distribución horizontal.
-                                ); // Finaliza la alineación con el borde visible de la tabla.
-                              }, // Finaliza el cálculo del ancho disponible.
-                            ), // Finaliza la fila independiente de búsqueda y filtros.
-
-                            const SizedBox(height: 20),
-
                             // Muestra el error de carga, cuando exista.
                             if (_error != null)
                               Text('Error al cargar clientes: $_error'),
@@ -355,9 +232,48 @@ class _PaginaClientesState extends State<PaginaClientes> {
                               )
                             else
                               Expanded(
-                                // Widget reutilizable de tabla, alimentado por los clientes filtrados.
-                                child: TablaDatos(
-                                  mostrarControles: false, // La página ya posiciona sus controles externos encima de la tabla.
+                                // Panel reutilizable que combina buscador, categoría y tabla.
+                                child: PanelFiltros<Cliente>(
+                                  datos:
+                                      clientes, // Filtra los clientes recuperados de Supabase.
+                                  textoAyuda:
+                                      'BUSCAR CLIENTE (NOMBRE, RUT, FONO O VEHÍCULO)', // Describe toda la búsqueda disponible.
+                                  camposBusqueda: [
+                                    (cliente) => cliente.nombre, // Busca en el nombre.
+                                    (cliente) => cliente.id, // Busca en el RUT.
+                                    (cliente) => cliente.numero, // Busca en el teléfono.
+                                    (cliente) => cliente.vehiculo, // Busca por las patentes.
+                                    (cliente) =>
+                                        cliente.vehiculos.join(' '), // Busca por marca, modelo o patente.
+                                  ],
+                                  categorias: [
+                                    // Permite separar clientes con y sin vehículos registrados.
+                                    CategoriaFiltro<Cliente>(
+                                      id: 'vehiculos',
+                                      etiqueta: 'VEHÍCULOS',
+                                      valor: (cliente) => cliente.vehiculos.isEmpty
+                                          ? 'SIN REGISTRAR'
+                                          : 'CON VEHÍCULOS',
+                                    ),
+                                  ],
+                                  child: (filtrados) {
+                                    // Convierte los clientes filtrados a registros de TablaDatos.
+                                    // El objeto original se conserva para utilizarlo al editar.
+                                    final filasClientes = filtrados
+                                        .map(
+                                          (cliente) => <String, dynamic>{
+                                            'nombre': cliente.nombre,
+                                            'numero': cliente.numero,
+                                            'rut': cliente.id,
+                                            'vehiculos': cliente.vehiculos.isEmpty
+                                                ? 'Sin vehículos'
+                                                : cliente.vehiculos.join('\n'),
+                                            'cliente': cliente,
+                                          },
+                                        )
+                                        .toList();
+                                    return TablaDatos(
+                                  mostrarControles: false, // El panel ya muestra el buscador y las categorías.
                                   // Encabezados visibles de la tabla.
                                   nombresColumnas: const [
                                     'NOMBRE',
@@ -509,8 +425,10 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                           ),
                                         ), // Consulta el perfil sin habilitar edición.
                                   },
-                                ),
-                              ),
+                                    ); // Finaliza la tabla construida con los clientes filtrados.
+                                  }, // Finaliza la construcción del contenido.
+                                ), // Finaliza el panel de filtros reutilizable.
+                              ), // Finaliza el espacio restante de la página.
                           ],
                         ),
                       ),

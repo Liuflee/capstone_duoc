@@ -11,11 +11,14 @@ import 'package:frenos_cerna/core/data/supabase_database.dart';
 import 'package:frenos_cerna/features/vehiculos/pagina_detalle_vehiculo.dart';
 import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
 import 'package:frenos_cerna/shared/widgets/tabla_datos.dart';
+// Importa el panel reutilizable que combina buscador y categorías.
+import 'package:frenos_cerna/shared/widgets/panel_filtros.dart';
 
 class HistorialVehiculo {
   final String id;
   final String clienteNombre;
   final String vehiculoNombre;
+  final String marca; // Permite filtrar por la marca del vehículo.
   final double total;
   final String fecha;
 
@@ -23,6 +26,7 @@ class HistorialVehiculo {
     required this.id,
     required this.clienteNombre,
     required this.vehiculoNombre,
+    this.marca = '', // Los registros antiguos no obligan a informar la marca.
     required this.total,
     required this.fecha,
   });
@@ -49,6 +53,10 @@ class HistorialVehiculo {
       vehiculoNombre: partesVehiculo.isEmpty
           ? patente
           : '${partesVehiculo.join(' ')} ($patente)',
+      marca:
+          marcaMap is Map
+              ? (marcaMap['marca']?.toString() ?? '')
+              : '', // Usa la marca desnormalizada del esquema.
       total: double.tryParse(json['kilometraje']?.toString() ?? '0') ?? 0,
       fecha: patente,
     );
@@ -82,8 +90,6 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
   List<HistorialVehiculo> historial = [];
   bool _cargando = true;
   String? _error;
-  final String _busqueda =
-      ''; // El buscador compartido filtra los registros de la tabla.
 
   // Colores de cabecera que se alternan entre las columnas.
   static const Color _rojoClaro = Color.fromARGB(255, 253, 116, 116);
@@ -131,45 +137,11 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
     }
   }
 
-  List<HistorialVehiculo> get _vehiculosFiltrados {
-    if (_busqueda.trim().isEmpty) {
-      return historial;
-    }
-
-    final busqueda = _busqueda.trim().toLowerCase();
-
-    return historial.where((registro) {
-      final cliente = registro.clienteNombre.toLowerCase();
-
-      final vehiculo = registro.vehiculoNombre.toLowerCase();
-
-      final patente = registro.fecha.toLowerCase();
-
-      return cliente.contains(busqueda) ||
-          vehiculo.contains(busqueda) ||
-          patente.contains(busqueda);
-    }).toList();
-  }
-
   @override
   Widget build(BuildContext context) {
     final esPantallaGrande =
         MediaQuery.of(context).size.width >=
         700; // Comparte el punto de adaptación del menú principal.
-
-    // Convierte los vehículos filtrados a registros que entiende TablaDatos.
-    // El objeto original se conserva para usarlo al revisar el detalle.
-    final List<Map<String, dynamic>> filasVehiculos = _vehiculosFiltrados
-        .map(
-          (registro) => <String, dynamic>{
-            'cliente': registro.clienteNombre,
-            'vehiculo': registro.vehiculoNombre,
-            'kilometraje': registro.total.toStringAsFixed(0),
-            'patente': registro.fecha,
-            'registro': registro,
-          },
-        )
-        .toList();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -227,10 +199,8 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                       ),
                     ),
                   ), // Abre la nueva vista y actualiza el listado al volver.
-                  const SizedBox(height: 20), // Separa la acción de la tabla.
+                  const SizedBox(height: 20), // Separa la acción de los filtros.
 
-                  const SizedBox.shrink(),
-                  const SizedBox(height: 20),
                   if (_error != null)
                     Text('Error al cargar vehículos: $_error'),
                   if (_cargando)
@@ -239,8 +209,48 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                     )
                   else
                     Expanded(
-                      child: TablaDatos(
-                        // Encabezados visibles de la tabla.
+                      child: PanelFiltros<HistorialVehiculo>(
+                        datos: historial, // Filtra todos los vehículos registrados.
+                        textoAyuda:
+                            'BUSCAR CLIENTE, VEHÍCULO O PATENTE', // Describe la búsqueda disponible.
+                        camposBusqueda: [
+                          (registro) =>
+                              registro.clienteNombre, // Busca en el cliente.
+                          (registro) =>
+                              registro.vehiculoNombre, // Busca en marca, modelo o patente.
+                          (registro) =>
+                              registro.total
+                                  .toStringAsFixed(0), // Permite buscar por kilometraje.
+                          (registro) => registro.fecha, // Busca en la patente.
+                        ],
+                        categorias: [
+                          // Muestra las marcas reales del parque automotriz sin configurarlas a mano.
+                          CategoriaFiltro<HistorialVehiculo>(
+                            id: 'marca',
+                            etiqueta: 'MARCA',
+                            valor: (registro) => registro.marca.isEmpty
+                                ? 'SIN MARCA'
+                                : registro.marca,
+                          ),
+                        ],
+                        child: (filtrados) {
+                          // Convierte los vehículos filtrados a registros de TablaDatos.
+                          // El objeto original se conserva para usarlo al revisar el detalle.
+                          final filasVehiculos = filtrados
+                              .map(
+                                (registro) => <String, dynamic>{
+                                  'cliente': registro.clienteNombre,
+                                  'vehiculo': registro.vehiculoNombre,
+                                  'kilometraje': registro.total.toStringAsFixed(0),
+                                  'patente': registro.fecha,
+                                  'registro': registro,
+                                },
+                              )
+                              .toList();
+                          return TablaDatos(
+                            mostrarControles:
+                                false, // El panel ya muestra el buscador y las categorías.
+                            // Encabezados visibles de la tabla.
                         nombresColumnas: const [
                           'CLIENTE',
                           'VEHÍCULO',
@@ -331,8 +341,10 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                             );
                           },
                         },
-                      ),
-                    ),
+                          ); // Finaliza la tabla construida con los vehículos filtrados.
+                        }, // Finaliza la construcción del contenido.
+                      ), // Finaliza el panel de filtros reutilizable.
+                    ), // Finaliza el espacio restante de la página.
                 ],
               ),
             ),

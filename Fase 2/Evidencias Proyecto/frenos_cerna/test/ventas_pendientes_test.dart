@@ -13,7 +13,6 @@ import 'package:frenos_cerna/features/ventas/presentation/pagina_crear_ventas.da
 import 'package:frenos_cerna/features/ventas/presentation/pagina_detalle_venta.dart'; // Distingue el historial cerrado.
 import 'package:frenos_cerna/features/ventas/presentation/pagina_detalle_venta_pendiente.dart'; // Distingue el historial pendiente.
 import 'package:frenos_cerna/features/ventas/presentation/pagina_ventas.dart'; // Verifica estados y rutas de la lupa.
-import 'package:frenos_cerna/shared/widgets/filtros_tabla.dart'; // Comprueba las opciones de estado.
 import 'package:frenos_cerna/shared/widgets/tabla_datos.dart'; // Comprueba las filas visibles.
 
 VentaPendiente borrador({
@@ -498,11 +497,11 @@ void main() {
           hasLength(2),
         ); // Muestra inicialmente ambas ventas.
         await tester.tap(
-          find.byType(FiltrosTabla),
-        ); // Abre el selector de estado.
+          find.byTooltip('ESTADO'),
+        ); // Abre el chip de estado del panel.
         await tester.pumpAndSettle(); // Espera el menú.
         await tester.tap(
-          find.text('FILTRO : VENTA EN PROCESO').last,
+          find.text('VENTA EN PROCESO'),
         ); // Filtra las ventas locales.
         await tester.pumpAndSettle(); // Aplica el filtro.
         expect(
@@ -539,10 +538,14 @@ void main() {
         Navigator.of(tester.element(find.byType(PaginaDetalleVentaPendiente)))
             .pop(); // Regresa a Ventas.
         await tester.pumpAndSettle(); // Refresca los datos.
-        await tester.tap(find.byType(FiltrosTabla)); // Abre el filtro de nuevo.
+        await tester.tap(find.byTooltip('ESTADO')); // Abre el filtro de nuevo.
         await tester.pumpAndSettle(); // Espera el menú.
         await tester.tap(
-          find.text('FILTRO : VENTA CERRADA').last,
+          find.text('VENTA EN PROCESO'),
+        ); // Quita la selección anterior.
+        await tester.pumpAndSettle(); // Vuelve a mostrar ambas ventas.
+        await tester.tap(
+          find.text('VENTA CERRADA'),
         ); // Filtra el historial remoto.
         await tester.pumpAndSettle(); // Aplica el estado.
         expect(

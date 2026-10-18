@@ -1,7 +1,8 @@
 // Importa Flutter y los widgets compartidos de la aplicación.
+import 'dart:math' as math; // Limita el ancho del buscador en pantallas anchas.
 import 'package:flutter/material.dart';
 import 'package:frenos_cerna/shared/widgets/estructura_pagina.dart';
-import 'package:frenos_cerna/shared/widgets/buscador_tabla.dart';
+import 'package:frenos_cerna/shared/widgets/panel_filtros.dart';
 
 // Presenta las preguntas de ayuda con la distribución vertical de Figma.
 class PaginaInformacion extends StatefulWidget {
@@ -37,22 +38,27 @@ class _PaginaInformacionState extends State<PaginaInformacion> {
         children: [
           Align(
             alignment: Alignment.centerRight,
-            child: BuscadorTabla(
-              anchoTabla: espacio.maxWidth,
-              controlador: _busqueda,
-              textoAyuda: 'BUSCAR PREGUNTA',
-              alCambiar: (_) => setState(() {}),
+            child: SizedBox(
+              width: math.min(
+                420,
+                espacio.maxWidth,
+              ), // Limita el buscador sin desaprovechar pantallas angostas.
+              child: CampoBusqueda(
+                controlador: _busqueda,
+                textoAyuda: 'BUSCAR PREGUNTA',
+                alCambiar: (_) => setState(() {}),
+              ),
             ),
-          ), // Reutiliza el buscador con su proporción habitual.
+          ), // Reutiliza el buscador del panel de filtros.
           const SizedBox(height: 32), // Separa la búsqueda de las preguntas.
           Expanded(
             child: ListView(
               children: [
                 for (final pregunta in _preguntas.entries.where(
-                  (entrada) => (entrada.key + entrada.value)
-                      .toLowerCase()
-                      .contains(_busqueda.text.trim().toLowerCase()),
-                )) // Busca en preguntas y respuestas.
+                  (entrada) => normalizarFiltro(
+                    entrada.key + entrada.value,
+                  ).contains(normalizarFiltro(_busqueda.text.trim())),
+                )) // Busca en preguntas y respuestas sin distinguir tildes.
                   Padding(
                     padding: const EdgeInsets.only(bottom: 24),
                     child: ExpansionTile(

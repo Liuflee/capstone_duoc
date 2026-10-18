@@ -23,7 +23,7 @@ import 'package:frenos_cerna/features/datos/pagina_datos.dart';
 import 'package:frenos_cerna/features/notificaciones/pagina_reserva_producto.dart';
 import 'package:frenos_cerna/features/notificaciones/pagina_productos_reservados.dart';
 import 'package:frenos_cerna/features/ventas/presentation/pagina_crear_ventas.dart';
-import 'package:frenos_cerna/shared/widgets/buscador_tabla.dart';
+import 'package:frenos_cerna/shared/widgets/panel_filtros.dart'; // Comprueba el buscador del selector.
 
 void main() {
   testWidgets('venta busca cliente y conserva la venta al crear otro', (
@@ -333,7 +333,7 @@ void main() {
       await tester.pumpAndSettle(); // Espera el buscador de clientes.
       await tester.enterText(
         find.descendant(
-          of: find.byType(BuscadorTabla),
+          of: find.byType(CampoBusqueda),
           matching: find.byType(TextField),
         ),
         busqueda,
