@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/features/autenticacion/presentation/pagina_autenticacion.dart'; // Comprueba el regreso al login existente.
 import 'package:flutter/material.dart'; // Construye el marco compartido de las páginas.
 import 'package:flutter_test/flutter_test.dart'; // Comprueba alineación, navegación y visibilidad.
 import 'package:frenos_cerna/shared/widgets/barra_superior.dart'; // Verifica la nueva barra común.
@@ -5,6 +6,69 @@ import 'package:frenos_cerna/shared/widgets/menu_lateral.dart'; // Verifica el m
 import 'package:frenos_cerna/features/vehiculos/pagina_vehiculos.dart'; // Comprueba la ruta recuperada de vehículos.
 
 void main() {
+  for (final salidaPersonalizada in [false, true]) {
+    testWidgets(
+      'cerrar sesión regresa al login y elimina el historial con callback $salidaPersonalizada',
+      (tester) async {
+        var cierres =
+            0; // Comprueba la ejecución de la salida proporcionada por Inicio.
+        final navegador =
+            GlobalKey<
+              NavigatorState
+            >(); // Permite comprobar que no se pueda regresar.
+        await tester.pumpWidget(
+          MaterialApp(
+            navigatorKey: navegador,
+            home: const Scaffold(body: Text('VISTA ANTERIOR')),
+          ),
+        ); // Conserva una ruta previa de la aplicación.
+        navegador.currentState!.push(
+          MaterialPageRoute(
+            builder: (_) => Scaffold(
+              body: SizedBox(
+                height: 100,
+                child: BarraSuperior(
+                  tituloPagina: 'Clientes',
+                  nombreUsuario: 'Nombre de prueba',
+                  onCerrarSesion: salidaPersonalizada
+                      ? () async {
+                          cierres++;
+                        }
+                      : null,
+                ),
+              ),
+            ),
+          ),
+        ); // Reproduce una vista con o sin callback de cierre.
+        await tester.pumpAndSettle(); // Espera la navegación.
+        expect(
+          find.byTooltip('Cerrar sesión'),
+          findsOneWidget,
+        ); // Mantiene la salida en todas las barras.
+        await tester.tap(
+          find.byTooltip('Cerrar sesión'),
+        ); // Ejecuta la salida compartida.
+        await tester.pumpAndSettle(); // Completa el regreso al acceso.
+        expect(
+          find.byType(PaginaAutenticacion),
+          findsOneWidget,
+        ); // Muestra el login real.
+        expect(
+          navegador.currentState!.canPop(),
+          isFalse,
+        ); // No permite volver a páginas de la sesión anterior.
+        expect(
+          cierres,
+          salidaPersonalizada ? 1 : 0,
+        ); // Conserva la salida personalizada cuando corresponde.
+        expect(
+          tester.takeException(),
+          isNull,
+        ); // Descarta errores al reemplazar las rutas.
+      },
+    );
+  }
+
   // Verifica los cambios comunes a todas las páginas.
   for (final tamano in [
     const Size(1920, 1080),

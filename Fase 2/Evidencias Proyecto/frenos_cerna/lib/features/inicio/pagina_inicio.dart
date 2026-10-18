@@ -1,5 +1,6 @@
 import 'package:frenos_cerna/features/ventas/presentation/pagina_crear_ventas.dart'; // Abre directamente el registro de una venta.
 import 'package:frenos_cerna/features/ventas/presentation/pagina_ventas_historial.dart'; // Abre el historial completo.
+import 'package:frenos_cerna/core/data/perfil_sesion.dart'; // Conserva el perfil autenticado para toda la navegación.
 // Importaciones
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -30,6 +31,15 @@ class PaginaInicio extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final plataforma = Theme.of(context).platform; // Identifica el dispositivo sin depender del tamaño de la ventana.
+    final esMovil =
+        plataforma == TargetPlatform.android ||
+        plataforma == TargetPlatform.iOS; // Reserva el escaneo para celulares.
+    if (perfilUsuario != null && !modoPrueba) {
+      PerfilSesion.conservar(
+        perfilUsuario!,
+      ); // Conserva el perfil cargado al iniciar sesión para las demás vistas.
+    }
     return Scaffold(
       // Conserva la navegación lateral en pantallas pequeñas.
       drawer: const Drawer(child: MenuLateral(activo: 'Página Principal')),
@@ -55,9 +65,7 @@ class PaginaInicio extends StatelessWidget {
                 // Se llama el widget de barra superior
                 child: BarraSuperior(
                   tituloPagina: 'Página Principal',
-                  nombreUsuario:
-                      perfilUsuario?.nombre ??
-                      'Usuario', //Nombre del usuario obtenido del perfil
+                  nombreUsuario: perfilUsuario?.nombre, // Recupera el perfil compartido al volver desde el menú.
                   rolUsuario: modoPrueba
                       ? 'Sin sesión'
                       : perfilUsuario?.rol.etiqueta,
@@ -210,7 +218,7 @@ class PaginaInicio extends StatelessWidget {
                                         },
                                       ),
 
-                                      // Tarjeta notificaciones
+                                      // Tarjeta para reservar productos.
                                       CartaNavegacion(
                                         ancho: anchoImportante,
                                         alto: altoImportante,
@@ -218,30 +226,34 @@ class PaginaInicio extends StatelessWidget {
 
                                         texto: 'NUEVA VENTA',
 
-                                        // Color opcional
-                                        // color: Colors.amber[100],
-
+                                        color: const Color(0xFFD96363), // Usa el rojo compartido por las acciones de registro.
                                         // Abre directamente el registro de una nueva venta
                                         alPresionar: () {
                                           abrirPagina(const PaginaCrearVenta());
                                         },
                                       ),
 
-                                      // Tarjeta productos faltantes
+                                      // Tarjeta de escaneo en móvil y acceso a datos en escritorio.
                                       CartaNavegacion(
                                         ancho: anchoImportante,
                                         alto: altoImportante,
-                                        icono: Icons.help_outline,
-                                        numero: '23',
-                                        texto: 'PRODUCTOS\nFALTANTES',
+                                        icono: esMovil
+                                            ? Icons.barcode_reader
+                                            : Icons.bar_chart, // Representa la acción disponible en cada dispositivo.
+                                        texto: esMovil
+                                            ? 'ESCANEAR PRODUCTO'
+                                            : 'DATOS',
 
                                         // Color opcional
                                         // color: Colors.orange[100],
 
-                                        // Navega a inventario
-                                        alPresionar: () {
-                                          abrirPagina(const PaginaInventario());
-                                        },
+                                        // Mantiene el escaneo pendiente y conserva la ruta de datos en escritorio.
+                                        alPresionar: esMovil
+                                            ? null
+                                            : () => Navigator.pushNamed(
+                                                context,
+                                                '/data',
+                                              ),
                                       ),
                                     ],
                                   ),
@@ -306,10 +318,10 @@ class PaginaInicio extends StatelessWidget {
                                       CartaNavegacion(
                                         ancho: anchoTrabajo,
                                         alto: altoTrabajo,
-                                        icono: Icons.warning_amber_rounded,
-                                        texto: 'NOTIFICACIONES',
+                                        icono: Icons.bookmark_add_outlined,
+                                        texto: 'RESERVAR PRODUCTO',
 
-                                        // Navega a notificaciones
+                                        // Conserva el acceso a las opciones de reserva
                                         alPresionar: () {
                                           abrirPagina(
                                             const PaginaNotificaciones(),
@@ -343,18 +355,15 @@ class PaginaInicio extends StatelessWidget {
                                         },
                                       ),
 
-                                      // Tarjeta datos
+                                      // Tarjeta de dashboard pendiente de conectar.
                                       CartaNavegacion(
                                         ancho: anchoTrabajo,
                                         alto: altoTrabajo,
-                                        icono: Icons.bar_chart,
-                                        texto: 'DATOS',
+                                        icono: Icons.dashboard_outlined,
+                                        texto: 'DASHBOARD',
 
-                                        // Abre los datos disponibles sin añadir campos a la base.
-                                        alPresionar: () => Navigator.pushNamed(
-                                          context,
-                                          '/data',
-                                        ),
+                                        // Conserva el dashboard sin navegación hasta implementar su vista.
+                                        alPresionar: null,
                                       ),
                                     ],
                                   ),

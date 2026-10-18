@@ -49,7 +49,7 @@ class VentaRegistro {
       items.add({
         'nombre': (producto['cod_barra']?.toString().trim().isNotEmpty ?? false)
             ? producto['cod_barra'].toString()
-            : 'Producto $codigo',
+            : codigo,
         'codigo': codigo,
 
         'total': _number(detalle['total']),

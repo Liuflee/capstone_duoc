@@ -1,39 +1,46 @@
-// Reutiliza la conexión existente para consultar productos reales.
-import 'package:frenos_cerna/core/data/supabase_database.dart';
+import 'package:frenos_cerna/core/data/supabase_database.dart'; // Reutiliza la sesión y los permisos existentes.
 
-// Conserva la selección temporal sin crear tablas fuera del esquema autorizado.
 class ReservasRepository {
-  static final Map<String, Map<String, dynamic>> _seleccion =
-      {}; // Mantiene solo las reservas de esta sesión.
-  static Future<List<Map<String, dynamic>>> catalogo() async {
+  const ReservasRepository(); // Permite usar una fuente controlada en pruebas.
+  Future<List<Map<String, dynamic>>> listar({required bool listas}) async {
     final datos = await SupabaseDatabase.client
-        .from(SupabaseTables.productos)
-        .select('codigo_producto, cod_barra, precio, stock')
+        .from('reserva_producto')
+        .select(
+          'id, codigo_producto, estado, fecha_registro, rut_cliente, cliente(nombre, fono)',
+        )
+        .eq('estado', listas ? 'lista' : 'reservado')
         .order(
-          'codigo_producto',
-        ); // Consulta exclusivamente columnas existentes.
-    return List<Map<String, dynamic>>.from(
-      datos,
-    ); // Conserva los identificadores originales.
-  } // Finaliza el catálogo.
+          'fecha_registro',
+          ascending: false,
+        ); // Consulta reservas persistentes según su estado.
+    return List<Map<String, dynamic>>.from(datos); // Conserva los IDs reales.
+  }
 
-  static Future<List<Map<String, dynamic>>> reservados() async => _seleccion
-      .values
-      .map((fila) => Map<String, dynamic>.from(fila))
-      .toList(); // Devuelve únicamente la selección temporal.
-  static Future<void> reservar(String codigo) async {
-    final producto = await SupabaseDatabase.client
-        .from(SupabaseTables.productos)
-        .select('codigo_producto, cod_barra, precio, stock')
-        .eq('codigo_producto', codigo)
-        .single(); // Verifica el producto existente.
-    _seleccion[codigo] = {
-      ...producto,
-      'id': codigo,
-    }; // Evita duplicados sin guardar campos nuevos en la base.
-  } // Finaliza la selección temporal.
+  Future<void> reservar(String codigo, {required String rutCliente}) async {
+    final valor = codigo
+        .trim()
+        .toUpperCase(); // Normaliza códigos sin convertirlos a números.
+    if (valor.isEmpty) {
+      throw ArgumentError(
+        'Ingresa el código del producto.',
+      ); // Evita reservas vacías.
+    }
+    await SupabaseDatabase.client.from('reserva_producto').insert({
+      'codigo_producto': valor,
+      'estado': 'reservado',
+      'rut_cliente': int.parse(
+        rutCliente,
+      ), // Vincula la solicitud al cliente que debe ser avisado.
+    }); // Guarda la reserva sin modificar ventas ni stock.
+  }
 
-  static Future<void> remover(String id) async {
-    _seleccion.remove(id);
-  } // Quita un producto de esta sesión.
-} // Finaliza el acceso temporal a reservas.
+  Future<void> marcarLista(Object id) async {
+    await SupabaseDatabase.client
+        .from('reserva_producto')
+        .update({'estado': 'lista'})
+        .eq('id', id)
+        .eq('estado', 'reservado')
+        .select('id')
+        .single(); // Cambia el estado sin eliminar la reserva y detecta cambios concurrentes.
+  }
+}

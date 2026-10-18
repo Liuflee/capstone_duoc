@@ -96,12 +96,18 @@ class CategoriaFiltro<T> {
   final String Function(T dato) valor;
   // Permite mostrar otro texto para valores técnicos o poco legibles.
   final Map<String, String>? etiquetas;
+  final bool
+  seleccionUnica; // Permite restringir una categoría a una sola opción.
+  final List<String> opcionesFijas; // Mantiene opciones disponibles aunque todavía no tengan registros.
 
   // Define cada categoría desde la página que conoce sus datos.
   const CategoriaFiltro({
     required this.id, // Identifica la selección de esta categoría.
     required this.etiqueta, // Describe la categoría para el usuario.
     required this.valor, // Calcula el valor de cada dato.
+    this.seleccionUnica =
+        false, // Conserva la selección múltiple en los demás filtros.
+    this.opcionesFijas = const [], // Por defecto conserva las opciones calculadas desde los datos.
     this.etiquetas, // Opcional: traduce valores técnicos a texto visible.
   }); // Finaliza el constructor de la categoría.
 } // Finaliza el modelo de una categoría.
@@ -172,6 +178,15 @@ class _PanelFiltrosState<T> extends State<PanelFiltros<T>> {
   List<_OpcionFiltro> _opcionesDe(CategoriaFiltro<T> categoria) {
     final conteos = <String, int>{}; // Cuenta los datos por valor.
     final textos = <String, String>{}; // Recuerda el texto visible original.
+    for (final opcion in categoria.opcionesFijas) {
+      final clave = normalizarFiltro(
+        opcion,
+      ); // Usa la misma comparación que las filas.
+      conteos[clave] = 0; // Muestra estados sin ventas con su conteo real.
+      textos[clave] =
+          categoria.etiquetas?[opcion] ??
+          opcion; // Conserva la etiqueta configurada.
+    }
     for (final dato in widget.datos) {
       final valor = categoria.valor(dato);
       if (valor.trim().isEmpty) {
@@ -204,6 +219,27 @@ class _PanelFiltrosState<T> extends State<PanelFiltros<T>> {
   // Entrega solamente los valores elegidos que todavía existen en los datos.
   Set<String> _seleccionValida(CategoriaFiltro<T> categoria) {
     final elegidos = _selecciones[categoria.id] ?? const <String>{};
+    if (categoria.seleccionUnica) {
+      final opciones = _opcionesDe(
+        categoria,
+      ); // Incluye los estados aunque tengan cero registros.
+      final validos = opciones.where(
+        (opcion) => elegidos.contains(opcion.valor),
+      ); // Conserva una única elección válida.
+      if (validos.isNotEmpty) {
+        return {validos.first.valor}; // Nunca combina ambos estados.
+      }
+      if (categoria.opcionesFijas.isNotEmpty) {
+        return {
+          normalizarFiltro(categoria.opcionesFijas.first),
+        }; // Usa ventas cerradas al iniciar o limpiar.
+      }
+      return opciones.isEmpty
+          ? <String>{}
+          : {
+              opciones.first.valor,
+            }; // Mantiene una selección si hay opciones disponibles.
+    }
     if (elegidos.isEmpty) return elegidos; // Una categoría vacía no filtra.
     final disponibles = _opcionesDe(categoria)
         .map((opcion) => opcion.valor)
@@ -447,6 +483,10 @@ class _ChipCategoriaState<T> extends State<_ChipCategoria<T>> {
           MenuItemButton(
             closeOnActivate: false, // No cierra el menú al marcar una casilla.
             onPressed: () {
+              if (widget.categoria.seleccionUnica) {
+                widget.alCambiar({opcion.valor}); // Sustituye la selección anterior y no desmarca la única elegida.
+                return; // Evita aplicar la alternancia múltiple.
+              }
               // Alterna el valor: lo agrega si falta y lo quita si existe.
               final nuevos = Set<String>.from(widget.elegidos);
               if (!nuevos.remove(opcion.valor)) {
@@ -458,8 +498,12 @@ class _ChipCategoriaState<T> extends State<_ChipCategoria<T>> {
               children: [
                 Icon(
                   widget.elegidos.contains(opcion.valor)
-                      ? Icons.check_box
-                      : Icons.check_box_outline_blank, // Marca las opciones elegidas.
+                      ? (widget.categoria.seleccionUnica
+                            ? Icons.radio_button_checked
+                            : Icons.check_box)
+                      : (widget.categoria.seleccionUnica
+                            ? Icons.radio_button_unchecked
+                            : Icons.check_box_outline_blank), // Marca las opciones elegidas.
                   size: 20,
                   color: Colors.black,
                 ), // Refleja la casilla de la opción.
@@ -482,27 +526,28 @@ class _ChipCategoriaState<T> extends State<_ChipCategoria<T>> {
               ], // Finaliza los elementos de la opción.
             ), // Finaliza la opción seleccionable.
           ), // Finaliza cada opción del menú.
-        // Reinicia la categoría completa sin tocar los demás filtros.
-        MenuItemButton(
-          onPressed: () =>
-              widget.alCambiar(<String>{}), // Vacía esta categoría.
-          child: Row(
-            children: [
-              const Icon(
-                Icons.restart_alt,
-                size: 20,
-                color: Colors.black,
-              ), // Identifica el reinicio de la categoría.
-              const SizedBox(width: 8), // Separa el icono del texto.
-              const Expanded(
-                child: Text(
-                  'TODAS',
-                  style: TextStyle(fontFamily: 'Courier', fontSize: 14),
-                ), // Describe el reinicio completo.
-              ), // Ajusta el texto al ancho del menú.
-            ], // Finaliza los elementos del reinicio.
-          ), // Finaliza el contenido del reinicio.
-        ), // Finaliza la opción de reinicio.
+        // Solo los filtros múltiples permiten mostrar todas las opciones juntas.
+        if (!widget.categoria.seleccionUnica)
+          MenuItemButton(
+            onPressed: () =>
+                widget.alCambiar(<String>{}), // Vacía esta categoría.
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.restart_alt,
+                  size: 20,
+                  color: Colors.black,
+                ), // Identifica el reinicio de la categoría.
+                const SizedBox(width: 8), // Separa el icono del texto.
+                const Expanded(
+                  child: Text(
+                    'TODAS',
+                    style: TextStyle(fontFamily: 'Courier', fontSize: 14),
+                  ), // Describe el reinicio completo.
+                ), // Ajusta el texto al ancho del menú.
+              ], // Finaliza los elementos del reinicio.
+            ), // Finaliza el contenido del reinicio.
+          ), // Finaliza la opción de reinicio.
       ], // Finaliza las opciones del menú.
 
       builder: (context, controlador, child) => InkWell(

@@ -1,3 +1,9 @@
+import 'package:frenos_cerna/features/clientes/pagina_clientes.dart'; // Proporciona clientes controlados a las reservas.
+import 'package:frenos_cerna/features/notificaciones/data/reservas_repository.dart'; // Simula la persistencia de reservas.
+import 'package:frenos_cerna/features/notificaciones/presentation/vista_reservas.dart'; // Comprueba el flujo completo de reservas.
+import 'package:frenos_cerna/features/inventario/pagina_edicion_producto.dart'; // Verifica que editar reutiliza el formulario sin eliminación.
+import 'package:frenos_cerna/features/vehiculos/pagina_crear_vehiculo.dart'; // Comprueba el centro del diálogo respecto al contenido.
+import 'package:frenos_cerna/features/inicio/pagina_inicio.dart'; // Comprueba las acciones por dispositivo.
 import 'package:frenos_cerna/shared/widgets/panel_filtros.dart'; // Comprueba la alineación de los controles externos.
 import 'package:frenos_cerna/shared/widgets/tabla_datos.dart'; // Compara los extremos visibles de la tabla.
 import 'package:flutter/material.dart'; // Construye los widgets tal como los usa la aplicación.
@@ -7,7 +13,290 @@ import 'package:frenos_cerna/shared/widgets/barra_superior.dart'; // Comprueba e
 import 'package:frenos_cerna/shared/widgets/menu_lateral.dart'; // Comprueba el borde continuo del menú.
 import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart'; // Compara acciones e iconos de tabla.
 
+class ReservasPrueba extends ReservasRepository {
+  final filas =
+      <
+        Map<String, dynamic>
+      >[]; // Conserva los registros entre vistas para simular Supabase.
+  @override
+  Future<List<Map<String, dynamic>>> listar({required bool listas}) async =>
+      filas
+          .where((fila) => fila['estado'] == (listas ? 'lista' : 'reservado'))
+          .map((fila) => Map<String, dynamic>.from(fila))
+          .toList();
+  @override
+  Future<void> reservar(String codigo, {required String rutCliente}) async {
+    filas.add({
+      'id': filas.length + 1,
+      'codigo_producto': codigo.trim().toUpperCase(),
+      'rut_cliente':
+          rutCliente, // Conserva el destinatario de la reserva simulada.
+      'estado': 'reservado',
+    });
+  } // Simula una reserva persistente.
+
+  @override
+  Future<void> marcarLista(Object id) async {
+    filas.singleWhere((fila) => fila['id'] == id)['estado'] = 'lista';
+  } // Conserva el registro al completar.
+}
+
 void main() {
+  for (final ancho in [390.0, 1440.0]) {
+    testWidgets(
+      'reservar por código y mover a reservas listas con ancho $ancho',
+      (tester) async {
+        tester.view.physicalSize = Size(
+          ancho,
+          1000,
+        ); // Comprueba móvil y escritorio.
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final repositorio = ReservasPrueba(); // Aísla los registros reales.
+        await tester.pumpWidget(
+          MaterialApp(
+            home: VistaReservas(
+              reservados: false,
+              repositorio: repositorio,
+              cargarClientes: () async => [
+                Cliente(
+                  id: '123',
+                  nombre: 'Cliente reserva',
+                  numero: '456',
+                  ultimaVenta: '',
+                  vehiculo: '',
+                ),
+              ],
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.text('No hay productos reservados.'),
+          findsOneWidget,
+        ); // No muestra todos los productos del inventario.
+        await tester.tap(find.text('RESERVAR PRODUCTO'));
+        await tester.pumpAndSettle(); // Abre el diálogo de código.
+        expect(
+          tester.widget<Dialog>(find.byType(Dialog)).backgroundColor,
+          Colors.white,
+        ); // Conserva el fondo del proyecto.
+        await tester.tap(find.text('RESERVAR'));
+        await tester.pumpAndSettle(); // Intenta enviar sin código.
+        expect(repositorio.filas, isEmpty); // Rechaza reservas vacías.
+        await tester.enterText(find.byType(TextFormField), 'sp0-01223');
+        await tester.tap(find.text('VINCULAR CLIENTE'));
+        await tester.pumpAndSettle(); // Abre el selector sin perder el código.
+        await tester.tap(find.text('CLIENTE EXISTENTE'));
+        await tester.pumpAndSettle(); // Selecciona el flujo de búsqueda.
+        await tester.tap(find.byTooltip('Vincular este cliente'));
+        await tester.pumpAndSettle(); // Vincula el destinatario de la reserva.
+        await tester.tap(find.text('RESERVAR'));
+        await tester.pumpAndSettle(); // Guarda y refresca la tabla.
+        expect(repositorio.filas.single['estado'], 'reservado');
+        expect(
+          tester
+              .widget<TablaDatos>(find.byType(TablaDatos))
+              .filas
+              .single['codigo_producto'],
+          'SP0-01223',
+        ); // Muestra la reserva recién guardada.
+        await tester.tap(find.byTooltip('Marcar reserva lista'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('CONFIRMAR'));
+        await tester.pumpAndSettle(); // Confirma el cambio de estado.
+        expect(repositorio.filas, hasLength(1)); // No elimina registros.
+        expect(repositorio.filas.single['estado'], 'lista');
+        await tester.tap(find.text('RESERVAS LISTAS'));
+        await tester.pumpAndSettle(); // Abre la segunda vista.
+        expect(
+          tester
+              .widget<TablaDatos>(find.byType(TablaDatos))
+              .filas
+              .single['estado_visible'],
+          'LISTA',
+        );
+        expect(
+          find.text('REMOVER'),
+          findsNothing,
+        ); // No ofrece borrar reservas.
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  testWidgets(
+    'editar producto precarga el formulario y conserva categoría y calidad',
+    (tester) async {
+      tester.view.physicalSize = const Size(
+        1440,
+        1200,
+      ); // Muestra los campos completos.
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final producto = Producto(
+        id: 'SP0-01223',
+        nombre: 'SP0-01223',
+        codigoBarra: '789030',
+        categoria: 'Pastillas',
+        precio: 14000,
+        cantidad: 7,
+        tipoId: 1,
+        calidadId: 10,
+      ); // Define un registro existente.
+      await tester.pumpWidget(
+        MaterialApp(
+          home: PaginaEdicionProducto(
+            producto: producto,
+            cargarCatalogos: () async => {
+              'categorias': [
+                {'id': 1, 'nombre_tipo': 'Pastillas'},
+                {'id': 2, 'nombre_tipo': 'Discos'},
+              ],
+              'calidades': [
+                {'id': 10, 'nombre_calidad': 'Cerámica'},
+              ],
+              'relaciones': [
+                {'id_tipo': 1, 'id_calidad': 10},
+              ],
+            },
+          ),
+        ),
+      );
+      await tester
+          .pumpAndSettle(); // Completa la carga de las opciones existentes.
+      final campos = tester
+          .widgetList<TextFormField>(find.byType(TextFormField))
+          .toList();
+      expect(campos.map((campo) => campo.controller!.text), [
+        'SP0-01223',
+        '14000',
+        '7',
+        '789030',
+      ]); // Comprueba los datos y el orden de Añadir producto.
+      expect(
+        campos.first.enabled,
+        isFalse,
+      ); // Protege la clave referenciada por ventas.
+      expect(
+        tester
+            .widget<DropdownButton<Object>>(
+              find.byType(DropdownButton<Object>).first,
+            )
+            .value,
+        1,
+      ); // Precarga la categoría.
+      expect(
+        tester
+            .widget<DropdownButton<Object>>(
+              find.byType(DropdownButton<Object>).last,
+            )
+            .value,
+        10,
+      ); // Precarga la calidad vinculada.
+      expect(
+        find.text('ELIMINAR'),
+        findsNothing,
+      ); // Retira la acción de borrado.
+      expect(
+        find.text('GUARDAR CAMBIOS'),
+        findsOneWidget,
+      ); // Guarda en el mismo registro.
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  for (final ancho in [390.0, 1920.0]) {
+    testWidgets(
+      'vincular cliente se centra respecto al contenido con ancho $ancho',
+      (tester) async {
+        tester.view.physicalSize = Size(
+          ancho,
+          1080,
+        ); // Comprueba celular y escritorio.
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        await tester.pumpWidget(
+          const MaterialApp(home: PaginaCrearVehiculo()),
+        ); // Abre el formulario real.
+        await tester.pumpAndSettle();
+        final boton = find.text('VINCULAR CON CLIENTE');
+        await tester.ensureVisible(boton); // Hace visible la acción en móvil.
+        await tester.tap(boton);
+        await tester.pumpAndSettle(); // Abre la ventana centrada.
+        final centro = tester.getCenter(
+          find.byKey(const ValueKey('dialogo_vincular_cliente')),
+        ); // Mide únicamente la ventana visible.
+        expect(
+          centro.dx,
+          closeTo(ancho * (ancho >= 700 ? 0.56 : 0.5), 0.01),
+        ); // Excluye el doce por ciento del menú en escritorio.
+        expect(
+          centro.dy,
+          closeTo(540, 0.01),
+        ); // Conserva el centro vertical de la pantalla.
+        expect(
+          tester.widget<Dialog>(find.byType(Dialog)).backgroundColor,
+          Colors.white,
+        ); // Conserva el fondo blanco solicitado.
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  for (final plataforma in [TargetPlatform.android, TargetPlatform.windows]) {
+    testWidgets('Inicio ofrece escaneo o datos según $plataforma', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1440, 1000); // Mantiene el tamaño para verificar que la decisión dependa de la plataforma.
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(platform: plataforma),
+          routes: {'/data': (_) => const Scaffold(body: Text('DESTINO DATOS'))},
+          home: const PaginaInicio(),
+        ),
+      ); // Reproduce Inicio con una ruta controlada.
+      await tester.pumpAndSettle();
+      final cartas = tester.widgetList<CartaNavegacion>(
+        find.byType(CartaNavegacion),
+      ); // Revisa las tarjetas reales.
+      expect(
+        cartas.singleWhere((carta) => carta.texto == 'DASHBOARD').alPresionar,
+        isNull,
+      ); // Deja la ruta del dashboard vacía.
+      if (plataforma == TargetPlatform.android) {
+        final escaneo = cartas.singleWhere(
+          (carta) => carta.texto == 'ESCANEAR PRODUCTO',
+        );
+        expect(
+          escaneo.icono,
+          Icons.barcode_reader,
+        ); // Conserva el escaneo de barras en celular.
+        expect(
+          escaneo.alPresionar,
+          isNull,
+        ); // Mantiene el escaneo pendiente de conectar.
+        expect(find.text('DATOS'), findsNothing); // Evita duplicar accesos.
+      } else {
+        expect(find.text('ESCANEAR PRODUCTO'), findsNothing);
+        await tester.tap(find.text('DATOS'));
+        await tester
+            .pumpAndSettle(); // Comprueba que Datos conserva su navegación.
+        expect(find.text('DESTINO DATOS'), findsOneWidget);
+      }
+      expect(
+        tester.takeException(),
+        isNull,
+      ); // Descarta errores de distribución.
+    });
+  }
+
   for (final ancho in [390.0, 1440.0]) {
     testWidgets(
       'buscador y filtros comparten los bordes de la tabla en $ancho',

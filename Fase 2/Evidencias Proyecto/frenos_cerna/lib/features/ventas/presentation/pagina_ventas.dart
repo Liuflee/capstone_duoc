@@ -7,7 +7,6 @@ import 'package:frenos_cerna/shared/widgets/barra_superior.dart';
 import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
 import 'package:flutter/material.dart';
 import 'package:frenos_cerna/features/ventas/data/ventas_repository.dart';
-import 'package:frenos_cerna/features/ventas/presentation/pagina_crear_ventas.dart';
 import 'package:frenos_cerna/features/ventas/presentation/pagina_detalle_venta.dart';
 import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
 import 'package:frenos_cerna/shared/widgets/tabla_datos.dart';
@@ -92,17 +91,6 @@ class _PaginaVentasState extends State<PaginaVentas> {
     }); // Conserva las pendientes aunque no haya conexión.
   } // Finaliza la carga combinada.
 
-  Future<void> _agregarVenta() async {
-    await Navigator.push<void>(
-      context,
-      MaterialPageRoute(
-        settings: const RouteSettings(name: '/sales/new'),
-        builder: (context) => const PaginaCrearVenta(),
-      ),
-    ); // Abre el registro desde las ventas del día.
-    if (mounted) await _cargarVentas(); // Actualiza la tabla al volver.
-  } // Finaliza el registro de una venta diaria.
-
   // Construye la celda del cliente con su avatar.
   Widget _celdaCliente(BuildContext context, Map<String, dynamic> fila) {
     final venta = fila['venta'] as VentaEnProceso;
@@ -170,8 +158,7 @@ class _PaginaVentasState extends State<PaginaVentas> {
 
       onPressed: () async {
         // Abre el detalle según el estado real.
-        final pendiente =
-            fila['pendiente'] as VentaPendiente?; // Recupera el borrador local si corresponde.
+        final pendiente = fila['pendiente'] as VentaPendiente?; // Recupera el borrador local si corresponde.
         await Navigator.push(
           context,
           MaterialPageRoute(
@@ -185,7 +172,8 @@ class _PaginaVentasState extends State<PaginaVentas> {
                   )
                 : PaginaDetalleVenta(
                     idVenta: venta.id,
-                    rutCliente: venta.rutCliente, // Abre el perfil por su relación real.
+                    rutCliente: venta
+                        .rutCliente, // Abre el perfil por su relación real.
                     clienteNombre: venta.clienteNombre.replaceAll('\n', ' '),
                     vehiculoNombre: venta.vehiculoNombre,
                     total: venta.total,
@@ -360,38 +348,15 @@ class _PaginaVentasState extends State<PaginaVentas> {
                       ),
                     ),
                   ] else
-                    LayoutBuilder(
-                      builder: (context, limites) {
-                        final titulo = const Text(
-                          'VENTAS',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        );
-                        final botonAgregar = CartaNavegacion.accion(
-                          onPressed: _agregarVenta,
-                          icon: const Icon(Icons.add),
-                          label: const Text('AGREGAR VENTA'),
-                        );
-
-                        if (limites.maxWidth >= 600) {
-                          return Row(
-                            children: [
-                              Expanded(child: titulo),
-                              botonAgregar,
-                            ],
-                          );
-                        }
-                        return Column(
-                          children: [
-                            titulo,
-                            const SizedBox(height: 12),
-                            botonAgregar,
-                          ],
-                        );
-                      },
+                    const Center(
+                      child: Text(
+                        'VENTAS',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ), // Mantiene el título centrado en el contenido sin depender de botones laterales.
                     ),
 
                   const SizedBox(height: 20),
@@ -426,26 +391,31 @@ class _PaginaVentasState extends State<PaginaVentas> {
                         // derecha para el scrollbar, así queda centrada.
                         padding: const EdgeInsets.only(left: 14),
                         child: PanelFiltros<Map<String, dynamic>>(
-                          datos:
-                              filasVisibles, // Conserva solo las ventas que corresponden a la página.
-                          textoAyuda:
-                              'BUSCAR CLIENTE, VEHÍCULO O PRODUCTO', // Describe la búsqueda disponible.
+                          datos: filasVisibles, // Conserva solo las ventas que corresponden a la página.
+                          textoAyuda: 'BUSCAR CLIENTE, VEHÍCULO O PRODUCTO', // Describe la búsqueda disponible.
                           camposBusqueda: [
                             // La vista de un cliente ya conoce su nombre.
                             if (!soloCliente)
-                              (fila) => fila['cliente'].toString(), // Busca en el cliente.
-                            (fila) => fila['vehiculo'].toString(), // Busca en el vehículo.
-                            (fila) =>
-                                fila['productos'].toString(), // Busca en los productos.
+                              (fila) => fila['cliente']
+                                  .toString(), // Busca en el cliente.
+                            (fila) => fila['vehiculo']
+                                .toString(), // Busca en el vehículo.
+                            (fila) => fila['productos']
+                                .toString(), // Busca en los productos.
                           ],
                           categorias: [
                             // Permite elegir ventas cerradas, en proceso o ambas.
                             CategoriaFiltro<Map<String, dynamic>>(
                               id: 'estado',
                               etiqueta: 'ESTADO',
+                              seleccionUnica: true, // Muestra ventas cerradas o pendientes, nunca ambas a la vez.
+                              opcionesFijas: const [
+                                'VENTAS CERRADAS',
+                                'VENTAS PENDIENTES',
+                              ], // Mantiene ambos estados incluso con cero ventas.
                               valor: (fila) => fila['estado'] == 'cerrada'
-                                  ? 'VENTA CERRADA'
-                                  : 'VENTA EN PROCESO',
+                                  ? 'VENTAS CERRADAS'
+                                  : 'VENTAS PENDIENTES',
                             ),
 
                             // El filtro por cliente es innecesario si ya se
@@ -466,66 +436,66 @@ class _PaginaVentasState extends State<PaginaVentas> {
                               ),
                           ],
                           child: (filtrados) => TablaDatos(
-                          mostrarControles: false, // El panel ya aplica estado, periodo y búsqueda.
-                          // Encabezados visibles de la tabla.
-                          // La vista por cliente omite la columna de cliente
-                          // porque todas sus filas muestran el mismo nombre.
-                          nombresColumnas: soloCliente
-                              ? const ['VEHÍCULO', 'PRODUCTOS', 'VER']
-                              : const [
-                                  'CLIENTE',
-                                  'VEHÍCULO',
-                                  'PRODUCTOS',
-                                  'VER',
-                                ],
+                            mostrarControles: false, // El panel ya aplica estado, periodo y búsqueda.
+                            // Encabezados visibles de la tabla.
+                            // La vista por cliente omite la columna de cliente
+                            // porque todas sus filas muestran el mismo nombre.
+                            nombresColumnas: soloCliente
+                                ? const ['VEHÍCULO', 'PRODUCTOS', 'VER']
+                                : const [
+                                    'CLIENTE',
+                                    'VEHÍCULO',
+                                    'PRODUCTOS',
+                                    'VER',
+                                  ],
 
-                          // Campos de cada columna (vacío si la celda es personalizada).
-                          camposColumnas: soloCliente
-                              ? const ['vehiculo', 'productos', '']
-                              : const [
-                                  'cliente',
-                                  'vehiculo',
-                                  'productos',
-                                  '',
-                                ],
+                            // Campos de cada columna (vacío si la celda es personalizada).
+                            camposColumnas: soloCliente
+                                ? const ['vehiculo', 'productos', '']
+                                : const [
+                                    'cliente',
+                                    'vehiculo',
+                                    'productos',
+                                    '',
+                                  ],
 
-                          // Ancho proporcional de cada columna.
-                          anchosColumnas: soloCliente
-                              ? const [250, 450, 100]
-                              : const [200, 200, 400, 100],
+                            // Ancho proporcional de cada columna.
+                            anchosColumnas: soloCliente
+                                ? const [250, 450, 100]
+                                : const [200, 200, 400, 100],
 
-                          // Colores de cabecera alternando entre los dos rojos.
-                          coloresEncabezados: soloCliente
-                              ? const [_rojoClaro, _rojoOscuro, _rojoClaro]
-                              : const [
-                                  _rojoClaro,
-                                  _rojoOscuro,
-                                  _rojoClaro,
-                                  _rojoOscuro,
-                                ],
+                            // Colores de cabecera alternando entre los dos rojos.
+                            coloresEncabezados: soloCliente
+                                ? const [_rojoClaro, _rojoOscuro, _rojoClaro]
+                                : const [
+                                    _rojoClaro,
+                                    _rojoOscuro,
+                                    _rojoClaro,
+                                    _rojoOscuro,
+                                  ],
 
-                          // Las filas de ventas son más altas que el valor por defecto.
-                          altoFila: 120,
+                            // Las filas de ventas son más altas que el valor por defecto.
+                            altoFila: 120,
 
-                          filas: filtrados, // Muestra las ventas que pasan los filtros.
+                            filas: filtrados, // Muestra las ventas que pasan los filtros.
 
-                          celdasPersonalizadas: soloCliente
-                              // Sin columna de cliente, las celdas bajan un lugar.
-                              ? {
-                                  0: _celdaVehiculo,
-                                  1: _celdaProductos,
-                                  2: _celdaVer,
-                                }
-                              : {
-                                  0: _celdaCliente,
-                                  1: _celdaVehiculo,
-                                  2: _celdaProductos,
-                                  3: _celdaVer,
-                                },
-                            ), // Finaliza la tabla construida con las ventas filtradas.
-                          ), // Finaliza el panel de filtros reutilizable.
-                        ), // Finaliza la compensación del scrollbar.
-                      ), // Finaliza el espacio restante de la página.
+                            celdasPersonalizadas: soloCliente
+                                // Sin columna de cliente, las celdas bajan un lugar.
+                                ? {
+                                    0: _celdaVehiculo,
+                                    1: _celdaProductos,
+                                    2: _celdaVer,
+                                  }
+                                : {
+                                    0: _celdaCliente,
+                                    1: _celdaVehiculo,
+                                    2: _celdaProductos,
+                                    3: _celdaVer,
+                                  },
+                          ), // Finaliza la tabla construida con las ventas filtradas.
+                        ), // Finaliza el panel de filtros reutilizable.
+                      ), // Finaliza la compensación del scrollbar.
+                    ), // Finaliza el espacio restante de la página.
                 ],
               ),
             ),

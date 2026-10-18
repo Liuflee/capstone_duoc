@@ -26,6 +26,8 @@ Future<Cliente?> seleccionarClienteExistente(
   return showDialog<Cliente>(
     context: context,
     builder: (dialogo) => Dialog(
+      backgroundColor: Colors.white, // Comparte el fondo de las páginas de la aplicación.
+      surfaceTintColor: Colors.transparent, // Evita el tinte rosado del tema Material.
       insetPadding: const EdgeInsets.all(
         16,
       ), // Conserva un margen en pantallas pequeñas.

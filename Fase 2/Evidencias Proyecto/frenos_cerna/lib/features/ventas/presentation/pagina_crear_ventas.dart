@@ -42,7 +42,7 @@ class ProductoVenta {
 
     return ProductoVenta(
       id: codigo,
-      nombre: codigoBarra.isEmpty ? 'Producto $codigo' : codigoBarra,
+      nombre: codigoBarra.isEmpty ? codigo : codigoBarra,
       categoria: tipo is Map
           ? (tipo['nombre_tipo'] ?? 'Sin categoría').toString()
           : (json['tipo']?.toString() ?? 'Sin categoría'),

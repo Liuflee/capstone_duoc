@@ -209,7 +209,7 @@ class VentasPendientesRepository {
         venta.articulos.isEmpty ||
         venta.articulos.any(
           (articulo) =>
-              int.tryParse(articulo.codigo) == null || articulo.cantidad <= 0,
+              articulo.codigo.trim().isEmpty || articulo.cantidad <= 0,
         )) {
       throw ArgumentError(
         'La venta requiere cliente y artículos válidos.',
@@ -246,6 +246,49 @@ class VentasPendientesRepository {
       (fila) => fila['id'] == id && fila['estado'] == 'enviando',
     ),
   ); // Detecta una confirmación cuyo resultado no se conoce.
+  Future<void> recuperarTrasRevision(String id) => _exclusivo(() async {
+    if (_confirmaciones.containsKey(id) || _recibos.containsKey(id)) {
+      throw StateError(
+        'La confirmación sigue activa o ya tiene un comprobante.',
+      ); // Impide restablecer un pago conocido.
+    }
+    final filas = await _leer(); // Conserva las otras ventas.
+    final registro = filas.firstWhere(
+      (fila) => fila['id'] == id,
+    ); // Recupera el borrador revisado por el usuario.
+    if (registro['estado'] != 'enviando' || registro['id_venta'] != null) {
+      throw StateError(
+        'Solo puede recuperarse una confirmación pendiente de revisión.',
+      ); // No reabre ventas cerradas.
+    }
+    registro['estado'] = 'pendiente'; // Habilita la corrección tras la revisión explícita del historial.
+    registro['revision'] =
+        (registro['revision'] as num? ?? 0).toInt() +
+        1; // Invalida copias abiertas antes de recuperar.
+    registro.remove(
+      'error_confirmacion',
+    ); // Conserva los datos de la venta y limpia el error revisado.
+    await _escribir(filas); // No registra nada en Supabase.
+  });
+  Future<String?> errorConfirmacion(String id) => _exclusivo(() async {
+    final filas =
+        await _leer(); // Recupera el motivo aunque se reinicie la aplicación.
+    final registros = filas.where((fila) => fila['id'] == id);
+    return registros.isEmpty
+        ? null
+        : registros.first['error_confirmacion']
+              as String?; // No inventa el motivo de envíos antiguos.
+  });
+  Future<void> _conservarError(String id, String mensaje) => _exclusivo(
+    () async {
+      final filas = await _leer(); // Conserva el borrador y su estado de envío.
+      filas.firstWhere((fila) => fila['id'] == id)['error_confirmacion'] =
+          mensaje; // Registra el error original del servidor.
+      await _escribir(
+        filas,
+      ); // Permite diagnosticarlo al volver a abrir la venta.
+    },
+  );
   Future<String> confirmarPago(String id) {
     // Evita confirmar dos veces desde el mismo dispositivo.
     final activa = _confirmaciones[id]; // Reutiliza una solicitud en curso.
@@ -318,19 +361,38 @@ class VentasPendientesRepository {
         '40P01',
         '57014',
         '42883',
+        '42804', // Una incompatibilidad de tipos revierte la transacción.
+        'PGRST202', // Una función ausente no llega a ejecutarse.
+        'PGRST203', // Una función ambigua no llega a ejecutarse.
+        'PGRST204', // Una columna ausente rechaza la solicitud.
+        'PGRST205', // Una tabla ausente rechaza la solicitud.
       }.contains(error.code)) {
         // Distingue rechazos de la transacción de errores inciertos del intermediario.
+        await _conservarError(
+          id,
+          '${error.code}: ${error.message}',
+        ); // Mantiene el diagnóstico sin habilitar otro envío.
         throw StateError(
-          'No se pudo comprobar el resultado. Revisa el historial antes de volver a registrar la venta.',
+          'No se pudo comprobar el resultado. Revisa el historial antes de volver a registrar la venta. Detalle: ${error.code}: ${error.message}',
         ); // Conserva el bloqueo cuando no se conoce el resultado remoto.
       } // Finaliza la comprobación del rechazo.
       await _exclusivo(() async {
         final filas = await _leer();
-        filas.firstWhere((fila) => fila['id'] == id)['estado'] = 'pendiente';
+        final registro = filas.firstWhere(
+          (fila) => fila['id'] == id,
+        ); // Recupera el borrador rechazado.
+        registro['estado'] =
+            'pendiente'; // Permite corregir un rechazo explícito.
+        registro['error_confirmacion'] =
+            '${error.code}: ${error.message}'; // Conserva el motivo real.
         await _escribir(filas);
       }); // Permite corregir stock o datos y reintentar.
       rethrow; // Presenta el motivo del rechazo.
-    } catch (_) {
+    } catch (error) {
+      await _conservarError(
+        id,
+        error.toString(),
+      ); // Conserva también errores de conexión.
       // Una desconexión podría ocurrir después de que el servidor guardó la venta.
       throw StateError(
         'No se pudo comprobar el resultado. Revisa el historial; el envío queda bloqueado para evitar una venta duplicada.',

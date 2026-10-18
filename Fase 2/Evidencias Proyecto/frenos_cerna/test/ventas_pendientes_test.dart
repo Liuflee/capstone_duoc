@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/shared/widgets/panel_filtros.dart'; // Compara el título con el centro del buscador alineado a la tabla.
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart'; // Proporciona clientes al registro real de ventas.
 
 import 'dart:async'; // Controla las confirmaciones simultáneas de prueba.
@@ -45,6 +46,68 @@ void main() {
     () => SharedPreferences.setMockInitialValues({}),
   ); // Aísla el catálogo de cada prueba.
 
+  test('recuperar tras revisión conserva la venta y permite un nuevo intento explícito', () async {
+    var fallar = true; // Simula una respuesta incierta inicial.
+    final repositorio = VentasPendientesRepository(
+      clave: 'recuperar',
+      registrar: (_) async {
+        if (fallar) throw TimeoutException('Respuesta perdida');
+        return '99';
+      },
+    );
+    await repositorio.guardar(borrador()); // Conserva el borrador.
+    await expectLater(
+      repositorio.confirmarPago('local-1'),
+      throwsStateError,
+    ); // Bloquea el resultado desconocido.
+    await repositorio.recuperarTrasRevision(
+      'local-1',
+    ); // Representa la revisión manual explícita.
+    expect(
+      await repositorio.requiereRevision('local-1'),
+      isFalse,
+    ); // Habilita el reintento.
+    expect(
+      (await repositorio.obtenerTodas()).single.total,
+      2000,
+    ); // No pierde artículos.
+    fallar = false; // Simula haber corregido la configuración.
+    expect(
+      await repositorio.confirmarPago('local-1'),
+      '99',
+    ); // Confirma una sola vez.
+    await expectLater(
+      repositorio.recuperarTrasRevision('local-1'),
+      throwsStateError,
+    ); // Nunca reabre un pago confirmado.
+  });
+  for (final codigo in ['PGRST202', 'PGRST203', '42804', '23505']) {
+    test(
+      'un rechazo $codigo conserva el motivo y permite corregir sin bloqueo incierto',
+      () async {
+        final repositorio = VentasPendientesRepository(
+          clave: 'rechazo',
+          registrar: (_) async => throw PostgrestException(
+            message: 'Configuración SQL incorrecta',
+            code: codigo,
+          ),
+        ); // Simula un rechazo previo o una transacción revertida.
+        await repositorio.guardar(borrador()); // Conserva la venta local.
+        await expectLater(
+          repositorio.confirmarPago('local-1'),
+          throwsA(isA<PostgrestException>()),
+        ); // Presenta el error original.
+        expect(
+          await repositorio.requiereRevision('local-1'),
+          isFalse,
+        ); // No bloquea cuando se sabe que no se guardó.
+        expect(
+          await repositorio.errorConfirmacion('local-1'),
+          contains(codigo),
+        ); // Conserva el código para el diagnóstico.
+      },
+    );
+  }
   test('un error del intermediario no habilita un segundo envío', () async {
     // Distingue un rechazo de stock de una respuesta incierta.
     var envios = 0; // Cuenta solicitudes.
@@ -494,14 +557,22 @@ void main() {
         await tester.pumpAndSettle(); // Espera el catálogo combinado.
         expect(
           tester.widget<TablaDatos>(find.byType(TablaDatos)).filas,
-          hasLength(2),
-        ); // Muestra inicialmente ambas ventas.
+          hasLength(1),
+        ); // Muestra inicialmente solo las ventas cerradas.
+        expect(
+          find.text('AGREGAR VENTA'),
+          findsNothing,
+        ); // Retira la acción de la pestaña diaria.
+        expect(
+          tester.getCenter(find.text('VENTAS')).dx,
+          closeTo(tester.getCenter(find.byType(CampoBusqueda)).dx, 0.01),
+        ); // Verifica el centro respecto al ancho visible de la tabla en móvil y escritorio.
         await tester.tap(
           find.byTooltip('ESTADO'),
         ); // Abre el chip de estado del panel.
         await tester.pumpAndSettle(); // Espera el menú.
         await tester.tap(
-          find.text('VENTA EN PROCESO'),
+          find.text('VENTAS PENDIENTES'),
         ); // Filtra las ventas locales.
         await tester.pumpAndSettle(); // Aplica el filtro.
         expect(
@@ -541,11 +612,11 @@ void main() {
         await tester.tap(find.byTooltip('ESTADO')); // Abre el filtro de nuevo.
         await tester.pumpAndSettle(); // Espera el menú.
         await tester.tap(
-          find.text('VENTA EN PROCESO'),
-        ); // Quita la selección anterior.
+          find.text('VENTAS PENDIENTES'),
+        ); // Mantiene la única selección al pulsarla otra vez.
         await tester.pumpAndSettle(); // Vuelve a mostrar ambas ventas.
         await tester.tap(
-          find.text('VENTA CERRADA'),
+          find.text('VENTAS CERRADAS'),
         ); // Filtra el historial remoto.
         await tester.pumpAndSettle(); // Aplica el estado.
         expect(

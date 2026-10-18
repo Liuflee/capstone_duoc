@@ -49,6 +49,9 @@ class _PaginaDetalleVentaPendienteState
       final revision = await _repositorio.requiereRevision(
         _venta.id,
       ); // Detecta confirmaciones interrumpidas.
+      final errorConfirmacion = await _repositorio.errorConfirmacion(
+        _venta.id,
+      ); // Recupera el detalle del último intento.
       if (!mounted) return; // Evita actualizar una página cerrada.
       final encontrada = ventas.where(
         (venta) => venta.id == _venta.id,
@@ -60,6 +63,10 @@ class _PaginaDetalleVentaPendienteState
         }
         _requiereRevision = revision || encontrada.isEmpty; // Deshabilita acciones si el resultado es incierto o la venta ya no está pendiente.
         if (encontrada.isEmpty) _error = 'La venta ya no está pendiente. Vuelve a Ventas para consultar su historial.'; // Evita editar una copia local desactualizada.
+        if (revision && errorConfirmacion != null) {
+          _error =
+              'Confirmación pendiente de revisión. Detalle del intento: $errorConfirmacion'; // Muestra el motivo real sin desbloquear una venta incierta.
+        }
         _ocupado = false; // Permite continuar después de la lectura.
       }); // Finaliza la actualización.
     } catch (error) {
@@ -73,6 +80,51 @@ class _PaginaDetalleVentaPendienteState
       }
     } // Finaliza la recuperación local.
   } // Finaliza la actualización.
+
+  Future<void> _recuperar() async {
+    final confirmado = await showDialog<bool>(
+      context: context,
+      builder: (dialogo) => AlertDialog(
+        title: const Text(
+          'REVISAR VENTA',
+        ), // Exige verificar el resultado antes de reintentar.
+        content: const Text(
+          'Antes de continuar, comprueba en el historial completo y en Supabase que esta venta no fue guardada. Si ya existe, no la recuperes: podrías duplicar la venta y descontar el stock otra vez. ¿Confirmas que no fue registrada y que ya corregiste el problema?',
+        ),
+        actions: [
+          CartaNavegacion.accion(
+            onPressed: () => Navigator.pop(dialogo, false),
+            child: const Text('CANCELAR'),
+          ), // Mantiene el bloqueo.
+          CartaNavegacion.accion(
+            onPressed: () => Navigator.pop(dialogo, true),
+            child: const Text('NO FUE REGISTRADA'),
+          ), // Confirma la revisión manual.
+        ],
+      ),
+    );
+    if (confirmado != true || !mounted) {
+      return; // Conserva el estado si se cancela.
+    }
+    setState(
+      () => _ocupado = true,
+    ); // Bloquea acciones durante la recuperación local.
+    try {
+      await _repositorio.recuperarTrasRevision(
+        _venta.id,
+      ); // Recupera sin enviar el pago.
+      if (!mounted) return;
+      setState(() => _error = null); // Limpia el mensaje revisado.
+      await _actualizar(); // Recarga los datos y habilita el intento posterior.
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _error = error.toString();
+          _ocupado = false;
+        }); // Conserva el bloqueo si no pudo recuperar.
+      }
+    }
+  }
 
   Future<void> _editar() async {
     // Abre la edición conservando este detalle debajo.
@@ -150,7 +202,20 @@ class _PaginaDetalleVentaPendienteState
     } catch (error) {
       // Mantiene los datos locales para corregir errores o revisar el resultado.
       if (!mounted) return; // Evita cambiar una página cerrada.
-      setState(() => _error = error.toString()); // Presenta la causa del fallo.
+      final detalle = error
+          .toString(); // Conserva el diagnóstico para otros errores.
+      final contadorVentas =
+          detalle.contains('23505') &&
+          (detalle.contains('venta_pkey') ||
+              detalle.contains('detalle_venta_producto_pkey') ||
+              detalle.contains(
+                'detalle_venta_servicio_pkey',
+              )); // Reconoce una colisión del ID automático.
+      setState(
+        () => _error = contadorVentas
+            ? 'El contador de IDs de ventas o sus detalles está desactualizado. La transacción fue rechazada y el borrador sigue local. Ejecuta supabase/reparar_secuencias_ventas.sql en Supabase y vuelve a confirmar el pago.'
+            : detalle,
+      ); // Explica la reparación sin afirmar que la venta ya existe.
       await _actualizar(); // Comprueba si se puede reintentar o debe revisarse el historial.
     } // Finaliza la confirmación.
   } // Finaliza el cierre de la venta.
@@ -192,6 +257,12 @@ class _PaginaDetalleVentaPendienteState
             spacing: 16,
             runSpacing: 16,
             children: [
+              if (_requiereRevision)
+                CartaNavegacion.accion(
+                  onPressed: _ocupado ? null : _recuperar,
+                  icon: const Icon(Icons.fact_check_outlined),
+                  label: const Text('REVISAR VENTA'),
+                ), // Recupera solo después de confirmar que no se guardó.
               // Conserva los botones en escritorio y móvil.
               CartaNavegacion.accion(
                 onPressed: _ocupado || _requiereRevision ? null : _editar,

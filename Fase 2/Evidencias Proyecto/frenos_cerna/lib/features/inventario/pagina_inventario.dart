@@ -25,6 +25,8 @@ class Producto {
   final String categoria;
   final double precio;
   final int cantidad;
+  final int?
+  calidadId; // Conserva la calidad para precargar el formulario de edición.
   final int? tipoId; // Conserva la categoría existente del esquema.
 
   Producto({
@@ -34,6 +36,7 @@ class Producto {
     required this.categoria,
     required this.precio,
     required this.cantidad,
+    this.calidadId, // Mantiene la calidad existente al editar.
     this.tipoId, // Permite editar la categoría sin añadir columnas.
   });
 
@@ -47,7 +50,7 @@ class Producto {
     return Producto(
       id: codigo,
 
-      nombre: codigoBarra.isEmpty ? 'Producto $codigo' : codigoBarra,
+      nombre: codigoBarra.isEmpty ? codigo : codigoBarra,
 
       codigoBarra: codigoBarra,
 
@@ -58,6 +61,8 @@ class Producto {
       precio: double.tryParse(json['precio']?.toString() ?? '0') ?? 0,
 
       cantidad: int.tryParse(json['stock']?.toString() ?? '0') ?? 0,
+      calidadId: (json['calidad'] as num?)
+          ?.toInt(), // Recupera el identificador real de calidad.
       tipoId: (json['tipo'] as num?)?.toInt(), // Usa la clave de tipo_producto.
     );
   }
@@ -107,7 +112,7 @@ class _PaginaInventarioState extends State<PaginaInventario> {
       final response = await SupabaseDatabase.client
           .from(SupabaseTables.productos)
           .select(
-            'codigo_producto, cod_barra, stock, tipo, precio, tipo_producto(nombre_tipo)',
+            'codigo_producto, cod_barra, stock, tipo, calidad, precio, tipo_producto(nombre_tipo)',
           )
           .order('codigo_producto');
 

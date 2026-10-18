@@ -1,6 +1,9 @@
+import 'package:supabase_flutter/supabase_flutter.dart'; // Permite cerrar únicamente la sesión de este dispositivo.
+import 'package:frenos_cerna/core/data/supabase_database.dart'; // Reutiliza la sesión autenticada.
+import 'package:frenos_cerna/features/autenticacion/presentation/puerta_autenticacion.dart'; // Regresa al acceso existente sin modificar su diseño.
 import 'package:flutter/material.dart'; // Construye la identidad, el título y las acciones de la barra compartida.
 
-import 'package:frenos_cerna/core/data/supabase_database.dart'; // Identifica la sesión conectada.
+import 'package:frenos_cerna/core/data/perfil_sesion.dart'; // Comparte el perfil entre páginas sin volver a cargar el nombre.
 import 'package:frenos_cerna/features/autenticacion/data/autenticacion_repository.dart'; // Recupera el nombre real del perfil.
 
 class BarraSuperior extends StatefulWidget {
@@ -24,41 +27,47 @@ class BarraSuperior extends StatefulWidget {
 class _BarraSuperiorState extends State<BarraSuperior> {
   late Future<PerfilUsuario?>
   _perfil; // Reutiliza la consulta entre reconstrucciones.
-  Future<PerfilUsuario?> _cargarPerfil() async {
-    if (!SupabaseDatabase.isConfigured) {
-      return null; // Permite usar el modo de prueba sin conexión.
-    } // Consulta únicamente cuando la conexión está configurada.
-    final usuario = SupabaseDatabase
-        .client
-        .auth
-        .currentUser; // Obtiene la identidad autenticada.
-    if (usuario == null) return null; // Evita consultar sin sesión.
-    return AutenticacionRepository().obtenerPerfil(
-      usuario.id,
-    ); // Lee el nombre registrado para esa cuenta.
-  }
-
   @override
   void initState() {
     super.initState(); // Inicializa el estado visual.
     _perfil = widget.nombreUsuario == null
-        ? _cargarPerfil()
+        ? PerfilSesion.obtener()
         : Future.value(null); // Aprovecha el perfil proporcionado por Inicio.
+  }
+
+  Future<void> _salir() async {
+    final navegador = Navigator.of(
+      context,
+      rootNavigator: true,
+    ); // Conserva el navegador aunque la sesión reconstruya Inicio.
+    if (widget.onCerrarSesion != null) {
+      await widget.onCerrarSesion!(); // Conserva la salida personalizada y el modo de prueba.
+    } else if (SupabaseDatabase.isConfigured) {
+      await SupabaseDatabase.client.auth.signOut(
+        scope: SignOutScope.local,
+      ); // Cierra la sesión desde cualquier vista.
+    }
+    PerfilSesion.limpiar(); // Evita conservar el nombre al volver al acceso.
+    if (!navegador.mounted) {
+      return; // Evita navegar si ya se cerró la aplicación.
+    }
+    navegador.pushAndRemoveUntil<void>(
+      MaterialPageRoute(builder: (_) => const PuertaAutenticacion()),
+      (_) => false, // Elimina las páginas de la sesión anterior para impedir volver atrás.
+    );
   }
 
   @override
   Widget build(BuildContext context) => FutureBuilder<PerfilUsuario?>(
-    future: _perfil, // Mantiene una sola consulta por barra.
+    future: _perfil, // Comparte la consulta de la sesión.
+    initialData: PerfilSesion
+        .actual, // Presenta el nombre guardado desde el primer fotograma.
     builder: (context, estado) => _ContenidoBarraSuperior(
       tituloPagina: widget.tituloPagina, // Conserva el título de cada vista.
-      nombreUsuario:
-          widget.nombreUsuario ??
-          estado.data?.nombre ??
-          'Usuario', // Usa el perfil real y un texto neutro durante la carga.
+      nombreUsuario: widget.nombreUsuario ?? estado.data?.nombre ?? '', // Evita mostrar un nombre provisional mientras se obtiene el perfil real.
       rolUsuario:
           widget.rolUsuario, // Conserva la presentación del rol existente.
-      onCerrarSesion:
-          widget.onCerrarSesion, // Mantiene el comportamiento de cierre.
+      onCerrarSesion: _salir, // Ofrece la misma salida y regreso al login en todas las páginas.
     ),
   );
 }

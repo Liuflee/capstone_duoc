@@ -7,11 +7,13 @@ import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
 
 // Presenta el registro como página independiente.
 class PaginaCrearProducto extends StatefulWidget {
+  final Map<String, dynamic>? productoInicial; // Activa la edición con los datos existentes sin duplicar el formulario.
   final Future<Map<String, List<Map<String, dynamic>>>> Function()?
   cargarCatalogos; // Permite verificar la relación con datos controlados.
   const PaginaCrearProducto({
     super.key,
     this.cargarCatalogos,
+    this.productoInicial, // Sin datos iniciales conserva el registro de un producto nuevo.
   }); // Crea el registro con la conexión habitual por defecto.
   @override // Crea el estado del formulario.
   State<PaginaCrearProducto> createState() => _PaginaCrearProductoState();
@@ -40,6 +42,37 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
   @override // Carga las categorías al abrir el formulario.
   void initState() {
     super.initState();
+    final producto =
+        widget.productoInicial; // Conserva el registro que se va a editar.
+    if (producto != null) {
+      _codigo.text = producto['codigo_producto']
+          .toString(); // Muestra su identificador real.
+      _nombre.text =
+          producto['cod_barra']?.toString() ??
+          ''; // Precarga el código de barras sin nombres inventados.
+      _precio.text = producto['precio']
+          .toString(); // Precarga el precio existente.
+      _stock.text = producto['stock']
+          .toString(); // Precarga las existencias existentes.
+      _categoria = producto['tipo']; // Selecciona su categoría.
+      _calidad = producto['calidad']; // Selecciona su calidad.
+      if (_categoria != null) {
+        _categorias = [
+          {
+            'id': _categoria,
+            'nombre_tipo': producto['nombre_tipo'] ?? 'Categoría actual',
+          },
+        ]; // Conserva la selección durante la carga.
+      }
+      if (_calidad != null) {
+        _calidades = [
+          {'id': _calidad, 'nombre_calidad': 'Calidad actual'},
+        ]; // Conserva el ID hasta consultar el catálogo.
+        _relacionesCalidad = [
+          {'id_tipo': _categoria, 'id_calidad': _calidad},
+        ]; // Mantiene la asociación existente.
+      }
+    }
     _cargarCategorias();
   }
 
@@ -264,20 +297,31 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
     }
     setState(() => _guardando = true); // Indica el guardado.
     try {
-      await SupabaseDatabase.client.from(SupabaseTables.productos).insert({
-        'codigo_producto': _codigo.text
-            .trim(), // Conserva el código del registro anterior.
+      final datos = <String, dynamic>{
         'cod_barra': _nombre.text.trim().isEmpty
             ? null
             : _nombre.text.trim(), // Conserva la columna existente.
-        if (_calidad != null)
-          'calidad': _calidad, // Guarda la calidad existente.
-        if (_categoria != null) 'tipo': _categoria, // Conserva la categoría seleccionada. // Usa el campo de nombre disponible en la base actual.
+        'calidad':
+            _calidad, // Guarda o limpia la calidad según la categoría elegida.
+        'tipo': _categoria, // Conserva la categoría seleccionada.
         'precio': int.parse(_precio.text.trim()),
         'stock': int.parse(
           _stock.text.trim(),
         ), // Conserva precio y existencias.
-      }); // Utiliza únicamente columnas existentes.
+      }; // Comparte los mismos campos entre registro y edición.
+      if (widget.productoInicial == null) {
+        await SupabaseDatabase.client.from(SupabaseTables.productos).insert({
+          'codigo_producto': _codigo.text.trim(),
+          ...datos,
+        }); // Crea únicamente desde Añadir producto.
+      } else {
+        await SupabaseDatabase.client
+            .from(SupabaseTables.productos)
+            .update(datos)
+            .eq('codigo_producto', widget.productoInicial!['codigo_producto'])
+            .select('codigo_producto')
+            .single(); // Actualiza el producto existente sin duplicarlo ni cambiar su clave.
+      }
       if (mounted) {
         Navigator.pop(context, true); // Actualiza el inventario al regresar.
       }
@@ -295,7 +339,9 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
 
   @override // Construye la composición de creación de producto.
   Widget build(BuildContext context) => EstructuraPagina(
-    titulo: 'Creación de producto',
+    titulo: widget.productoInicial == null
+        ? 'Creación de producto'
+        : 'Edición de producto',
     activo: 'Inventario',
     child: SingleChildScrollView(
       child: Column(
@@ -331,11 +377,13 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
                     validador: (valor) => valor == null || valor.trim().isEmpty
                         ? 'Ingresa el código del producto'
                         : null, // Exige un identificador alfanumérico.
-                    habilitado: !_guardando,
+                    habilitado: !_guardando && widget.productoInicial == null, // Conserva la clave utilizada por las ventas existentes.
                   ), // Conserva el código obligatorio.
                   CampoFormularioDatos(
                     controlador: _precio,
-                    etiqueta: 'PRECIO DEL PRODUCTO NUEVO:',
+                    etiqueta: widget.productoInicial == null
+                        ? 'PRECIO DEL PRODUCTO NUEVO:'
+                        : 'PRECIO DEL PRODUCTO:',
                     textoAyuda: 'Precio',
                     tipoTeclado: TextInputType.number,
                     validador: _entero,
@@ -343,7 +391,9 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
                   ), // Configura el precio.
                   CampoFormularioDatos(
                     controlador: _stock,
-                    etiqueta: 'CANTIDAD INICIAL EN BODEGA:',
+                    etiqueta: widget.productoInicial == null
+                        ? 'CANTIDAD INICIAL EN BODEGA:'
+                        : 'CANTIDAD EN BODEGA:',
                     textoAyuda: 'Cantidad',
                     tipoTeclado: TextInputType.number,
                     validador: _entero,
@@ -365,8 +415,12 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
                   for (final esCalidad in [false, true]) ...[
                     Text(
                       esCalidad
-                          ? 'CALIDAD DEL PRODUCTO NUEVO:'
-                          : 'CATEGORÍA DEL PRODUCTO NUEVO:',
+                          ? (widget.productoInicial == null
+                                ? 'CALIDAD DEL PRODUCTO NUEVO:'
+                                : 'CALIDAD DEL PRODUCTO:')
+                          : (widget.productoInicial == null
+                                ? 'CATEGORÍA DEL PRODUCTO NUEVO:'
+                                : 'CATEGORÍA DEL PRODUCTO:'),
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -460,7 +514,9 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
                     campos: [
                       CampoFormularioDatos(
                         controlador: _nombre,
-                        etiqueta: 'CÓDIGO DE BARRA DEL PRODUCTO NUEVO:',
+                        etiqueta: widget.productoInicial == null
+                            ? 'CÓDIGO DE BARRA DEL PRODUCTO NUEVO:'
+                            : 'CÓDIGO DE BARRA DEL PRODUCTO:',
                         textoAyuda: 'Código de barra',
                         habilitado: !_guardando,
                       ), // Usa el dato admitido por el esquema actual.
@@ -480,7 +536,13 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
             child: CartaNavegacion.accion(
               onPressed: _guardando || _editandoCatalogo ? null : _registrar,
               icon: const Icon(Icons.download),
-              label: Text(_guardando ? 'GUARDANDO...' : 'REGISTRAR'),
+              label: Text(
+                _guardando
+                    ? 'GUARDANDO...'
+                    : widget.productoInicial == null
+                    ? 'REGISTRAR'
+                    : 'GUARDAR CAMBIOS',
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFD96363),
                 foregroundColor: Colors.black,
