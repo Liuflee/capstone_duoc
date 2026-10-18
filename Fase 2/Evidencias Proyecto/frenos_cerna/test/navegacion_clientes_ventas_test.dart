@@ -189,6 +189,155 @@ void main() {
 
   });
 
+  testWidgets(
+    'Ver cliente muestra una vista previa de sus ventas y abre el historial completo',
+    (tester) async {
+      // Comprueba la vista previa limitada y su acceso al historial.
+      tester.view.physicalSize = const Size(1440, 1000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final ventas = [
+        for (var i = 1; i <= 7; i++)
+          VentaRegistro(
+            id: '$i',
+            rutCliente: cliente.id,
+            clienteNombre: cliente.nombre,
+            vehiculoNombre: 'Vehículo $i',
+            productosResumen: 'Producto $i',
+            total: i * 1000,
+            fecha: '10/10/2026',
+            items: [],
+          ),
+      ]; // Prepara más ventas de las que caben en la vista previa.
+      await tester.pumpWidget(
+        MaterialApp(
+          home: PaginaVerCliente(
+            cliente: cliente,
+            cargarHistorial: (_) async => ventas,
+            cargarVehiculos: (_) async => [],
+          ),
+        ),
+      ); // Abre el perfil real sin conexión.
+      await tester.pumpAndSettle(); // Espera la composición.
+      // La vista previa muestra únicamente las cinco ventas más recientes.
+      expect(find.text('Mostrando 5 de 7 ventas'), findsOneWidget);
+      expect(
+        tester.widget<TablaDatos>(find.byType(TablaDatos)).filas,
+        hasLength(5),
+      ); // No lista el historial completo en el perfil.
+      expect(
+        find.byTooltip('Ver detalle de venta'),
+        findsWidgets,
+      ); // Cada fila de la vista previa conserva su detalle.
+      // El botón abre el historial completo filtrado por este cliente.
+      await tester.tap(find.text('VER HISTORIAL\nCOMPLETO'));
+      await tester.pumpAndSettle(); // Espera la navegación.
+      expect(find.byType(PaginaVentasHistorial), findsOneWidget);
+      expect(
+        find.text('HISTORIAL DE VENTAS DE ${cliente.nombre}'),
+        findsOneWidget,
+      ); // Personaliza el título con el cliente consultado.
+      expect(find.text('VOLVER'), findsOneWidget); // Regresa al perfil.
+      expect(tester.takeException(), isNull); // Exige ausencia de desbordamientos.
+    },
+  ); // Finaliza la vista previa del historial.
+
+  testWidgets(
+    'El historial completo se filtra por el cliente y omite su columna',
+    (tester) async {
+      // Comprueba el historial de un perfil sin mezclar otros clientes.
+      tester.view.physicalSize = const Size(1440, 1000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final repositorio = VentasPendientesRepository(
+        clave: 'historial-cliente',
+      ); // Aísla las ventas locales de esta prueba.
+      await repositorio.guardar(
+        VentaPendiente(
+          id: 'pendiente-123',
+          rutCliente: cliente.id,
+          nombreCliente: cliente.nombre,
+          fonoCliente: cliente.numero,
+          patente: '',
+          fechaCreacion: DateTime(2026, 10, 10),
+          articulos: const [
+            ArticuloVentaPendiente(
+              codigo: '10',
+              nombre: 'Freno',
+              categoria: '',
+              precio: 1000,
+              cantidad: 1,
+              stock: 5,
+            ),
+          ],
+        ),
+      ); // Prepara una pendiente del cliente consultado.
+      final ventas = [
+        VentaRegistro(
+          id: '1',
+          rutCliente: cliente.id,
+          clienteNombre: cliente.nombre,
+          vehiculoNombre: 'Vehículo propio',
+          productosResumen: 'Freno',
+          total: 1000,
+          fecha: '',
+          items: [],
+        ),
+        const VentaRegistro(
+          id: '2',
+          rutCliente: '999',
+          clienteNombre: 'Otro cliente',
+          vehiculoNombre: 'Vehículo ajeno',
+          productosResumen: 'Disco',
+          total: 2000,
+          fecha: '',
+          items: [],
+        ),
+      ]; // Incluye una venta que pertenece a otro cliente.
+      await tester.pumpWidget(
+        MaterialApp(
+          home: PaginaVentasHistorial(
+            repositorioPendientes: repositorio,
+            cargarVentas: () async => ventas,
+            clienteId: cliente.id,
+            clienteNombre: cliente.nombre,
+          ),
+        ),
+      ); // Abre el historial filtrado desde el perfil.
+      await tester.pumpAndSettle(); // Espera ambas fuentes de datos.
+      expect(
+        find.text('HISTORIAL DE VENTAS DE ${cliente.nombre}'),
+        findsOneWidget,
+      ); // Muestra el alcance del filtro en el título.
+      final tabla = tester.widget<TablaDatos>(find.byType(TablaDatos));
+      expect(
+        tabla.nombresColumnas,
+        isNot(contains('CLIENTE')),
+      ); // Oculta la columna redundante al filtrar por cliente.
+      expect(
+        tabla.filas,
+        hasLength(2),
+      ); // Conserva la pendiente y la cerrada del cliente.
+      expect(
+        tabla.filas.every((fila) => fila['rut'].toString() == cliente.id),
+        isTrue,
+      ); // Excluye las ventas de otros clientes.
+      expect(find.byTooltip('ESTADO'), findsOneWidget); // Conserva sus filtros.
+      expect(
+        find.byTooltip('PERIODO'),
+        findsOneWidget,
+      ); // El historial sigue filtrando por fecha.
+      expect(find.byTooltip('CLIENTE'), findsNothing); // Ya no aporta nada.
+      expect(find.text('VOLVER'), findsOneWidget); // Regresa al perfil.
+      expect(
+        tester.takeException(),
+        isNull,
+      ); // Exige ausencia de desbordamientos.
+    },
+  ); // Finaliza el historial filtrado por cliente.
+
   testWidgets('Edición de cliente muestra todos sus vehículos', (tester) async {
     final vehiculos = [
       HistorialVehiculo(

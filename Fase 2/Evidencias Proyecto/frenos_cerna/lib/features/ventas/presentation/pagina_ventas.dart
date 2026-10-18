@@ -23,6 +23,10 @@ class PaginaVentas extends StatefulWidget {
   mostrarHistorial; // Separa el historial completo de las ventas diarias.
   final DateTime Function()?
   ahora; // Permite comprobar límites de día sin depender del reloj real.
+  final String?
+  clienteId; // Filtra todas las ventas por el RUT de un solo cliente.
+  final String?
+  clienteNombre; // Personaliza el título cuando se filtra por cliente.
   const PaginaVentas({
     super.key,
     this.mostrarHistorial =
@@ -30,6 +34,8 @@ class PaginaVentas extends StatefulWidget {
     this.ahora, // Mantiene el reloj real por defecto.
     this.repositorioPendientes,
     this.cargarVentas,
+    this.clienteId, // Sin cliente definido se muestra el historial completo.
+    this.clienteNombre,
   });
 
   @override
@@ -97,6 +103,101 @@ class _PaginaVentasState extends State<PaginaVentas> {
     if (mounted) await _cargarVentas(); // Actualiza la tabla al volver.
   } // Finaliza el registro de una venta diaria.
 
+  // Construye la celda del cliente con su avatar.
+  Widget _celdaCliente(BuildContext context, Map<String, dynamic> fila) {
+    final venta = fila['venta'] as VentaEnProceso;
+
+    return Row(
+      children: [
+        CircleAvatar(
+          radius: 20,
+          backgroundColor: Colors.red[300],
+          child: const Icon(
+            Icons.person_outline,
+            color: Colors.black,
+            size: 30,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            venta.clienteNombre,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+        ),
+      ],
+    );
+  } // Finaliza la celda de identificación del cliente.
+
+  // Construye la celda del vehículo asociado a la venta.
+  Widget _celdaVehiculo(BuildContext context, Map<String, dynamic> fila) {
+    final venta = fila['venta'] as VentaEnProceso;
+
+    return Text(
+      venta.vehiculoNombre,
+      textAlign: TextAlign.center,
+      maxLines: 3,
+      overflow: TextOverflow.ellipsis,
+      style: const TextStyle(fontSize: 18),
+    );
+  } // Finaliza la celda del vehículo.
+
+  // Construye la celda con el resumen de productos de la venta.
+  Widget _celdaProductos(BuildContext context, Map<String, dynamic> fila) {
+    final venta = fila['venta'] as VentaEnProceso;
+
+    return Text(
+      venta.productosResumen,
+      textAlign: TextAlign.center,
+      maxLines: 4,
+      overflow: TextOverflow.ellipsis,
+      style: const TextStyle(fontSize: 16),
+    );
+  } // Finaliza la celda de productos.
+
+  // Construye la celda con la acción para ver el detalle completo de la venta.
+  Widget _celdaVer(BuildContext context, Map<String, dynamic> fila) {
+    final venta = fila['venta'] as VentaEnProceso;
+
+    return CartaNavegacion.accion(
+      // Conserva las medidas y la función de la acción original.
+      tipoBoton: 'icon',
+
+      tooltip: 'Ver venta',
+      child: const Icon(Icons.search, size: 40, color: Colors.black),
+
+      onPressed: () async {
+        // Abre el detalle según el estado real.
+        final pendiente =
+            fila['pendiente'] as VentaPendiente?; // Recupera el borrador local si corresponde.
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            settings: RouteSettings(
+              name: pendiente == null ? '/sales/closed' : '/sales/pending',
+            ),
+            builder: (context) => pendiente != null
+                ? PaginaDetalleVentaPendiente(
+                    venta: pendiente,
+                    repositorio: _repositorio,
+                  )
+                : PaginaDetalleVenta(
+                    idVenta: venta.id,
+                    rutCliente: venta.rutCliente, // Abre el perfil por su relación real.
+                    clienteNombre: venta.clienteNombre.replaceAll('\n', ' '),
+                    vehiculoNombre: venta.vehiculoNombre,
+                    total: venta.total,
+                    desdeHistorial: false,
+                  ),
+          ),
+        ); // Conserva historial cerrado sin edición ni confirmación.
+        if (mounted) await _cargarVentas(); // Refresca la lista después de editar o confirmar el pago.
+      },
+    );
+  } // Finaliza la celda con la acción de detalle.
+
   @override
   Widget build(BuildContext context) {
     final esPantallaGrande =
@@ -141,6 +242,7 @@ class _PaginaVentasState extends State<PaginaVentas> {
       )) // Recorre las ventas guardadas en este dispositivo.
         {
           'cliente': pendiente.nombreCliente,
+          'rut': pendiente.rutCliente, // Permite filtrar por el cliente real.
           'vehiculo': pendiente.registro.vehiculoNombre,
           'productos': pendiente.registro.productosResumen,
           'venta': pendiente.registro,
@@ -153,6 +255,7 @@ class _PaginaVentasState extends State<PaginaVentas> {
       )) // Recorre únicamente ventas concretadas en Supabase.
         {
           'cliente': venta.clienteNombre,
+          'rut': venta.rutCliente, // Permite filtrar por el cliente real.
           'vehiculo': venta.vehiculoNombre,
           'productos': venta.productosResumen,
           'venta': venta,
@@ -160,6 +263,14 @@ class _PaginaVentasState extends State<PaginaVentas> {
           'fecha': venta.fechaRegistro, // Permite filtrar por periodo.
         }, // Distingue el historial cerrado.
     ]; // Finaliza la lista completa de ventas visibles.
+
+    // La vista de un cliente conserva solamente sus propias ventas.
+    final bool soloCliente = widget.clienteId != null;
+    final List<Map<String, dynamic>> filasVisibles = soloCliente
+        ? filasVentas
+              .where((fila) => fila['rut'].toString() == widget.clienteId)
+              .toList() // Compara el RUT almacenado en cada venta.
+        : filasVentas;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -228,15 +339,27 @@ class _PaginaVentasState extends State<PaginaVentas> {
                   // ==================================================
                   // TÍTULO
                   // ==================================================
-                  if (widget.mostrarHistorial)
-                    const Text(
-                      'HISTORIAL DE VENTAS',
-                      style: TextStyle(
+                  if (widget.mostrarHistorial) ...[
+                    if (widget.clienteId != null)
+                      Align(
+                        // Regresa al perfil del cliente desde el historial.
+                        alignment: Alignment.centerLeft,
+                        child: CartaNavegacion.accion(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.keyboard_return),
+                          label: const Text('VOLVER'),
+                        ),
+                      ),
+                    Text(
+                      widget.clienteNombre == null
+                          ? 'HISTORIAL DE VENTAS'
+                          : 'HISTORIAL DE VENTAS DE ${widget.clienteNombre}',
+                      style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
-                    )
-                  else
+                    ),
+                  ] else
                     LayoutBuilder(
                       builder: (context, limites) {
                         final titulo = const Text(
@@ -304,11 +427,13 @@ class _PaginaVentasState extends State<PaginaVentas> {
                         padding: const EdgeInsets.only(left: 14),
                         child: PanelFiltros<Map<String, dynamic>>(
                           datos:
-                              filasVentas, // Todas las ventas visibles de la página.
+                              filasVisibles, // Conserva solo las ventas que corresponden a la página.
                           textoAyuda:
                               'BUSCAR CLIENTE, VEHÍCULO O PRODUCTO', // Describe la búsqueda disponible.
                           camposBusqueda: [
-                            (fila) => fila['cliente'].toString(), // Busca en el cliente.
+                            // La vista de un cliente ya conoce su nombre.
+                            if (!soloCliente)
+                              (fila) => fila['cliente'].toString(), // Busca en el cliente.
                             (fila) => fila['vehiculo'].toString(), // Busca en el vehículo.
                             (fila) =>
                                 fila['productos'].toString(), // Busca en los productos.
@@ -323,7 +448,10 @@ class _PaginaVentasState extends State<PaginaVentas> {
                                   : 'VENTA EN PROCESO',
                             ),
 
-                            CategoriaFiltro<Map<String, dynamic>>(
+                            // El filtro por cliente es innecesario si ya se
+                            // muestran únicamente las ventas de un cliente.
+                            if (!soloCliente)
+                              CategoriaFiltro<Map<String, dynamic>>(
                                 id: 'cliente',
                                 etiqueta: 'CLIENTE',
                                 valor: (fila) => fila['cliente'].toString(),
@@ -340,144 +468,60 @@ class _PaginaVentasState extends State<PaginaVentas> {
                           child: (filtrados) => TablaDatos(
                           mostrarControles: false, // El panel ya aplica estado, periodo y búsqueda.
                           // Encabezados visibles de la tabla.
-                          nombresColumnas: const [
-                            'CLIENTE',
-                            'VEHÍCULO',
-                            'PRODUCTOS',
-                            'VER',
-                          ],
+                          // La vista por cliente omite la columna de cliente
+                          // porque todas sus filas muestran el mismo nombre.
+                          nombresColumnas: soloCliente
+                              ? const ['VEHÍCULO', 'PRODUCTOS', 'VER']
+                              : const [
+                                  'CLIENTE',
+                                  'VEHÍCULO',
+                                  'PRODUCTOS',
+                                  'VER',
+                                ],
 
                           // Campos de cada columna (vacío si la celda es personalizada).
-                          camposColumnas: const [
-                            'cliente',
-                            'vehiculo',
-                            'productos',
-                            '',
-                          ],
+                          camposColumnas: soloCliente
+                              ? const ['vehiculo', 'productos', '']
+                              : const [
+                                  'cliente',
+                                  'vehiculo',
+                                  'productos',
+                                  '',
+                                ],
 
                           // Ancho proporcional de cada columna.
-                          anchosColumnas: const [200, 200, 400, 100],
+                          anchosColumnas: soloCliente
+                              ? const [250, 450, 100]
+                              : const [200, 200, 400, 100],
 
                           // Colores de cabecera alternando entre los dos rojos.
-                          coloresEncabezados: const [
-                            _rojoClaro,
-                            _rojoOscuro,
-                            _rojoClaro,
-                            _rojoOscuro,
-                          ],
+                          coloresEncabezados: soloCliente
+                              ? const [_rojoClaro, _rojoOscuro, _rojoClaro]
+                              : const [
+                                  _rojoClaro,
+                                  _rojoOscuro,
+                                  _rojoClaro,
+                                  _rojoOscuro,
+                                ],
 
                           // Las filas de ventas son más altas que el valor por defecto.
                           altoFila: 120,
 
                           filas: filtrados, // Muestra las ventas que pasan los filtros.
 
-                          celdasPersonalizadas: {
-                            // Columna 0: cliente con avatar.
-                            0: (context, fila) {
-                              final venta = fila['venta'] as VentaEnProceso;
-
-                              return Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 20,
-                                    backgroundColor: Colors.red[300],
-                                    child: const Icon(
-                                      Icons.person_outline,
-                                      color: Colors.black,
-                                      size: 30,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      venta.clienteNombre,
-                                      maxLines: 3,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 18,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-
-                            // Columna 1: vehículo.
-                            1: (context, fila) {
-                              final venta = fila['venta'] as VentaEnProceso;
-
-                              return Text(
-                                venta.vehiculoNombre,
-                                textAlign: TextAlign.center,
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 18),
-                              );
-                            },
-
-                            // Columna 2: resumen de productos.
-                            2: (context, fila) {
-                              final venta = fila['venta'] as VentaEnProceso;
-
-                              return Text(
-                                venta.productosResumen,
-                                textAlign: TextAlign.center,
-                                maxLines: 4,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 16),
-                              );
-                            },
-
-                            // Columna 3: botón para ver el detalle de la venta.
-                            3: (context, fila) {
-                              final venta = fila['venta'] as VentaEnProceso;
-
-                              return CartaNavegacion.accion(
-                                // Conserva las medidas y la función de la acción original.
-                                tipoBoton: 'icon',
-
-                                tooltip: 'Ver venta',
-                                child: const Icon(
-                                  Icons.search,
-                                  size: 40,
-                                  color: Colors.black,
-                                ),
-
-                                onPressed: () async {
-                                  // Abre el detalle según el estado real.
-                                  final pendiente =
-                                      fila['pendiente'] as VentaPendiente?; // Recupera el borrador local si corresponde.
-                                  await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      settings: RouteSettings(
-                                        name: pendiente == null
-                                            ? '/sales/closed'
-                                            : '/sales/pending',
-                                      ),
-                                      builder: (context) => pendiente != null
-                                          ? PaginaDetalleVentaPendiente(
-                                              venta: pendiente,
-                                              repositorio: _repositorio,
-                                            )
-                                          : PaginaDetalleVenta(
-                                              idVenta: venta.id,
-                                              rutCliente: venta.rutCliente, // Abre el perfil por su relación real.
-                                              clienteNombre: venta.clienteNombre
-                                                  .replaceAll('\n', ' '),
-                                              vehiculoNombre:
-                                                  venta.vehiculoNombre,
-                                              total: venta.total,
-                                              desdeHistorial: false,
-                                            ),
-                                    ),
-                                  ); // Conserva historial cerrado sin edición ni confirmación.
-                                  if (mounted) await _cargarVentas(); // Refresca la lista después de editar o confirmar el pago.
+                          celdasPersonalizadas: soloCliente
+                              // Sin columna de cliente, las celdas bajan un lugar.
+                              ? {
+                                  0: _celdaVehiculo,
+                                  1: _celdaProductos,
+                                  2: _celdaVer,
+                                }
+                              : {
+                                  0: _celdaCliente,
+                                  1: _celdaVehiculo,
+                                  2: _celdaProductos,
+                                  3: _celdaVer,
                                 },
-                              );
-                            },
-                          },
                             ), // Finaliza la tabla construida con las ventas filtradas.
                           ), // Finaliza el panel de filtros reutilizable.
                         ), // Finaliza la compensación del scrollbar.

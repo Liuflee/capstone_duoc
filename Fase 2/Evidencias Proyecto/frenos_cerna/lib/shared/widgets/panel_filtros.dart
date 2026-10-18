@@ -275,32 +275,25 @@ class _PanelFiltrosState<T> extends State<PanelFiltros<T>> {
         const SizedBox(height: 12),
 
         // Segunda fila: filtros a la izquierda y resultados a la derecha.
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Los chips ocupan el espacio disponible a la izquierda.
-            Expanded(
-              child: Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  for (final categoria in categoriasVisibles)
-                    _ChipCategoria<T>(
-                      categoria: categoria,
-                      opciones: _opcionesDe(categoria),
-                      elegidos: _seleccionValida(categoria),
-                      alCambiar: (nuevos) => setState(
-                        () => _selecciones[categoria.id] = nuevos,
-                      ),
+        LayoutBuilder(
+          builder: (context, limites) {
+            final chips = Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                for (final categoria in categoriasVisibles)
+                  _ChipCategoria<T>(
+                    categoria: categoria,
+                    opciones: _opcionesDe(categoria),
+                    elegidos: _seleccionValida(categoria),
+                    alCambiar: (nuevos) => setState(
+                      () => _selecciones[categoria.id] = nuevos,
                     ),
-                ],
-              ),
-            ),
+                  ),
+              ],
+            ); // Las fichas se acomodan solas en pantallas angostas.
 
-            const SizedBox(width: 12),
-
-            // Contador y limpieza permanecen al extremo derecho.
-            Row(
+            final contador = Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
@@ -332,8 +325,34 @@ class _PanelFiltrosState<T> extends State<PanelFiltros<T>> {
                   ),
                 ],
               ],
-            ),
-          ],
+            ); // Mantiene el contador y la limpieza juntos.
+
+            // En pantallas angostas el contador baja debajo de las fichas:
+            // así ninguna ficha queda estrangulada ni desborda.
+            if (limites.maxWidth < 560) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  chips,
+                  const SizedBox(height: 10),
+                  contador,
+                ],
+              );
+            } // Finaliza la distribución apilada.
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Los chips ocupan el espacio disponible a la izquierda.
+                Expanded(child: chips),
+
+                const SizedBox(width: 12),
+
+                // Contador y limpieza permanecen al extremo derecho.
+                contador,
+              ],
+            ); // Finaliza la distribución de escritorio.
+          },
         ),
 
         const SizedBox(height: 20),

@@ -1,6 +1,7 @@
 // Importa el historial real y sus páginas de detalle.
 import 'package:frenos_cerna/features/ventas/data/ventas_repository.dart';
 import 'package:frenos_cerna/features/ventas/presentation/pagina_detalle_venta.dart';
+import 'package:frenos_cerna/features/ventas/presentation/pagina_ventas_historial.dart';
 import 'package:frenos_cerna/features/vehiculos/pagina_vehiculos.dart';
 import 'package:frenos_cerna/features/vehiculos/pagina_detalle_vehiculo.dart';
 import 'package:frenos_cerna/features/clientes/widgets/lista_vehiculos_cliente.dart';
@@ -38,6 +39,9 @@ class PaginaVerCliente extends StatefulWidget {
 
 // Se crea el estado para administrar los campos y las operaciones de Supabase
 class _PaginaVerClienteState extends State<PaginaVerCliente> {
+  // Cantidad de ventas que se muestran como vista previa del historial.
+  static const int _ventasVistaPrevia = 5;
+
   // Controladores de los campos que pueden editarse
   late final TextEditingController _nombreCtrl;
   late final TextEditingController _fonoCtrl;
@@ -120,6 +124,19 @@ class _PaginaVerClienteState extends State<PaginaVerCliente> {
       context,
       MaterialPageRoute(
         builder: (context) => PaginaDetalleVehiculo(vehiculo: vehiculo),
+      ),
+    );
+  }
+
+  // Abre el historial completo de ventas filtrado por este cliente.
+  void _abrirHistorialCompleto() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PaginaVentasHistorial(
+          clienteId: widget.cliente.id,
+          clienteNombre: widget.cliente.nombre,
+        ),
       ),
     );
   }
@@ -220,25 +237,44 @@ class _PaginaVerClienteState extends State<PaginaVerCliente> {
     ), // Permite desplazar la página.
   ); // Finaliza el marco común.
 
-  Widget _historialVentas() => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      Row(
-        children: [
-          const Expanded(
-            child: Text(
-              'HISTORIAL DE VENTAS',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+  Widget _historialVentas() {
+    // Vista previa: muestra únicamente las ventas más recientes del cliente.
+    final previa = _ventas.take(_ventasVistaPrevia).toList();
+    final hayMas = _ventas.length > _ventasVistaPrevia;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'HISTORIAL DE VENTAS',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              ),
+            ),
+            Text(
+              hayMas
+                  ? 'Mostrando ${previa.length} de ${_ventas.length} ventas'
+                  : '${_ventas.length} ${_ventas.length == 1 ? 'venta' : 'ventas'}',
+              style: const TextStyle(color: Color(0xFF616161)),
+            ),
+          ],
+        ),
+        if (hayMas) ...[
+          // Acceso al historial completo del cliente con sus filtros.
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: CartaNavegacion.accion(
+              onPressed: _abrirHistorialCompleto,
+              icon: const Icon(Icons.history),
+              label: const Text('VER HISTORIAL\nCOMPLETO'),
+              tooltip: 'Ver historial completo de ventas del cliente',
             ),
           ),
-          Text(
-            '${_ventas.length} ${_ventas.length == 1 ? 'venta' : 'ventas'}',
-            style: const TextStyle(color: Color(0xFF616161)),
-          ),
         ],
-      ),
-      const SizedBox(height: 16),
-      if (_cargandoHistorial)
+        const SizedBox(height: 16),
+        if (_cargandoHistorial)
         const SizedBox(
           height: 220,
           child: Center(child: CircularProgressIndicator()),
@@ -282,7 +318,7 @@ class _PaginaVerClienteState extends State<PaginaVerCliente> {
             nombresColumnas: const ['NOMBRE PRODUCTO', 'EXPANDIR'],
             camposColumnas: const ['producto', ''],
             anchosColumnas: const [550, 130],
-            filas: _ventas
+            filas: previa
                 .map(
                   (venta) => <String, dynamic>{
                     'producto': venta.productosResumen,
@@ -316,8 +352,9 @@ class _PaginaVerClienteState extends State<PaginaVerCliente> {
             },
           ),
         ),
-    ],
-  );
+      ],
+    );
+  }
 
   // Resume la identidad del cliente sin fotografías.
   Widget _resumenCliente() => Container(
