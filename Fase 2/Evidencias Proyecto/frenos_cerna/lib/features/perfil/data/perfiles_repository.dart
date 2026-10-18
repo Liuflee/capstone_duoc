@@ -21,7 +21,7 @@ class PerfilGestion {
   final String id, nombre; // Identifica al usuario y su nombre visible.
   final TipoPerfil tipo; // Distingue dueño y mecánico.
   final String?
-  correo; // Muestra el correo propio cuando la sesión lo proporciona.
+      correo; // Muestra el correo propio cuando la sesión lo proporciona.
   const PerfilGestion({
     required this.id,
     required this.nombre,
@@ -31,14 +31,15 @@ class PerfilGestion {
   factory PerfilGestion.fromJson(
     Map<String, dynamic> datos, {
     String? correo,
-  }) => PerfilGestion(
-    id: datos['user_id'] as String,
-    nombre: datos['nombre'] as String,
-    tipo: datos['rol'] == 'administrador'
-        ? TipoPerfil.dueno
-        : TipoPerfil.mecanico,
-    correo: correo,
-  ); // Lee el esquema existente.
+  }) =>
+      PerfilGestion(
+        id: datos['user_id'] as String,
+        nombre: datos['nombre'] as String,
+        tipo: datos['rol'] == 'administrador'
+            ? TipoPerfil.dueno
+            : TipoPerfil.mecanico,
+        correo: correo,
+      ); // Lee el esquema existente.
 } // Finaliza el modelo de gestión.
 
 class PerfilesRepository {
@@ -51,9 +52,7 @@ class PerfilesRepository {
       return null; // Permite revisar las vistas sin inventar usuarios.
     }
     final usuario = SupabaseDatabase
-        .client
-        .auth
-        .currentUser!; // Conserva la identidad de la sesión actual.
+        .client.auth.currentUser!; // Conserva la identidad de la sesión actual.
     final datos = await SupabaseDatabase.client
         .from(SupabaseTables.perfiles)
         .select('user_id, nombre, rol')
@@ -109,12 +108,18 @@ class PerfilesRepository {
     }
     final existentes = await SupabaseDatabase.client
         .from(SupabaseTables.perfiles)
-        .select('user_id'); // Conserva las identidades existentes para no convertir una creación en un cambio de rol accidental.
-    final identificadores = existentes.map((fila) => fila['user_id']).toSet(); // Comprueba el resultado de Auth sin consultar contraseñas ni correos ajenos.
+        .select(
+            'user_id'); // Conserva las identidades existentes para no convertir una creación en un cambio de rol accidental.
+    final identificadores = existentes
+        .map((fila) => fila['user_id'])
+        .toSet(); // Comprueba el resultado de Auth sin consultar contraseñas ni correos ajenos.
     final registro = SupabaseClient(
       const String.fromEnvironment('SUPABASE_URL'),
       const String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY'),
-      authOptions: const AuthClientOptions(autoRefreshToken: false),
+      authOptions: const AuthClientOptions(
+        autoRefreshToken: false,
+        authFlowType: AuthFlowType.implicit,
+      ),
     ); // Aísla el registro de la sesión principal sin claves administrativas.
     try {
       // Mantiene el cliente temporal solo durante la creación.

@@ -4,9 +4,11 @@
 
 1. Crea un proyecto en Supabase y abre su SQL Editor.
 2. Ejecuta el esquema de `../Base de Datos/db-frenos-cerna_2026-09-12T23_09_07.637Z.sql`.
-3. Ejecuta `supabase/registrar_venta.sql` en el SQL Editor. La función registra la venta, sus detalles y descuenta stock dentro de una transacción.
-4. Ejecuta `supabase/autenticacion_perfiles.sql`. Crea un perfil para cada cuenta autenticada, asigna `empleado` al registrarse y aplica políticas RLS a las tablas usadas por la aplicación.
-5. Copia `supabase.example.json` como `supabase.config.json`, reemplaza sus valores con la URL del proyecto y su publishable key, e inicia la aplicación:
+3. Ejecuta `supabase/codigo_producto_alfanumerico.sql` para permitir los códigos de producto alfanuméricos que usa el formulario y sus ventas.
+4. Ejecuta `supabase/registrar_venta.sql` en el SQL Editor. La función registra la venta, sus detalles y descuenta stock dentro de una transacción.
+5. Ejecuta `supabase/autenticacion_perfiles.sql`. Crea un perfil para cada cuenta autenticada, asigna `empleado` al registrarse y aplica políticas RLS a las tablas usadas por la aplicación.
+6. Ejecuta `supabase/administrar_perfiles.sql`. Habilita la eliminación protegida del acceso de dueño/mecánico; no elimina la cuenta Auth ni los datos del negocio.
+7. Copia `supabase.example.json` como `supabase.config.json`, reemplaza sus valores con la URL del proyecto y su publishable key, e inicia la aplicación:
 
 ```powershell
 flutter run --dart-define-from-file=supabase.config.json
