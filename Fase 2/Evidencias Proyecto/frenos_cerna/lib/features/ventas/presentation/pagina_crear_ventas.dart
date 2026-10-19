@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/shared/widgets/panel_filtros.dart'; // Comparte el margen de la barra de desplazamiento con la tabla.
 import 'package:frenos_cerna/features/ventas/data/ventas_pendientes_repository.dart'; // Conserva las ventas antes de confirmar el pago.
 // Espera antes de consultar un RUT ingresado.
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart'; // Usa el cliente seleccionado por su RUT.
@@ -266,7 +267,9 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
                       );
                     },
                   ), // Mantiene el buscador largo y el botón a su lado.
-                  const SizedBox(height: 12), // Separa la búsqueda de los resultados.
+                  const SizedBox(
+                    height: 12,
+                  ), // Separa la búsqueda de los resultados.
                   Expanded(
                     child: FutureBuilder<List<Cliente>>(
                       future: _clientes,
@@ -719,10 +722,7 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
                   ), // Separa las columnas como en Figma.
                   Expanded(
                     flex: 5,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 52),
-                      child: _construirCarritoYTotal(),
-                    ),
+                    child: _construirCarritoYTotal(), // Comparte el inicio vertical con el botón de regreso.
                   ), // Sitúa productos y total a la derecha.
                 ], // Finaliza las columnas de escritorio.
               )
@@ -769,7 +769,7 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
           ),
         ),
 
-        const SizedBox(height: 50),
+        const SizedBox(height: 12), // Iguala la separación entre los botones superiores y los campos de cliente y búsqueda.
 
         _selectorCliente(), // Selecciona un cliente existente o recién creado.
         const SizedBox(height: 24), // Separa el cliente de la patente.
@@ -819,15 +819,18 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         // Abre la selección sobre la página y conserva los productos actuales.
-        CartaNavegacion.accion(
-          onPressed: _guardando ? null : _abrirSeleccionProductos,
-          icon: const Icon(Icons.add_circle_outline),
-          label: const Text('AÑADIR NUEVO PRODUCTO'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFD9D9D9),
-            foregroundColor: Colors.black,
+        Padding(
+          padding: const EdgeInsets.only(right: margenDesplazamientoTabla), // Alinea el botón con el borde visible de la tabla en escritorio y Android.
+          child: CartaNavegacion.accion(
+            onPressed: _guardando ? null : _abrirSeleccionProductos,
+            icon: const Icon(Icons.add_circle_outline),
+            label: const Text('AÑADIR NUEVO PRODUCTO'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFD9D9D9),
+              foregroundColor: Colors.black,
+            ),
           ),
-        ),
+        ), // Conserva el tamaño y la acción de añadir productos.
         const SizedBox(height: 12), // Separa la acción del carrito.
         // ======================================================================
         // CONTENEDOR DEL CARRITO

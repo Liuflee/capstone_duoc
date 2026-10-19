@@ -231,6 +231,39 @@ void main() {
       find.text('Cliente pendiente · RUT: 123'),
     ); // Selecciona el cliente real del catálogo.
     await tester.pumpAndSettle(); // Cierra el menú.
+    final botonAgregar = find
+        .ancestor(
+          of: find.text('AÑADIR NUEVO PRODUCTO'),
+          matching: find.byType(ElevatedButton),
+        )
+        .first; // Localiza el borde real del botón.
+    final ultimaCabecera = find
+        .ancestor(of: find.text('REMOVER'), matching: find.byType(Container))
+        .first; // Localiza el borde derecho de la tabla.
+    expect(
+      tester.getRect(botonAgregar).right,
+      closeTo(tester.getRect(ultimaCabecera).right, 0.01),
+    ); // Comprueba la alineación antes de abrir el selector.
+    final botonVolver = find
+        .ancestor(
+          of: find.text('VOLVER A VENTAS'),
+          matching: find.byType(ElevatedButton),
+        )
+        .first; // Compara las acciones superiores de ambas columnas.
+    expect(
+      tester.getRect(botonAgregar).top,
+      closeTo(tester.getRect(botonVolver).top, 0.01),
+    ); // Mantiene los botones a la misma altura.
+    final campoCliente = find
+        .ancestor(
+          of: find.text('CLIENTE'),
+          matching: find.byType(InputDecorator),
+        )
+        .first; // Obtiene el selector de cliente.
+    expect(
+      tester.getRect(campoCliente).top,
+      closeTo(tester.getRect(find.byType(CampoBusqueda)).top, 0.01),
+    ); // Alinea el cliente con la búsqueda de productos.
     await tester.tap(find.text('AÑADIR NUEVO PRODUCTO')); // Abre el inventario.
     await tester.pumpAndSettle(); // Espera la tabla superpuesta.
     await tester.tap(

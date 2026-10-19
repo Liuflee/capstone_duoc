@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/main.dart'; // Comprueba el área segura aplicada a todas las rutas.
 import 'package:frenos_cerna/features/autenticacion/presentation/pagina_autenticacion.dart'; // Comprueba el regreso al login existente.
 import 'package:flutter/material.dart'; // Construye el marco compartido de las páginas.
 import 'package:flutter_test/flutter_test.dart'; // Comprueba alineación, navegación y visibilidad.
@@ -6,6 +7,48 @@ import 'package:frenos_cerna/shared/widgets/menu_lateral.dart'; // Verifica el m
 import 'package:frenos_cerna/features/vehiculos/pagina_vehiculos.dart'; // Comprueba la ruta recuperada de vehículos.
 
 void main() {
+  testWidgets(
+    'la barra superior respeta la barra de estado de Android en Inicio y otras rutas',
+    (tester) async {
+      tester.view.physicalSize = const Size(
+        390,
+        844,
+      ); // Simula una pantalla Android con barra de estado.
+      tester.view.devicePixelRatio = 1;
+      tester.view.padding = const FakeViewPadding(
+        top: 32,
+      ); // Reserva la zona de hora y notificaciones.
+      tester.view.viewPadding = const FakeViewPadding(top: 32);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPadding);
+      addTearDown(tester.view.resetViewPadding);
+      await tester.pumpWidget(
+        const MiAplicacion(),
+      ); // Usa la configuración real de la aplicación.
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Entrar en modo de prueba'));
+      await tester.tap(find.text('Entrar en modo de prueba'));
+      await tester.pumpAndSettle(); // Abre Inicio sin una sesión real.
+      expect(
+        tester.getRect(find.byType(BarraSuperior)).top,
+        closeTo(32, 0.01),
+      ); // Impide solapar la barra del celular.
+      final contexto = tester.element(find.byType(BarraSuperior));
+      expect(
+        MediaQuery.paddingOf(contexto).top,
+        0,
+      ); // Evita que otras páginas apliquen dos veces el margen superior.
+      Navigator.of(contexto).pushNamed('/vehicles/new');
+      await tester.pumpAndSettle(); // Comprueba una página que usa appBar.
+      expect(
+        tester.getRect(find.byType(BarraSuperior)).top,
+        closeTo(32, 0.01),
+      ); // Conserva el mismo borde seguro al navegar.
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   for (final salidaPersonalizada in [false, true]) {
     testWidgets(
       'cerrar sesión regresa al login y elimina el historial con callback $salidaPersonalizada',

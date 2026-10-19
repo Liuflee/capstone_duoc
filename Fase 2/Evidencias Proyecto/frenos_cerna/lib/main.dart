@@ -77,7 +77,13 @@ class MiAplicacion extends StatelessWidget {
                   entorno.textScaler.scale(1) * ajustes.texto,
                 ),
               ),
-              child: child!,
+              child: ColoredBox(
+                color: const Color(0xFFE0E0E0), // Prolonga el gris del encabezado detrás de la barra de estado.
+                child: SafeArea(
+                  bottom: false, // Conserva el tratamiento inferior de cada página y del teclado.
+                  child: child!, // Mantiene todas las rutas debajo de la barra de estado y fuera de los recortes laterales.
+                ),
+              ),
             ),
           );
         },

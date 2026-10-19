@@ -452,8 +452,8 @@ class _ChipCategoriaState<T> extends State<_ChipCategoria<T>> {
   Widget build(BuildContext context) {
     final activo =
         widget.elegidos.isNotEmpty; // Detecta la categoría seleccionada.
-    // Color del texto según el fondo del chip.
-    final Color colorTexto = activo ? Colors.white : Colors.black;
+    // Comparte texto y flecha blancos en todos los filtros, tengan o no selección.
+    const Color colorTexto = Colors.white;
 
     return MenuAnchor(
       controller: _controladorMenu, // Conserva el control del menú abierto.
@@ -568,9 +568,7 @@ class _ChipCategoriaState<T> extends State<_ChipCategoria<T>> {
               horizontal: 12,
             ), // Separa el texto de los bordes.
             decoration: BoxDecoration(
-              color: activo
-                  ? const Color(0xFFB74545)
-                  : Colors.grey[300], // Rojo activo y gris inactivo.
+              color: const Color(0xFFB74545), // Usa el mismo rojo por defecto en todos los filtros.
               borderRadius: BorderRadius.circular(
                 8,
               ), // Suaviza los bordes del chip.
