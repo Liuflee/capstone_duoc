@@ -68,6 +68,7 @@ class _PaginaSeleccionarPerfilState extends State<PaginaSeleccionarPerfil> {
         const SizedBox(height: 24), // Separa las acciones de la tabla.
         Expanded(
           child: FutureBuilder<List<PerfilGestion>>(
+            key: ObjectKey(_perfiles), // Reinicia la tabla al solicitar una consulta nueva.
             future: _perfiles,
             builder: (context, estado) {
               // Conserva la carga y los errores de permisos.
@@ -76,10 +77,9 @@ class _PaginaSeleccionarPerfilState extends State<PaginaSeleccionarPerfil> {
                   children: [
                     Text('No se pudieron cargar los perfiles: ${estado.error}'),
                     CartaNavegacion.accion(
-                      onPressed: () => setState(
-                        () =>
-                            _perfiles = widget.repositorio.listar(widget.tipo),
-                      ),
+                      onPressed: () => setState(() {
+                        _perfiles = widget.repositorio.listar(widget.tipo);
+                      }),
                       child: const Text('REINTENTAR'),
                     ),
                   ],
@@ -126,11 +126,9 @@ class _PaginaSeleccionarPerfilState extends State<PaginaSeleccionarPerfil> {
                         ),
                       ); // Conserva la clave real seleccionada.
                       if (actualizado == true && mounted) {
-                        setState(
-                          () => _perfiles = widget.repositorio.listar(
-                            widget.tipo,
-                          ),
-                        ); // Refresca la lista después de editar o eliminar.
+                        setState(() {
+                          _perfiles = widget.repositorio.listar(widget.tipo);
+                        }); // Refresca la lista después de editar o eliminar.
                       }
                     },
                     child: const Icon(Icons.search, size: 28),

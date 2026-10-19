@@ -98,6 +98,7 @@ class CategoriaFiltro<T> {
   final Map<String, String>? etiquetas;
   final bool
   seleccionUnica; // Permite restringir una categoría a una sola opción.
+  final bool seleccionUnicaSinDefecto; // Permite iniciar una selección única sin restringir resultados.
   final List<String> opcionesFijas; // Mantiene opciones disponibles aunque todavía no tengan registros.
 
   // Define cada categoría desde la página que conoce sus datos.
@@ -107,6 +108,7 @@ class CategoriaFiltro<T> {
     required this.valor, // Calcula el valor de cada dato.
     this.seleccionUnica =
         false, // Conserva la selección múltiple en los demás filtros.
+    this.seleccionUnicaSinDefecto = false, // Conserva el comportamiento habitual de selección única.
     this.opcionesFijas = const [], // Por defecto conserva las opciones calculadas desde los datos.
     this.etiquetas, // Opcional: traduce valores técnicos a texto visible.
   }); // Finaliza el constructor de la categoría.
@@ -228,6 +230,9 @@ class _PanelFiltrosState<T> extends State<PanelFiltros<T>> {
       ); // Conserva una única elección válida.
       if (validos.isNotEmpty) {
         return {validos.first.valor}; // Nunca combina ambos estados.
+      }
+      if (categoria.seleccionUnicaSinDefecto) {
+        return <String>{}; // Sin una opción elegida, muestra todos los datos.
       }
       if (categoria.opcionesFijas.isNotEmpty) {
         return {
