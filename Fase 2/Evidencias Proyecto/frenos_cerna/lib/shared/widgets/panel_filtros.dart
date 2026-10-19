@@ -229,16 +229,7 @@ class _PanelFiltrosState<T> extends State<PanelFiltros<T>> {
       if (validos.isNotEmpty) {
         return {validos.first.valor}; // Nunca combina ambos estados.
       }
-      if (categoria.opcionesFijas.isNotEmpty) {
-        return {
-          normalizarFiltro(categoria.opcionesFijas.first),
-        }; // Usa ventas cerradas al iniciar o limpiar.
-      }
-      return opciones.isEmpty
-          ? <String>{}
-          : {
-              opciones.first.valor,
-            }; // Mantiene una selección si hay opciones disponibles.
+      return <String>{}; // Sin selección, la categoría no restringe los datos.
     }
     if (elegidos.isEmpty) return elegidos; // Una categoría vacía no filtra.
     final disponibles = _opcionesDe(categoria)

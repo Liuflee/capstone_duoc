@@ -8,6 +8,7 @@ import 'package:frenos_cerna/shared/widgets/barra_superior.dart';
 import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
 import 'package:flutter/material.dart';
 import 'package:frenos_cerna/core/data/supabase_database.dart';
+import 'package:frenos_cerna/core/data/perfil_sesion.dart';
 import 'package:frenos_cerna/features/inventario/pagina_edicion_producto.dart';
 import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
 import 'package:frenos_cerna/shared/widgets/tabla_datos.dart';
@@ -26,7 +27,7 @@ class Producto {
   final double precio;
   final int cantidad;
   final int?
-  calidadId; // Conserva la calidad para precargar el formulario de edición.
+      calidadId; // Conserva la calidad para precargar el formulario de edición.
   final int? tipoId; // Conserva la categoría existente del esquema.
 
   Producto({
@@ -112,8 +113,9 @@ class _PaginaInventarioState extends State<PaginaInventario> {
       final response = await SupabaseDatabase.client
           .from(SupabaseTables.productos)
           .select(
-            'codigo_producto, cod_barra, stock, tipo, calidad, precio, tipo_producto(nombre_tipo)',
+            'codigo_producto, cod_barra, stock, tipo, calidad, precio, activo, tipo_producto(nombre_tipo)',
           )
+          .eq('activo', true)
           .order('codigo_producto');
 
       final data = response as List<dynamic>;
@@ -158,6 +160,40 @@ class _PaginaInventarioState extends State<PaginaInventario> {
     }
   }
 
+  Future<void> _eliminarProducto(Producto producto) async {
+    if (!PerfilSesion.esAdministrador) return;
+    final confirmado = await showDialog<bool>(
+      context: context,
+      builder: (dialogo) => AlertDialog(
+        title: const Text('ELIMINAR PRODUCTO'),
+        content: Text(
+            '¿Deseas quitar ${producto.nombre} del inventario? El producto se ocultará, pero se conservará para las ventas asociadas.'),
+        actions: [
+          CartaNavegacion.accion(
+            onPressed: () => Navigator.pop(dialogo, false),
+            child: const Text('VOLVER'),
+          ),
+          CartaNavegacion.accion(
+            onPressed: () => Navigator.pop(dialogo, true),
+            child: const Text('ELIMINAR'),
+          ),
+        ],
+      ),
+    );
+    if (confirmado != true || !mounted) return;
+    try {
+      await SupabaseDatabase.client
+          .from(SupabaseTables.productos)
+          .update({'activo': false}).eq('codigo_producto', producto.id);
+      await _cargarProductos();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo eliminar el producto: $error')),
+      );
+    }
+  }
+
   // ============================================================
   // CONSTRUIR PÁGINA
   // ============================================================
@@ -166,8 +202,7 @@ class _PaginaInventarioState extends State<PaginaInventario> {
   Widget build(BuildContext context) {
     final anchoPantalla = MediaQuery.of(context).size.width;
 
-    final esPantallaGrande =
-        anchoPantalla >=
+    final esPantallaGrande = anchoPantalla >=
         700; // Comparte el punto de adaptación del menú principal.
 
     return Scaffold(
@@ -182,8 +217,7 @@ class _PaginaInventarioState extends State<PaginaInventario> {
           MediaQuery.sizeOf(context).height * 0.10,
         ),
         child: SizedBox(
-          height:
-              MediaQuery.sizeOf(context).height *
+          height: MediaQuery.sizeOf(context).height *
               0.10, // Mantiene la altura común de las barras.
           child: BarraSuperior(
             tituloPagina: 'Inventario',
@@ -203,7 +237,6 @@ class _PaginaInventarioState extends State<PaginaInventario> {
       // ========================================================
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
-
         children: [
           // ======================================================
           // MENÚ LATERAL ESCRITORIO
@@ -221,10 +254,8 @@ class _PaginaInventarioState extends State<PaginaInventario> {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(20.0),
-
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-
                 children: [
                   // ==================================================
                   // BOTÓN AÑADIR PRODUCTO
@@ -236,7 +267,6 @@ class _PaginaInventarioState extends State<PaginaInventario> {
                     ), // Alinea la acción con el borde visible de la tabla.
                     child: Align(
                       alignment: Alignment.centerRight,
-
                       child: CartaNavegacion.accion(
                         // Conserva las medidas y la función de la acción original.
                         tipoBoton: 'elevated',
@@ -247,7 +277,6 @@ class _PaginaInventarioState extends State<PaginaInventario> {
 
                         label: const Text(
                           'AÑADIR PRODUCTO',
-
                           style: TextStyle(
                             color: Colors.black,
                             fontWeight: FontWeight.bold,
@@ -256,7 +285,6 @@ class _PaginaInventarioState extends State<PaginaInventario> {
 
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.grey[300],
-
                           padding: const EdgeInsets.symmetric(
                             horizontal: 20,
                             vertical: 15,
@@ -285,7 +313,8 @@ class _PaginaInventarioState extends State<PaginaInventario> {
                     Expanded(
                       child: PanelFiltros<Producto>(
                         datos: productos, // Filtra el inventario completo.
-                        textoAyuda: 'BUSCAR PRODUCTO, CÓDIGO O CATEGORÍA', // Describe la búsqueda disponible.
+                        textoAyuda:
+                            'BUSCAR PRODUCTO, CÓDIGO O CATEGORÍA', // Describe la búsqueda disponible.
                         camposBusqueda: [
                           (producto) => producto.nombre, // Busca en el nombre.
                           (producto) => producto
@@ -295,8 +324,8 @@ class _PaginaInventarioState extends State<PaginaInventario> {
                           (producto) =>
                               producto.categoria, // Busca en la categoría.
                           (producto) => producto.precio.toStringAsFixed(
-                            0,
-                          ), // Permite buscar por precio.
+                                0,
+                              ), // Permite buscar por precio.
                         ],
                         categorias: [
                           // Permite separar productos sin stock de los que están en bodega.
@@ -330,14 +359,15 @@ class _PaginaInventarioState extends State<PaginaInventario> {
                               )
                               .toList();
                           return TablaDatos(
-                            mostrarControles: false, // El panel ya muestra el buscador y las categorías.
+                            mostrarControles:
+                                false, // El panel ya muestra el buscador y las categorías.
                             // Encabezados visibles de la tabla.
                             nombresColumnas: const [
                               'PRODUCTO',
                               'CATEGORÍA',
                               'PRECIO',
                               'CANTIDAD',
-                              'VER',
+                              'ACCIONES',
                             ],
 
                             // Campos de cada columna (vacío si la celda es personalizada).
@@ -350,7 +380,7 @@ class _PaginaInventarioState extends State<PaginaInventario> {
                             ],
 
                             // Ancho proporcional de cada columna.
-                            anchosColumnas: const [450, 180, 130, 130, 100],
+                            anchosColumnas: const [400, 180, 130, 130, 140],
 
                             // Colores de cabecera alternando entre los dos rojos.
                             coloresEncabezados: const [
@@ -381,31 +411,37 @@ class _PaginaInventarioState extends State<PaginaInventario> {
                                 );
                               },
 
-                              // Columna 4: botón para ver/editar el producto.
+                              // Columna 4: permite editar o retirar el producto.
                               4: (context, fila) {
                                 final producto = fila['producto'] as Producto;
-
-                                return CartaNavegacion.accion(
-                                  // Conserva las medidas y la función de la acción original.
-                                  tipoBoton: 'icon',
-
-                                  tooltip: 'Ver producto',
-                                  child: const Icon(Icons.search, size: 30),
-                                  onPressed: () async {
-                                    await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            PaginaEdicionProducto(
-                                              producto: producto,
-                                            ),
+                                return Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    CartaNavegacion.accion(
+                                      tipoBoton: 'icon',
+                                      tooltip: 'Ver producto',
+                                      child: const Icon(Icons.search, size: 26),
+                                      onPressed: () async {
+                                        await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                PaginaEdicionProducto(
+                                                    producto: producto),
+                                          ),
+                                        );
+                                        if (!mounted) return;
+                                        await _cargarProductos();
+                                      },
+                                    ),
+                                    if (PerfilSesion.esAdministrador)
+                                      CartaNavegacion.accion(
+                                        tipoBoton: 'icon',
+                                        tooltip: 'Eliminar producto',
+                                        child: const Icon(Icons.delete_outline, size: 24),
+                                        onPressed: () => _eliminarProducto(producto),
                                       ),
-                                    );
-
-                                    // Recarga los productos después de editar.
-                                    if (!mounted) return;
-                                    await _cargarProductos();
-                                  },
+                                  ],
                                 );
                               },
                             },

@@ -7,6 +7,7 @@ import 'package:frenos_cerna/shared/widgets/estructura_pagina.dart'; // Conserva
 import 'package:frenos_cerna/shared/widgets/tabla_datos.dart'; // Reutiliza la tabla y su búsqueda.
 import 'package:frenos_cerna/shared/widgets/formulario_datos.dart'; // Reutiliza el campo de código.
 import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart'; // Conserva los botones del proyecto.
+import 'package:frenos_cerna/core/data/perfil_sesion.dart';
 
 class VistaReservas extends StatefulWidget {
   final Future<List<Cliente>> Function()?
@@ -339,6 +340,31 @@ class _VistaReservasState extends State<VistaReservas> {
     }
   }
 
+  Future<void> _eliminar(Map<String, dynamic> fila) async {
+    if (!PerfilSesion.esAdministrador || _ocupado) return;
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (dialogo) => AlertDialog(
+        title: const Text('ELIMINAR RESERVA'),
+        content: Text('¿Eliminar la reserva de ${fila['codigo_producto']} para ${fila['cliente_visible']}?'),
+        actions: [
+          CartaNavegacion.accion(onPressed: () => Navigator.pop(dialogo, false), child: const Text('VOLVER')),
+          CartaNavegacion.accion(onPressed: () => Navigator.pop(dialogo, true), child: const Text('ELIMINAR')),
+        ],
+      ),
+    );
+    if (confirmar != true || !mounted) return;
+    setState(() => _ocupado = true);
+    try {
+      await widget.repositorio.eliminar(fila['id']);
+      if (mounted) setState(() => _datos = widget.repositorio.listar(listas: widget.reservados));
+    } catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo eliminar la reserva: $error')));
+    } finally {
+      if (mounted) setState(() => _ocupado = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) => EstructuraPagina(
     titulo: widget.reservados ? 'Reservas listas' : 'Reservar producto',
@@ -427,6 +453,7 @@ class _VistaReservasState extends State<VistaReservas> {
                   'TELÉFONO',
                   'ESTADO',
                   if (!widget.reservados) 'MARCAR LISTA',
+                  if (PerfilSesion.esAdministrador) 'ELIMINAR',
                 ],
                 camposColumnas: [
                   'codigo_producto',
@@ -434,8 +461,9 @@ class _VistaReservasState extends State<VistaReservas> {
                   'contacto',
                   'estado_visible',
                   if (!widget.reservados) '',
+                  if (PerfilSesion.esAdministrador) '',
                 ],
-                anchosColumnas: [3, 3, 2, 2, if (!widget.reservados) 1],
+                anchosColumnas: [3, 3, 2, 2, if (!widget.reservados) 1, if (PerfilSesion.esAdministrador) 1],
                 filas: filas,
                 mensajeSinDatos: widget.reservados
                     ? 'No hay reservas listas.'
@@ -451,6 +479,13 @@ class _VistaReservasState extends State<VistaReservas> {
                         color: Colors.black,
                       ),
                     ), // Cambia el estado sin eliminar datos.
+                  if (PerfilSesion.esAdministrador)
+                    (widget.reservados ? 4 : 5): (context, fila) => CartaNavegacion.accion(
+                      tipoBoton: 'icon',
+                      tooltip: 'Eliminar reserva',
+                      onPressed: _ocupado ? null : () => _eliminar(fila),
+                      child: const Icon(Icons.delete_outline),
+                    ),
                 },
               );
             },

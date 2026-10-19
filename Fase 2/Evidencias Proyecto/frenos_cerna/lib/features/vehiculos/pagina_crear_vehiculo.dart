@@ -1,6 +1,7 @@
 // Importa Flutter y las páginas necesarias para vincular clientes.
 import 'package:flutter/material.dart';
 import 'package:frenos_cerna/core/data/supabase_database.dart';
+import 'package:frenos_cerna/core/data/perfil_sesion.dart';
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart';
 import 'package:frenos_cerna/features/clientes/pagina_crear_cliente.dart';
 import 'package:frenos_cerna/features/clientes/presentation/selector_cliente.dart';
@@ -44,10 +45,12 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
       final marcas = await SupabaseDatabase.client
           .from(SupabaseTables.marcasVehiculo)
           .select('id, marca')
+          .eq('activo', true)
           .order('marca'); // Consulta las marcas existentes.
       final modelos = await SupabaseDatabase.client
           .from(SupabaseTables.modelosVehiculo)
           .select('id, modelo, id_marca')
+          .eq('activo', true)
           .order('modelo'); // Consulta los modelos existentes.
       if (mounted) {
         setState(() {
@@ -101,7 +104,7 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
               value: -1,
               child: Text(esModelo ? 'AÑADIR MODELO' : 'AÑADIR MARCA'),
             ), // Abre la creación sin cambiar de página.
-            if (registros.isNotEmpty)
+            if (PerfilSesion.esAdministrador && registros.isNotEmpty)
               DropdownMenuItem(
                 value: -2,
                 child: Text(esModelo ? 'ELIMINAR MODELO' : 'ELIMINAR MARCA'),
@@ -138,6 +141,7 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
   } // Finaliza el selector reutilizado.
 
   Future<void> _eliminarCatalogo({required bool esModelo}) async {
+    if (!PerfilSesion.esAdministrador) return;
     final registros = esModelo
         ? _modelos.where((fila) => fila['id_marca'] == _marca).toList()
         : _marcas;
@@ -166,9 +170,7 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
       context: context,
       builder: (dialogo) => AlertDialog(
         title: Text('ELIMINAR ${esModelo ? 'MODELO' : 'MARCA'}'),
-        content: Text(
-          '¿Eliminar ${registro[columna]}? Esta acción no se puede deshacer.',
-        ),
+        content: Text('¿Quitar ${registro[columna]} del catálogo activo? Los registros relacionados se conservarán.'),
         actions: [
           CartaNavegacion.accion(
             onPressed: () => Navigator.pop(dialogo, false),
@@ -185,36 +187,16 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
 
     setState(() => _editandoCatalogo = true);
     try {
-      if (esModelo) {
-        final vehiculos = await SupabaseDatabase.client
-            .from(SupabaseTables.vehiculos)
-            .select('patente')
-            .eq('id_modelo', registro['id'])
-            .limit(1);
-        if (vehiculos.isNotEmpty) {
-          throw StateError(
-            'No se puede eliminar: hay vehículos asociados a este modelo.',
-          );
-        }
-      } else {
-        final modelos = await SupabaseDatabase.client
+      if (!esModelo) {
+        await SupabaseDatabase.client
             .from(SupabaseTables.modelosVehiculo)
-            .select('id')
-            .eq('id_marca', registro['id'])
-            .limit(1);
-        if (modelos.isNotEmpty) {
-          throw StateError(
-            'No se puede eliminar: primero elimina los modelos de esta marca.',
-          );
-        }
+            .update({'activo': false})
+            .eq('id_marca', registro['id']);
       }
-
       await SupabaseDatabase.client
           .from(tabla)
-          .delete()
-          .eq('id', registro['id'])
-          .select('id')
-          .single();
+          .update({'activo': false})
+          .eq('id', registro['id']);
       if (!mounted) return;
       setState(() {
         if (esModelo) {
@@ -325,7 +307,7 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
       final columna = esModelo
           ? 'modelo'
           : 'marca'; // Utiliza el nombre real de cada columna.
-      final actuales = await SupabaseDatabase.client.from(tabla).select(); // Consulta los registros para evitar duplicados por mayúsculas o espacios.
+      final actuales = await SupabaseDatabase.client.from(tabla).select().eq('activo', true); // Consulta registros activos para evitar duplicados.
       final coincidencias = actuales.where(
         (fila) =>
             fila[columna].toString().trim().toLowerCase() ==

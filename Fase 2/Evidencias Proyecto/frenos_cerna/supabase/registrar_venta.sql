@@ -37,6 +37,7 @@ BEGIN
       INTO v_precio, v_stock
       FROM public.producto
       WHERE codigo_producto = v_codigo_producto
+        AND activo IS TRUE
       FOR UPDATE;
 
     IF NOT FOUND THEN

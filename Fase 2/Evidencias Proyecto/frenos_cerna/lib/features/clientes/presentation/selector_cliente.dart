@@ -14,6 +14,7 @@ Future<Cliente?> seleccionarClienteExistente(
     final filas = await SupabaseDatabase.client
         .from(SupabaseTables.clientes)
         .select('rut, nombre, fono')
+        .eq('activo', true)
         .order('nombre'); // Usa solo las columnas de Cliente.
     return filas
         .map((fila) => Cliente.fromJson(Map<String, dynamic>.from(fila)))

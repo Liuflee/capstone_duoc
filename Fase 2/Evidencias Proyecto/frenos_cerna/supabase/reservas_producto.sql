@@ -21,6 +21,7 @@ DROP POLICY IF EXISTS completar_reservas ON public.reserva_producto;
 CREATE POLICY completar_reservas ON public.reserva_producto FOR UPDATE TO authenticated USING ((SELECT public.rol_actual()) IN ('administrador', 'empleado') AND estado = 'reservado') WITH CHECK ((SELECT public.rol_actual()) IN ('administrador', 'empleado') AND estado = 'lista');
 REVOKE ALL ON public.reserva_producto FROM PUBLIC, anon, authenticated;
 GRANT SELECT, INSERT ON public.reserva_producto TO authenticated;
+GRANT DELETE ON public.reserva_producto TO authenticated; -- RLS limita la eliminación al administrador.
 GRANT UPDATE (estado) ON public.reserva_producto TO authenticated; -- Solo permite modificar el estado desde la aplicación.
 GRANT USAGE ON SEQUENCE public.reserva_producto_id_seq TO authenticated; -- Permite asignar IDs sin claves administrativas.
 COMMIT;

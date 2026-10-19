@@ -16,6 +16,8 @@ abstract final class PerfilSesion {
     }
     return _perfil; // Entrega el nombre inmediatamente al navegar.
   }
+  static bool get esAdministrador =>
+      actual?.rol == RolUsuario.administrador; // La interfaz oculta acciones administrativas; Supabase aplica la protección definitiva.
 
   static void conservar(PerfilUsuario perfil) {
     if (perfil.id != _usuarioActual) {

@@ -1,4 +1,5 @@
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart'; // Muestra el cliente local asociado a la pendiente.
+import 'package:frenos_cerna/core/data/perfil_sesion.dart';
 import 'package:flutter/material.dart'; // Presenta las acciones de la venta pendiente.
 import 'package:frenos_cerna/features/ventas/data/ventas_pendientes_repository.dart'; // Recupera y confirma los borradores locales.
 import 'package:frenos_cerna/features/ventas/presentation/pagina_crear_ventas.dart'; // Reutiliza el formulario para editar la venta.
@@ -9,7 +10,7 @@ class PaginaDetalleVentaPendiente extends StatefulWidget {
   // Muestra el historial de una venta sin pago confirmado.
   final VentaPendiente venta; // Recibe la venta seleccionada mediante la lupa.
   final VentasPendientesRepository?
-  repositorio; // Permite verificar el flujo con almacenamiento controlado.
+      repositorio; // Permite verificar el flujo con almacenamiento controlado.
   const PaginaDetalleVentaPendiente({
     super.key,
     required this.venta,
@@ -61,8 +62,12 @@ class _PaginaDetalleVentaPendienteState
         if (encontrada.isNotEmpty) {
           _venta = encontrada.first; // Conserva las modificaciones guardadas.
         }
-        _requiereRevision = revision || encontrada.isEmpty; // Deshabilita acciones si el resultado es incierto o la venta ya no está pendiente.
-        if (encontrada.isEmpty) _error = 'La venta ya no está pendiente. Vuelve a Ventas para consultar su historial.'; // Evita editar una copia local desactualizada.
+        _requiereRevision = revision ||
+            encontrada
+                .isEmpty; // Deshabilita acciones si el resultado es incierto o la venta ya no está pendiente.
+        if (encontrada.isEmpty)
+          _error =
+              'La venta ya no está pendiente. Vuelve a Ventas para consultar su historial.'; // Evita editar una copia local desactualizada.
         if (revision && errorConfirmacion != null) {
           _error =
               'Confirmación pendiente de revisión. Detalle del intento: $errorConfirmacion'; // Muestra el motivo real sin desbloquear una venta incierta.
@@ -144,6 +149,43 @@ class _PaginaDetalleVentaPendienteState
     } // Refresca artículos, cliente y total.
   } // Finaliza la edición.
 
+  Future<void> _cancelarVenta() async {
+    if (_ocupado || _requiereRevision || !PerfilSesion.esAdministrador) return;
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (dialogo) => AlertDialog(
+        title: const Text('CANCELAR VENTA'),
+        content: const Text(
+            '¿Deseas cancelar esta venta pendiente? Se eliminará el borrador y no se descontará inventario.'),
+        actions: [
+          CartaNavegacion.accion(
+            onPressed: () => Navigator.pop(dialogo, false),
+            child: const Text('VOLVER'),
+          ),
+          CartaNavegacion.accion(
+            onPressed: () => Navigator.pop(dialogo, true),
+            child: const Text('CANCELAR VENTA'),
+          ),
+        ],
+      ),
+    );
+    if (confirmar != true || !mounted) return;
+    setState(() {
+      _ocupado = true;
+      _error = null;
+    });
+    try {
+      await _repositorio.cancelar(_venta.id);
+      if (mounted) Navigator.pop(context, true);
+    } catch (error) {
+      if (mounted)
+        setState(() {
+          _error = error.toString();
+          _ocupado = false;
+        });
+    }
+  }
+
   Future<void> _confirmarPago() async {
     // Envía la venta únicamente tras confirmar su pago.
     if (_ocupado || _requiereRevision) {
@@ -190,9 +232,8 @@ class _PaginaDetalleVentaPendienteState
             rutCliente: _venta
                 .rutCliente, // Transfiere la relación al historial cerrado.
             clienteNombre: _venta.nombreCliente,
-            vehiculoNombre: _venta.patente.isEmpty
-                ? 'Sin vehículo'
-                : _venta.patente,
+            vehiculoNombre:
+                _venta.patente.isEmpty ? 'Sin vehículo' : _venta.patente,
             total: _venta.total,
             desdeHistorial: false,
           ),
@@ -202,10 +243,9 @@ class _PaginaDetalleVentaPendienteState
     } catch (error) {
       // Mantiene los datos locales para corregir errores o revisar el resultado.
       if (!mounted) return; // Evita cambiar una página cerrada.
-      final detalle = error
-          .toString(); // Conserva el diagnóstico para otros errores.
-      final contadorVentas =
-          detalle.contains('23505') &&
+      final detalle =
+          error.toString(); // Conserva el diagnóstico para otros errores.
+      final contadorVentas = detalle.contains('23505') &&
           (detalle.contains('venta_pkey') ||
               detalle.contains('detalle_venta_producto_pkey') ||
               detalle.contains(
@@ -222,68 +262,75 @@ class _PaginaDetalleVentaPendienteState
 
   @override // Conserva el mismo contenido y las mismas proporciones del historial.
   Widget build(BuildContext context) => PopScope(
-    canPop: !_ocupado,
-    child: PaginaDetalleVenta(
-      key: ValueKey(_venta.revision),
-      idVenta: _venta.id,
-      clienteNombre: _venta.nombreCliente,
-      vehiculoNombre: _venta.patente.isEmpty ? 'Sin vehículo' : _venta.patente,
-      total: _venta.total,
-      desdeHistorial: false,
-      rutCliente: _venta.rutCliente, // Conserva la relación del cliente local.
-      clienteInicial: Cliente(
-        id: _venta.rutCliente,
-        nombre: _venta.nombreCliente,
-        numero: _venta.fonoCliente,
-        ultimaVenta: '',
-        vehiculo: _venta.patente,
-      ), // Permite ver el perfil del borrador incluso sin conexión.
-      ventaInicial: _venta.registro,
-      esPendiente: true,
-      acciones: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Añade únicamente las acciones propias de una pendiente.
-          if (_error != null)
-            Text(
-              _error!,
-            ), // Mantiene visible el error de almacenamiento o pago.
-          if (_requiereRevision)
-            const Text(
-              'Confirmación pendiente de revisión. Comprueba el historial antes de volver a registrar esta venta.',
-            ), // Impide duplicados ante resultados inciertos.
-          const SizedBox(height: 20), // Separa el detalle de las acciones.
-          Wrap(
-            spacing: 16,
-            runSpacing: 16,
+        canPop: !_ocupado,
+        child: PaginaDetalleVenta(
+          key: ValueKey(_venta.revision),
+          idVenta: _venta.id,
+          clienteNombre: _venta.nombreCliente,
+          vehiculoNombre:
+              _venta.patente.isEmpty ? 'Sin vehículo' : _venta.patente,
+          total: _venta.total,
+          desdeHistorial: false,
+          rutCliente:
+              _venta.rutCliente, // Conserva la relación del cliente local.
+          clienteInicial: Cliente(
+            id: _venta.rutCliente,
+            nombre: _venta.nombreCliente,
+            numero: _venta.fonoCliente,
+            ultimaVenta: '',
+            vehiculo: _venta.patente,
+          ), // Permite ver el perfil del borrador incluso sin conexión.
+          ventaInicial: _venta.registro,
+          esPendiente: true,
+          acciones: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Añade únicamente las acciones propias de una pendiente.
+              if (_error != null)
+                Text(
+                  _error!,
+                ), // Mantiene visible el error de almacenamiento o pago.
               if (_requiereRevision)
-                CartaNavegacion.accion(
-                  onPressed: _ocupado ? null : _recuperar,
-                  icon: const Icon(Icons.fact_check_outlined),
-                  label: const Text('REVISAR VENTA'),
-                ), // Recupera solo después de confirmar que no se guardó.
-              // Conserva los botones en escritorio y móvil.
-              CartaNavegacion.accion(
-                onPressed: _ocupado || _requiereRevision ? null : _editar,
-                icon: const Icon(Icons.edit),
-                label: const Text('EDITAR VENTA'),
-              ), // Permite modificar únicamente ventas abiertas.
-              CartaNavegacion.accion(
-                onPressed: _ocupado || _requiereRevision
-                    ? null
-                    : _confirmarPago,
-                icon: const Icon(Icons.check_circle_outline),
-                label: Text(_ocupado ? 'ESPERA...' : 'CONFIRMAR PAGO'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFD96363),
-                  foregroundColor: Colors.black,
-                ), // Distingue la confirmación con el rojo existente.
-              ), // Cierra la venta después de recibir el pago.
+                const Text(
+                  'Confirmación pendiente de revisión. Comprueba el historial antes de volver a registrar esta venta.',
+                ), // Impide duplicados ante resultados inciertos.
+              const SizedBox(height: 20), // Separa el detalle de las acciones.
+              Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: [
+                  if (_requiereRevision)
+                    CartaNavegacion.accion(
+                      onPressed: _ocupado ? null : _recuperar,
+                      icon: const Icon(Icons.fact_check_outlined),
+                      label: const Text('REVISAR VENTA'),
+                    ), // Recupera solo después de confirmar que no se guardó.
+                  // Conserva los botones en escritorio y móvil.
+                  CartaNavegacion.accion(
+                    onPressed: _ocupado || _requiereRevision ? null : _editar,
+                    icon: const Icon(Icons.edit),
+                    label: const Text('EDITAR VENTA'),
+                  ), // Permite modificar únicamente ventas abiertas.
+                  CartaNavegacion.accion(
+                    onPressed:
+                        _ocupado || _requiereRevision ? null : _confirmarPago,
+                    icon: const Icon(Icons.check_circle_outline),
+                    label: Text(_ocupado ? 'ESPERA...' : 'CONFIRMAR PAGO'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFD96363),
+                      foregroundColor: Colors.black,
+                    ), // Distingue la confirmación con el rojo existente.
+                  ), // Cierra la venta después de recibir el pago.
+                  if (PerfilSesion.esAdministrador)
+                    CartaNavegacion.accion(
+                      onPressed: _ocupado || _requiereRevision ? null : _cancelarVenta,
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text('CANCELAR VENTA'),
+                    ), // La cancelación del borrador queda reservada al administrador.
+                ],
+              ), // Finaliza las acciones específicas.
             ],
-          ), // Finaliza las acciones específicas.
-        ],
-      ),
-    ),
-  ); // Finaliza la vista del historial pendiente.
+          ),
+        ),
+      ); // Finaliza la vista del historial pendiente.
 } // Finaliza el estado de la página.

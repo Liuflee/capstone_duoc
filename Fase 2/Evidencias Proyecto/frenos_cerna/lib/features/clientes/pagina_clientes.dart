@@ -5,6 +5,7 @@ import 'package:frenos_cerna/features/clientes/pagina_ver_cliente.dart'; // Abre
 import 'package:flutter/material.dart';
 
 import 'package:frenos_cerna/core/data/supabase_database.dart';
+import 'package:frenos_cerna/core/data/perfil_sesion.dart';
 
 import 'package:frenos_cerna/features/clientes/pagina_crear_cliente.dart';
 
@@ -111,8 +112,9 @@ class _PaginaClientesState extends State<PaginaClientes> {
       final response = await SupabaseDatabase.client
           .from(SupabaseTables.clientes)
           .select(
-            'rut, nombre, fono, vehiculo_cliente(patente, modelo_vehiculo(modelo, marca_vehiculo(marca)))',
+            'rut, nombre, fono, activo, vehiculo_cliente(patente, modelo_vehiculo(modelo, marca_vehiculo(marca)))',
           )
+          .eq('activo', true)
           .order('nombre');
 
       final data = response as List<dynamic>;
@@ -140,6 +142,29 @@ class _PaginaClientesState extends State<PaginaClientes> {
         _error = error.toString();
         _cargando = false;
       });
+    }
+  }
+
+  Future<void> _eliminarCliente(Cliente cliente) async {
+    if (!PerfilSesion.esAdministrador) return;
+    final confirma = await showDialog<bool>(
+      context: context,
+      builder: (dialogo) => AlertDialog(
+        title: const Text('ELIMINAR CLIENTE'),
+        content: Text('¿Quitar a ${cliente.nombre} de los clientes activos? Sus ventas y vehículos históricos se conservarán.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogo, false), child: const Text('VOLVER')),
+          TextButton(onPressed: () => Navigator.pop(dialogo, true), child: const Text('ELIMINAR')),
+        ],
+      ),
+    );
+    if (confirma != true || !mounted) return;
+    try {
+      await SupabaseDatabase.client.from(SupabaseTables.clientes)
+          .update({'activo': false}).eq('rut', int.parse(cliente.id));
+      await _cargarClientes();
+    } catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo eliminar el cliente: $error')));
     }
   }
 
@@ -275,55 +300,56 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                     return TablaDatos(
                                   mostrarControles: false, // El panel ya muestra el buscador y las categorías.
                                   // Encabezados visibles de la tabla.
-                                  nombresColumnas: const [
+                                  nombresColumnas: [
                                     'NOMBRE',
                                     'NÚMERO',
                                     'RUT',
                                     'VEHÍCULOS',
                                     'CAMBIAR',
                                     'VER',
+                                    if (PerfilSesion.esAdministrador) 'ELIMINAR',
                                   ],
 
                                   // Campos asociados a los valores de cada registro.
                                   // Las columnas de acciones no necesitan campo.
-                                  camposColumnas: const [
+                                  camposColumnas: [
                                     'nombre',
                                     'numero',
                                     'rut',
                                     'vehiculos',
                                     '',
+                                    if (PerfilSesion.esAdministrador) '',
                                     '',
                                   ],
 
                                   // Ancho proporcional de cada columna.
                                   // El widget los ajusta para ocupar el espacio total.
-                                  anchosColumnas: const [
-                                    330,
-                                    150,
-                                    150,
-                                    260,
-                                    120,
-                                    120,
+                                  anchosColumnas: [
+                                    330, 150, 150, 260, 120, 120,
+                                    if (PerfilSesion.esAdministrador) 120,
                                   ],
 
                                   // Color de cada cabecera (null usa colorEncabezado).
-                                  coloresEncabezados: const [
+                                  coloresEncabezados: [
                                     Color.fromARGB(255, 253, 116, 116),
                                     Color.fromARGB(255, 207, 81, 81),
                                     Color.fromARGB(255, 253, 116, 116),
                                     Color.fromARGB(255, 253, 116, 116),
                                     Color.fromARGB(255, 253, 116, 116),
                                     Color.fromARGB(255, 207, 81, 81),
+                                    if (PerfilSesion.esAdministrador)
+                                      Color.fromARGB(255, 207, 81, 81),
                                   ],
 
                                   // Color del texto de cada cabecera (null usa blanco).
-                                  coloresTextoEncabezados: const [
+                                  coloresTextoEncabezados: [
                                     null,
                                     null,
                                     null,
                                     null,
                                     null,
                                     null,
+                                    if (PerfilSesion.esAdministrador) null,
                                   ],
 
                                   // Resultados de Supabase ya filtrados por el buscador.
@@ -424,6 +450,13 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                             size: 28,
                                           ),
                                         ), // Consulta el perfil sin habilitar edición.
+                                    if (PerfilSesion.esAdministrador)
+                                      6: (context, fila) => CartaNavegacion.accion(
+                                        tipoBoton: 'icon',
+                                        tooltip: 'Eliminar cliente',
+                                        onPressed: () => _eliminarCliente(fila['cliente'] as Cliente),
+                                        child: const Icon(Icons.delete_outline),
+                                      ),
                                   },
                                     ); // Finaliza la tabla construida con los clientes filtrados.
                                   }, // Finaliza la construcción del contenido.

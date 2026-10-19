@@ -7,8 +7,11 @@
 3. Ejecuta `supabase/codigo_producto_alfanumerico.sql` para permitir los códigos de producto alfanuméricos que usa el formulario y sus ventas.
 4. Ejecuta `supabase/registrar_venta.sql` en el SQL Editor. La función registra la venta, sus detalles y descuenta stock dentro de una transacción.
 5. Ejecuta `supabase/autenticacion_perfiles.sql`. Crea un perfil para cada cuenta autenticada, asigna `empleado` al registrarse y aplica políticas RLS a las tablas usadas por la aplicación.
-6. Ejecuta `supabase/administrar_perfiles.sql`. Habilita la eliminación protegida del acceso de dueño/mecánico; no elimina la cuenta Auth ni los datos del negocio.
-7. Copia `supabase.example.json` como `supabase.config.json`, reemplaza sus valores con la URL del proyecto y su publishable key, e inicia la aplicación:
+6. Ejecuta `supabase/reservas_producto.sql` para habilitar las reservas y su gestión.
+7. Ejecuta `supabase/administrar_perfiles.sql`. Habilita la eliminación protegida del acceso de dueño/mecánico; no elimina la cuenta Auth ni los datos del negocio.
+8. Ejecuta `supabase/eliminacion_logica_productos.sql` para habilitar la baja lógica de productos. Los productos quedan ocultos del inventario y de nuevas ventas, mientras sus referencias históricas se conservan.
+9. Ejecuta `supabase/administrar_eliminaciones.sql` para aplicar bajas lógicas a clientes, vehículos y catálogos, y reservar las eliminaciones físicas al administrador en Supabase.
+10. Copia `supabase.example.json` como `supabase.config.json`, reemplaza sus valores con la URL del proyecto y su publishable key, e inicia la aplicación:
 
 ```powershell
 flutter run --dart-define-from-file=supabase.config.json

@@ -8,6 +8,7 @@ import 'package:frenos_cerna/shared/widgets/barra_superior.dart';
 import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
 import 'package:flutter/material.dart';
 import 'package:frenos_cerna/core/data/supabase_database.dart';
+import 'package:frenos_cerna/core/data/perfil_sesion.dart';
 import 'package:frenos_cerna/features/vehiculos/pagina_detalle_vehiculo.dart';
 import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
 import 'package:frenos_cerna/shared/widgets/tabla_datos.dart';
@@ -70,6 +71,7 @@ Future<List<HistorialVehiculo>> cargarVehiculosDeCliente(String rut) async {
         'modelo_vehiculo(modelo, marca_vehiculo(marca))',
       )
       .eq('rut_cliente', int.parse(rut))
+      .eq('activo', true)
       .order('patente');
   return respuesta
       .map(
@@ -108,6 +110,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
             'patente, kilometraje, rut_cliente, cliente(nombre), '
             'modelo_vehiculo(modelo, marca_vehiculo(marca))',
           )
+          .eq('activo', true)
           .order('patente');
 
       final data = response as List<dynamic>;
@@ -133,6 +136,29 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
         _error = e.toString();
         _cargando = false;
       });
+    }
+  }
+
+  Future<void> _eliminarVehiculo(HistorialVehiculo vehiculo) async {
+    if (!PerfilSesion.esAdministrador) return;
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (dialogo) => AlertDialog(
+        title: const Text('ELIMINAR VEHÍCULO'),
+        content: Text('¿Quitar ${vehiculo.id} de los vehículos activos? Se conservarán las ventas asociadas.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogo, false), child: const Text('VOLVER')),
+          TextButton(onPressed: () => Navigator.pop(dialogo, true), child: const Text('ELIMINAR')),
+        ],
+      ),
+    );
+    if (confirmar != true || !mounted) return;
+    try {
+      await SupabaseDatabase.client.from(SupabaseTables.vehiculos)
+          .update({'activo': false}).eq('patente', vehiculo.id);
+      await _cargarVehiculos();
+    } catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo eliminar el vehículo: $error')));
     }
   }
 
@@ -258,33 +284,36 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                           return TablaDatos(
                             mostrarControles: false, // El panel ya muestra el buscador y las categorías.
                             // Encabezados visibles de la tabla.
-                            nombresColumnas: const [
+                            nombresColumnas: [
                               'CLIENTE',
                               'VEHÍCULO',
                               'KILOMETRAJE',
                               'PATENTE',
                               'REVISAR',
+                              if (PerfilSesion.esAdministrador) 'ELIMINAR',
                             ],
 
                             // Campos de cada columna (vacío si la celda es personalizada).
-                            camposColumnas: const [
+                            camposColumnas: [
                               'cliente',
                               'vehiculo',
                               'kilometraje',
                               'patente',
                               '',
+                              if (PerfilSesion.esAdministrador) '',
                             ],
 
                             // Ancho proporcional de cada columna.
-                            anchosColumnas: const [300, 230, 150, 150, 120],
+                            anchosColumnas: [300, 230, 150, 150, 120, if (PerfilSesion.esAdministrador) 120],
 
                             // Colores de cabecera alternando entre los dos rojos.
-                            coloresEncabezados: const [
+                            coloresEncabezados: [
                               _rojoClaro,
                               _rojoOscuro,
                               _rojoClaro,
                               _rojoOscuro,
                               _rojoClaro,
+                              if (PerfilSesion.esAdministrador) _rojoOscuro,
                             ],
 
                             filas: filasVehiculos,
@@ -348,6 +377,16 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                                   },
                                 );
                               },
+                              if (PerfilSesion.esAdministrador)
+                                5: (context, fila) {
+                                  final registro = fila['registro'] as HistorialVehiculo;
+                                  return CartaNavegacion.accion(
+                                    tipoBoton: 'icon',
+                                    tooltip: 'Eliminar vehículo',
+                                    onPressed: () => _eliminarVehiculo(registro),
+                                    child: const Icon(Icons.delete_outline),
+                                  );
+                                },
                             },
                           ); // Finaliza la tabla construida con los vehículos filtrados.
                         }, // Finaliza la construcción del contenido.

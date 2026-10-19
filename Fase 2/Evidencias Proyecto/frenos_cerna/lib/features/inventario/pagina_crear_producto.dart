@@ -1,6 +1,7 @@
 // Importa Flutter, la conexión existente y los widgets compartidos.
 import 'package:flutter/material.dart';
 import 'package:frenos_cerna/core/data/supabase_database.dart';
+import 'package:frenos_cerna/core/data/perfil_sesion.dart';
 import 'package:frenos_cerna/shared/widgets/estructura_pagina.dart';
 import 'package:frenos_cerna/shared/widgets/formulario_datos.dart';
 import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
@@ -94,22 +95,39 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
       }
       final respuesta = await SupabaseDatabase.client
           .from(SupabaseTables.tiposProducto)
-          .select();
+          .select()
+          .eq('activo', true);
       final calidades = await SupabaseDatabase.client
           .from(SupabaseTables.calidadesProducto)
-          .select(); // Consulta las calidades existentes.
+          .select()
+          .eq('activo', true); // Consulta las calidades disponibles.
       final relaciones = await SupabaseDatabase.client
           .from('tipo_calidad_producto')
           .select('id_tipo, id_calidad'); // Consulta las asociaciones reales, sin ofrecer calidades de otras categorías.
+      final listaCategorias = List<Map<String, dynamic>>.from(respuesta);
+      final listaCalidades = List<Map<String, dynamic>>.from(calidades);
+      final productoActual = widget.productoInicial;
+      if (productoActual != null) {
+        final tipoActual = productoActual['tipo'];
+        if (tipoActual != null && !listaCategorias.any((fila) => fila['id'] == tipoActual)) {
+          final fila = await SupabaseDatabase.client.from(SupabaseTables.tiposProducto).select().eq('id', tipoActual).maybeSingle();
+          if (fila != null) listaCategorias.add(Map<String, dynamic>.from(fila));
+        }
+        final calidadActual = productoActual['calidad'];
+        if (calidadActual != null && !listaCalidades.any((fila) => fila['id'] == calidadActual)) {
+          final fila = await SupabaseDatabase.client.from(SupabaseTables.calidadesProducto).select().eq('id', calidadActual).maybeSingle();
+          if (fila != null) listaCalidades.add(Map<String, dynamic>.from(fila));
+        }
+      }
       if (mounted) {
         _relacionesCalidad = List<Map<String, dynamic>>.from(
           relaciones,
         ); // Conserva las asociaciones existentes.
         _calidades = List<Map<String, dynamic>>.from(
-          calidades,
+          listaCalidades,
         ); // Conserva sus identificadores.
         setState(
-          () => _categorias = List<Map<String, dynamic>>.from(respuesta),
+          () => _categorias = listaCategorias,
         );
       }
     } catch (error) {
@@ -212,7 +230,8 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
       } else {
         final actuales = await SupabaseDatabase.client
             .from(SupabaseTables.tiposProducto)
-            .select(); // Evita duplicados por espacios o mayúsculas.
+            .select()
+            .eq('activo', true); // Evita duplicados entre categorías activas.
         final coincidencias = actuales.where(
           (fila) =>
               fila[columna].toString().trim().toLowerCase() ==
@@ -285,6 +304,57 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
     _precio.dispose();
     _stock.dispose();
     super.dispose();
+  }
+
+  Future<void> _eliminarCatalogo({required bool esCalidad}) async {
+    if (!PerfilSesion.esAdministrador || _editandoCatalogo) return;
+    final id = esCalidad ? _calidad : _categoria;
+    final lista = esCalidad ? _calidades : _categorias;
+    if (id == null) return;
+    final coincidencias = lista.where((elemento) => elemento['id'] == id);
+    if (coincidencias.isEmpty) return;
+    final fila = coincidencias.first;
+    final columna = esCalidad ? 'nombre_calidad' : 'nombre_tipo';
+    final confirma = await showDialog<bool>(
+      context: context,
+      builder: (dialogo) => AlertDialog(
+        title: Text('ELIMINAR ${esCalidad ? 'CALIDAD' : 'CATEGORÍA'}'),
+        content: Text('¿Ocultar ${fila[columna]} del catálogo? Los productos que ya lo usan conservarán su relación.'),
+        actions: [
+          CartaNavegacion.accion(onPressed: () => Navigator.pop(dialogo, false), child: const Text('VOLVER')),
+          CartaNavegacion.accion(onPressed: () => Navigator.pop(dialogo, true), child: const Text('ELIMINAR')),
+        ],
+      ),
+    );
+    if (confirma != true || !mounted) return;
+    setState(() => _editandoCatalogo = true);
+    try {
+      await SupabaseDatabase.client
+          .from(esCalidad ? SupabaseTables.calidadesProducto : SupabaseTables.tiposProducto)
+          .update({'activo': false})
+          .eq('id', id);
+      if (!mounted) return;
+      setState(() {
+        final loUsaProductoEditado =
+            (esCalidad && widget.productoInicial?['calidad'] == id) ||
+            (!esCalidad && widget.productoInicial?['tipo'] == id);
+        if (!loUsaProductoEditado) {
+          lista.removeWhere((elemento) => elemento['id'] == id);
+        }
+        if (esCalidad) {
+          if (!loUsaProductoEditado) _calidad = null;
+        } else {
+          if (!loUsaProductoEditado) {
+            _categoria = null;
+            _calidad = null;
+          }
+        }
+      });
+    } catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo eliminar el registro: $error')));
+    } finally {
+      if (mounted) setState(() => _editandoCatalogo = false);
+    }
   }
 
   String? _entero(String? valor) =>
@@ -482,6 +552,12 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
                                     : 'AÑADIR CATEGORÍA',
                               ),
                             ), // Abre el registro sin abandonar el producto.
+                            if (PerfilSesion.esAdministrador &&
+                                (esCalidad ? _calidades.isNotEmpty : _categorias.isNotEmpty))
+                              DropdownMenuItem(
+                                value: -2,
+                                child: Text(esCalidad ? 'ELIMINAR CALIDAD' : 'ELIMINAR CATEGORÍA'),
+                              ),
                           ],
                           onChanged:
                               _guardando ||
@@ -491,6 +567,8 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
                               : (valor) {
                                   if (valor == -1) {
                                     _agregarCatalogo(esCalidad: esCalidad); // Pide nombre y confirmación antes de guardar.
+                                  } else if (valor == -2) {
+                                    _eliminarCatalogo(esCalidad: esCalidad);
                                   } else {
                                     setState(() {
                                       if (esCalidad) {

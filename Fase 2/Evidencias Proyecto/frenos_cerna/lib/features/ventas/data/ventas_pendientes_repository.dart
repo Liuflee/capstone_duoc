@@ -21,13 +21,13 @@ class ArticuloVentaPendiente {
     required this.stock,
   }); // Configura una línea inmutable.
   Map<String, dynamic> toJson() => {
-    'codigo': codigo,
-    'nombre': nombre,
-    'categoria': categoria,
-    'precio': precio,
-    'cantidad': cantidad,
-    'stock': stock,
-  }; // Conserva los datos necesarios para editar.
+        'codigo': codigo,
+        'nombre': nombre,
+        'categoria': categoria,
+        'precio': precio,
+        'cantidad': cantidad,
+        'stock': stock,
+      }; // Conserva los datos necesarios para editar.
   factory ArticuloVentaPendiente.fromJson(Map<String, dynamic> datos) =>
       ArticuloVentaPendiente(
         codigo: datos['codigo'] as String,
@@ -47,8 +47,9 @@ class VentaPendiente {
       fonoCliente,
       patente; // Conserva las relaciones y los datos visibles.
   final List<ArticuloVentaPendiente>
-  articulos; // Conserva unidades sin descontar existencias.
-  final DateTime? fechaCreacion; // Conserva el día del borrador sin crear una venta en Supabase.
+      articulos; // Conserva unidades sin descontar existencias.
+  final DateTime?
+      fechaCreacion; // Conserva el día del borrador sin crear una venta en Supabase.
   final int revision; // Impide sobrescribir una edición más reciente.
   VentaPendiente({
     required this.id,
@@ -60,79 +61,85 @@ class VentaPendiente {
     this.revision = 0,
     this.fechaCreacion, // Mantiene fecha desconocida para borradores anteriores.
   }) : articulos = List.unmodifiable(
-         articulos,
-       ); // Protege el borrador frente a cambios externos.
+          articulos,
+        ); // Protege el borrador frente a cambios externos.
   double get total => articulos.fold(
-    0,
-    (suma, articulo) => suma + articulo.precio * articulo.cantidad,
-  ); // Calcula el total mostrado antes del cierre.
+        0,
+        (suma, articulo) => suma + articulo.precio * articulo.cantidad,
+      ); // Calcula el total mostrado antes del cierre.
   VentaRegistro get registro => VentaRegistro(
-    id: id,
-    rutCliente: rutCliente, // Conserva el cliente del borrador en la vista del historial.
-    clienteNombre: nombreCliente,
-    vehiculoNombre: patente.isEmpty ? 'Sin vehículo' : patente,
-    productosResumen: articulos.map((articulo) => articulo.nombre).join(', '),
-    total: total,
-    fecha: 'Pendiente de pago',
-    items: articulos
-        .map(
-          (articulo) => <String, dynamic>{
-            'codigo': articulo.codigo,
-            'nombre': '${articulo.nombre} × ${articulo.cantidad}',
-            'total': articulo.precio * articulo.cantidad,
-          },
-        )
-        .toList(),
-  ); // Reutiliza exactamente el diseño del historial.
+        id: id,
+        rutCliente:
+            rutCliente, // Conserva el cliente del borrador en la vista del historial.
+        clienteNombre: nombreCliente,
+        vehiculoNombre: patente.isEmpty ? 'Sin vehículo' : patente,
+        productosResumen:
+            articulos.map((articulo) => articulo.nombre).join(', '),
+        total: total,
+        fecha: 'Pendiente de pago',
+        items: articulos
+            .map(
+              (articulo) => <String, dynamic>{
+                'codigo': articulo.codigo,
+                'nombre': '${articulo.nombre} × ${articulo.cantidad}',
+                'total': articulo.precio * articulo.cantidad,
+              },
+            )
+            .toList(),
+      ); // Reutiliza exactamente el diseño del historial.
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'rut_cliente': rutCliente,
-    'nombre_cliente': nombreCliente,
-    'fono_cliente': fonoCliente,
-    'patente': patente,
-    'articulos': articulos.map((articulo) => articulo.toJson()).toList(),
-    'revision': revision,
-    'fecha_creacion': fechaCreacion
-        ?.toUtc()
-        .toIso8601String(), // Persiste el día original al editar.
-  }; // Serializa el borrador completo.
+        'id': id,
+        'rut_cliente': rutCliente,
+        'nombre_cliente': nombreCliente,
+        'fono_cliente': fonoCliente,
+        'patente': patente,
+        'articulos': articulos.map((articulo) => articulo.toJson()).toList(),
+        'revision': revision,
+        'fecha_creacion': fechaCreacion
+            ?.toUtc()
+            .toIso8601String(), // Persiste el día original al editar.
+      }; // Serializa el borrador completo.
   factory VentaPendiente.fromJson(Map<String, dynamic> datos) => VentaPendiente(
-    id: datos['id'] as String,
-    rutCliente: datos['rut_cliente'] as String,
-    nombreCliente: datos['nombre_cliente'] as String,
-    fonoCliente: datos['fono_cliente'] as String,
-    patente: datos['patente'] as String,
-    articulos: (datos['articulos'] as List)
-        .map(
-          (fila) =>
-              ArticuloVentaPendiente.fromJson(Map<String, dynamic>.from(fila)),
-        )
-        .toList(),
-    revision: datos['revision'] as int,
-    fechaCreacion: DateTime.tryParse(datos['fecha_creacion']?.toString() ?? '')
-        ?.toLocal(), // Recupera el día sin inventar fechas anteriores.
-  ); // Recupera el borrador sin consultar Supabase.
+        id: datos['id'] as String,
+        rutCliente: datos['rut_cliente'] as String,
+        nombreCliente: datos['nombre_cliente'] as String,
+        fonoCliente: datos['fono_cliente'] as String,
+        patente: datos['patente'] as String,
+        articulos: (datos['articulos'] as List)
+            .map(
+              (fila) => ArticuloVentaPendiente.fromJson(
+                  Map<String, dynamic>.from(fila)),
+            )
+            .toList(),
+        revision: datos['revision'] as int,
+        fechaCreacion:
+            DateTime.tryParse(datos['fecha_creacion']?.toString() ?? '')
+                ?.toLocal(), // Recupera el día sin inventar fechas anteriores.
+      ); // Recupera el borrador sin consultar Supabase.
 } // Finaliza el modelo local.
 
 class VentasPendientesRepository {
   // Administra borradores persistentes y su confirmación.
   final String
-  clave; // Separa las pendientes de cada usuario en este dispositivo.
-  final Future<SharedPreferences> Function() preferencias; // Permite verificar la persistencia con almacenamiento controlado.
+      clave; // Separa las pendientes de cada usuario en este dispositivo.
+  final Future<SharedPreferences> Function()
+      preferencias; // Permite verificar la persistencia con almacenamiento controlado.
   final Future<String> Function(VentaPendiente)
-  registrar; // Envía la venta solamente al confirmar el pago.
+      registrar; // Envía la venta solamente al confirmar el pago.
   Future<void>? _cola; // Crea la cola cuando comienza una operación local.
   final Map<String, Future<String>> _confirmaciones =
       {}; // Comparte una única confirmación por venta.
-  final Map<String, String> _recibos = {}; // Conserva resultados confirmados si falla la escritura local posterior.
+  final Map<String, String> _recibos =
+      {}; // Conserva resultados confirmados si falla la escritura local posterior.
   static final Map<String, VentasPendientesRepository> _instancias =
       {}; // Mantiene una instancia por usuario.
   VentasPendientesRepository({
     required this.clave,
     Future<SharedPreferences> Function()? preferencias,
     Future<String> Function(VentaPendiente)? registrar,
-  }) : preferencias = preferencias ?? SharedPreferences.getInstance,
-       registrar = registrar ?? _registrarEnBase; // Configura los límites entre almacenamiento local y remoto.
+  })  : preferencias = preferencias ?? SharedPreferences.getInstance,
+        registrar = registrar ??
+            _registrarEnBase; // Configura los límites entre almacenamiento local y remoto.
   static VentasPendientesRepository get instancia {
     // Conserva los borradores dentro de la cuenta actual.
     final usuario = SupabaseDatabase.isConfigured
@@ -193,102 +200,124 @@ class VentasPendientesRepository {
   } // Finaliza la escritura.
 
   Future<List<VentaPendiente>> obtenerTodas() => _exclusivo(() async {
-    // Muestra únicamente ventas que aún no tienen un comprobante remoto.
-    final filas =
-        await _leer(); // Recupera también confirmaciones interrumpidas.
-    return filas
-        .where((fila) => fila['estado'] != 'confirmada')
-        .map((fila) => VentaPendiente.fromJson(fila))
-        .toList()
-        .reversed
-        .toList(); // Conserva pendientes de revisión para impedir reenvíos automáticos.
-  }); // Finaliza el catálogo de pendientes.
+        // Muestra únicamente ventas que aún no tienen un comprobante remoto.
+        final filas =
+            await _leer(); // Recupera también confirmaciones interrumpidas.
+        return filas
+            .where((fila) => fila['estado'] != 'confirmada')
+            .map((fila) => VentaPendiente.fromJson(fila))
+            .toList()
+            .reversed
+            .toList(); // Conserva pendientes de revisión para impedir reenvíos automáticos.
+      }); // Finaliza el catálogo de pendientes.
   Future<void> guardar(VentaPendiente venta) => _exclusivo(() async {
-    // Guarda o modifica únicamente una venta pendiente.
-    if (int.tryParse(venta.rutCliente) == null ||
-        venta.articulos.isEmpty ||
-        venta.articulos.any(
-          (articulo) =>
-              articulo.codigo.trim().isEmpty || articulo.cantidad <= 0,
-        )) {
-      throw ArgumentError(
-        'La venta requiere cliente y artículos válidos.',
-      ); // Valida el borrador antes de persistir.
-    }
-    final filas = await _leer(); // Conserva los demás borradores del usuario.
-    final indice = filas.indexWhere(
-      (fila) => fila['id'] == venta.id,
-    ); // Localiza la venta editada.
-    if (indice >= 0 &&
-        (filas[indice]['estado'] != 'pendiente' ||
-            filas[indice]['revision'] != venta.revision)) {
-      throw StateError(
-        'La venta cambió o su pago ya fue enviado. Vuelve a abrirla.',
-      ); // Impide editar una venta cerrada o desactualizada.
-    }
-    final registro = {
-      ...venta.toJson(),
-      'revision': venta.revision + 1,
-      'estado': 'pendiente',
-      'fecha_creacion': indice < 0
-          ? (venta.fechaCreacion ?? DateTime.now()).toUtc().toIso8601String()
-          : filas[indice]['fecha_creacion'], // Conserva el día original al modificar el borrador.
-    }; // Incrementa la versión después de guardar.
-    if (indice < 0) {
-      filas.add(registro);
-    } else {
-      filas[indice] = registro;
-    } // Conserva la misma clave al editar.
-    await _escribir(filas); // No ejecuta consultas ni escrituras en Supabase.
-  }); // Finaliza el guardado local.
+        // Guarda o modifica únicamente una venta pendiente.
+        if (int.tryParse(venta.rutCliente) == null ||
+            venta.articulos.isEmpty ||
+            venta.articulos.any(
+              (articulo) =>
+                  articulo.codigo.trim().isEmpty || articulo.cantidad <= 0,
+            )) {
+          throw ArgumentError(
+            'La venta requiere cliente y artículos válidos.',
+          ); // Valida el borrador antes de persistir.
+        }
+        final filas =
+            await _leer(); // Conserva los demás borradores del usuario.
+        final indice = filas.indexWhere(
+          (fila) => fila['id'] == venta.id,
+        ); // Localiza la venta editada.
+        if (indice >= 0 &&
+            (filas[indice]['estado'] != 'pendiente' ||
+                filas[indice]['revision'] != venta.revision)) {
+          throw StateError(
+            'La venta cambió o su pago ya fue enviado. Vuelve a abrirla.',
+          ); // Impide editar una venta cerrada o desactualizada.
+        }
+        final registro = {
+          ...venta.toJson(),
+          'revision': venta.revision + 1,
+          'estado': 'pendiente',
+          'fecha_creacion': indice < 0
+              ? (venta.fechaCreacion ?? DateTime.now())
+                  .toUtc()
+                  .toIso8601String()
+              : filas[indice][
+                  'fecha_creacion'], // Conserva el día original al modificar el borrador.
+        }; // Incrementa la versión después de guardar.
+        if (indice < 0) {
+          filas.add(registro);
+        } else {
+          filas[indice] = registro;
+        } // Conserva la misma clave al editar.
+        await _escribir(
+            filas); // No ejecuta consultas ni escrituras en Supabase.
+      }); // Finaliza el guardado local.
+  Future<void> cancelar(String id) => _exclusivo(() async {
+        // Solo elimina borradores cuyo pago no se ha enviado.
+        if (_confirmaciones.containsKey(id) || _recibos.containsKey(id)) {
+          throw StateError(
+              'No se puede cancelar una venta cuyo pago fue enviado.');
+        }
+        final filas = await _leer();
+        final indice = filas.indexWhere((fila) => fila['id'] == id);
+        if (indice < 0) return;
+        if (filas[indice]['estado'] != 'pendiente') {
+          throw StateError(
+              'No se puede cancelar una venta cuyo pago fue enviado o debe revisarse.');
+        }
+        filas.removeAt(indice);
+        await _escribir(filas);
+      }); // Finaliza la cancelación segura del borrador.
   Future<bool> requiereRevision(String id) => _exclusivo(
-    () async => (await _leer()).any(
-      (fila) => fila['id'] == id && fila['estado'] == 'enviando',
-    ),
-  ); // Detecta una confirmación cuyo resultado no se conoce.
+        () async => (await _leer()).any(
+          (fila) => fila['id'] == id && fila['estado'] == 'enviando',
+        ),
+      ); // Detecta una confirmación cuyo resultado no se conoce.
   Future<void> recuperarTrasRevision(String id) => _exclusivo(() async {
-    if (_confirmaciones.containsKey(id) || _recibos.containsKey(id)) {
-      throw StateError(
-        'La confirmación sigue activa o ya tiene un comprobante.',
-      ); // Impide restablecer un pago conocido.
-    }
-    final filas = await _leer(); // Conserva las otras ventas.
-    final registro = filas.firstWhere(
-      (fila) => fila['id'] == id,
-    ); // Recupera el borrador revisado por el usuario.
-    if (registro['estado'] != 'enviando' || registro['id_venta'] != null) {
-      throw StateError(
-        'Solo puede recuperarse una confirmación pendiente de revisión.',
-      ); // No reabre ventas cerradas.
-    }
-    registro['estado'] = 'pendiente'; // Habilita la corrección tras la revisión explícita del historial.
-    registro['revision'] =
-        (registro['revision'] as num? ?? 0).toInt() +
-        1; // Invalida copias abiertas antes de recuperar.
-    registro.remove(
-      'error_confirmacion',
-    ); // Conserva los datos de la venta y limpia el error revisado.
-    await _escribir(filas); // No registra nada en Supabase.
-  });
+        if (_confirmaciones.containsKey(id) || _recibos.containsKey(id)) {
+          throw StateError(
+            'La confirmación sigue activa o ya tiene un comprobante.',
+          ); // Impide restablecer un pago conocido.
+        }
+        final filas = await _leer(); // Conserva las otras ventas.
+        final registro = filas.firstWhere(
+          (fila) => fila['id'] == id,
+        ); // Recupera el borrador revisado por el usuario.
+        if (registro['estado'] != 'enviando' || registro['id_venta'] != null) {
+          throw StateError(
+            'Solo puede recuperarse una confirmación pendiente de revisión.',
+          ); // No reabre ventas cerradas.
+        }
+        registro['estado'] =
+            'pendiente'; // Habilita la corrección tras la revisión explícita del historial.
+        registro['revision'] = (registro['revision'] as num? ?? 0).toInt() +
+            1; // Invalida copias abiertas antes de recuperar.
+        registro.remove(
+          'error_confirmacion',
+        ); // Conserva los datos de la venta y limpia el error revisado.
+        await _escribir(filas); // No registra nada en Supabase.
+      });
   Future<String?> errorConfirmacion(String id) => _exclusivo(() async {
-    final filas =
-        await _leer(); // Recupera el motivo aunque se reinicie la aplicación.
-    final registros = filas.where((fila) => fila['id'] == id);
-    return registros.isEmpty
-        ? null
-        : registros.first['error_confirmacion']
-              as String?; // No inventa el motivo de envíos antiguos.
-  });
+        final filas =
+            await _leer(); // Recupera el motivo aunque se reinicie la aplicación.
+        final registros = filas.where((fila) => fila['id'] == id);
+        return registros.isEmpty
+            ? null
+            : registros.first['error_confirmacion']
+                as String?; // No inventa el motivo de envíos antiguos.
+      });
   Future<void> _conservarError(String id, String mensaje) => _exclusivo(
-    () async {
-      final filas = await _leer(); // Conserva el borrador y su estado de envío.
-      filas.firstWhere((fila) => fila['id'] == id)['error_confirmacion'] =
-          mensaje; // Registra el error original del servidor.
-      await _escribir(
-        filas,
-      ); // Permite diagnosticarlo al volver a abrir la venta.
-    },
-  );
+        () async {
+          final filas =
+              await _leer(); // Conserva el borrador y su estado de envío.
+          filas.firstWhere((fila) => fila['id'] == id)['error_confirmacion'] =
+              mensaje; // Registra el error original del servidor.
+          await _escribir(
+            filas,
+          ); // Permite diagnosticarlo al volver a abrir la venta.
+        },
+      );
   Future<String> confirmarPago(String id) {
     // Evita confirmar dos veces desde el mismo dispositivo.
     final activa = _confirmaciones[id]; // Reutiliza una solicitud en curso.
@@ -398,7 +427,8 @@ class VentasPendientesRepository {
         'No se pudo comprobar el resultado. Revisa el historial; el envío queda bloqueado para evitar una venta duplicada.',
       ); // Conserva el borrador y exige revisar el resultado.
     } // Finaliza la solicitud remota.
-    _recibos[id] = idRemoto; // Impide repetir la transacción si falla el almacenamiento local.
+    _recibos[id] =
+        idRemoto; // Impide repetir la transacción si falla el almacenamiento local.
     await _exclusivo(() async {
       // Confirma el cierre después de recibir respuesta.
       final filas = await _leer(); // Conserva los demás registros.

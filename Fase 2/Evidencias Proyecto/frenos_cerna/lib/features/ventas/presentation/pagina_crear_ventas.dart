@@ -58,12 +58,13 @@ class ProductoVenta {
 // ============================================================================
 
 class PaginaCrearVenta extends StatefulWidget {
-  final Future<List<ProductoVenta>> Function()? cargarProductos; // Permite verificar la selección con una fuente controlada sin escribir en la base.
+  final Future<List<ProductoVenta>> Function()?
+      cargarProductos; // Permite verificar la selección con una fuente controlada sin escribir en la base.
   final Future<List<Cliente>> Function()?
-  cargarClientes; // Permite comprobar la búsqueda con datos controlados.
+      cargarClientes; // Permite comprobar la búsqueda con datos controlados.
   final VentaPendiente? pendiente; // Permite editar una venta local existente.
   final VentasPendientesRepository?
-  repositorioPendientes; // Permite verificar el flujo sin escrituras remotas.
+      repositorioPendientes; // Permite verificar el flujo sin escrituras remotas.
   const PaginaCrearVenta({
     super.key,
     this.cargarProductos,
@@ -133,7 +134,8 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
     _cargarInventario();
 
     _clientes = _consultarClientes();
-    _clientes.ignore(); // Conserva el error para el menú sin generar excepciones antes de abrirlo. // Recupera el catálogo al abrir la venta.
+    _clientes
+        .ignore(); // Conserva el error para el menú sin generar excepciones antes de abrirlo. // Recupera el catálogo al abrir la venta.
   }
 
   Future<List<Cliente>> _consultarClientes() async {
@@ -146,6 +148,7 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
         .select(
           'rut, nombre, fono, vehiculo_cliente(patente, modelo_vehiculo(modelo, marca_vehiculo(marca)))',
         )
+        .eq('activo', true)
         .order('nombre'); // Consulta las columnas existentes.
     return filas
         .map((fila) => Cliente.fromJson(Map<String, dynamic>.from(fila)))
@@ -169,170 +172,176 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
       _cliente = cliente; // Selecciona automáticamente el cliente nuevo.
       _busquedaCliente.clear(); // Limpia la búsqueda.
       _clientes = _consultarClientes();
-      _clientes.ignore(); // Conserva el error para el menú sin generar excepciones antes de abrirlo. // Refresca el catálogo.
+      _clientes
+          .ignore(); // Conserva el error para el menú sin generar excepciones antes de abrirlo. // Refresca el catálogo.
     }); // Conserva carrito y patente.
   } // Finaliza la creación.
 
   Widget _selectorCliente() => LayoutBuilder(
-    builder: (context, limites) {
-      // Adapta el menú al campo.
-      return MenuAnchor(
-        // Superpone las opciones sobre la página.
-        controller: _menuClientes, // Controla el desplegable.
-        style: const MenuStyle(
-          backgroundColor: WidgetStatePropertyAll(Color(0xFFE0E0E0)),
-          surfaceTintColor: WidgetStatePropertyAll(Colors.transparent),
-        ), // Conserva el gris del buscador y elimina el tinte rosado.
-        menuChildren: [
-          // Contiene búsqueda y selección.
-          SizedBox(
-            width: limites.maxWidth,
-            height: 350,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Limita el tamaño del menú.
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final campoBusqueda = SizedBox(
-                        height: 56,
-                        child: FormularioDatos.campo(
-                          controller: _busquedaCliente,
-                          decoration: const InputDecoration(
-                            hintText: 'Nombre o RUT',
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 16,
-                            ),
-                          ),
-                          onChanged: (_) => setState(() {}),
-                        ),
-                      );
-                      final botonCrear = SizedBox(
-                        width: 240,
-                        height: 56,
-                        child: CartaNavegacion.accion(
-                          onPressed: _crearCliente,
-                          icon: const Icon(Icons.person_add_alt_1),
-                          label: const Text('CREAR CLIENTE'),
-                          conservarEstiloOriginal: true,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFBDBDBD),
-                            foregroundColor: Colors.black,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            textStyle: Theme.of(context).textTheme.labelLarge
-                                ?.copyWith(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
+        builder: (context, limites) {
+          // Adapta el menú al campo.
+          return MenuAnchor(
+            // Superpone las opciones sobre la página.
+            controller: _menuClientes, // Controla el desplegable.
+            style: const MenuStyle(
+              backgroundColor: WidgetStatePropertyAll(Color(0xFFE0E0E0)),
+              surfaceTintColor: WidgetStatePropertyAll(Colors.transparent),
+            ), // Conserva el gris del buscador y elimina el tinte rosado.
+            menuChildren: [
+              // Contiene búsqueda y selección.
+              SizedBox(
+                width: limites.maxWidth,
+                height: 350,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Limita el tamaño del menú.
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final campoBusqueda = SizedBox(
+                            height: 56,
+                            child: FormularioDatos.campo(
+                              controller: _busquedaCliente,
+                              decoration: const InputDecoration(
+                                hintText: 'Nombre o RUT',
+                                filled: true,
+                                fillColor: Colors.white,
+                                border: OutlineInputBorder(),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 16,
                                 ),
-                          ),
-                        ),
-                      );
-
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const Text(
-                            'BUSCAR CLIENTE',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          if (constraints.maxWidth >= 520)
-                            Row(
-                              children: [
-                                Expanded(child: campoBusqueda),
-                                const SizedBox(width: 12),
-                                botonCrear,
-                              ],
-                            )
-                          else ...[
-                            campoBusqueda,
-                            const SizedBox(height: 12),
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: botonCrear,
-                            ),
-                          ],
-                        ],
-                      );
-                    },
-                  ), // Mantiene el buscador largo y el botón a su lado.
-                  const SizedBox(
-                    height: 12,
-                  ), // Separa la búsqueda de los resultados.
-                  Expanded(
-                    child: FutureBuilder<List<Cliente>>(
-                      future: _clientes,
-                      builder: (context, estado) {
-                        // Conserva el catálogo durante la búsqueda.
-                        if (estado.hasError) {
-                          return Column(
-                            children: [
-                              const Text('No se pudieron cargar los clientes.'),
-                              CartaNavegacion.accion(
-                                onPressed: () => setState(
-                                  () => _clientes = _consultarClientes(),
-                                ),
-                                child: const Text('REINTENTAR'),
                               ),
-                            ],
-                          ); // Permite reintentar.
-                        }
-                        if (!estado.hasData) {
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          ); // Muestra la carga.
-                        }
-                        final texto = _busquedaCliente.text
-                            .trim()
-                            .toLowerCase(); // Normaliza el texto.
-                        final resultados = estado.data!
-                            .where(
-                              (cliente) =>
-                                  cliente.nombre.toLowerCase().contains(
-                                    texto,
-                                  ) ||
-                                  cliente.id.contains(texto),
-                            )
-                            .toList(); // Busca por nombre o RUT.
-                        if (resultados.isEmpty) {
-                          return const Center(
-                            child: Text(
-                              'No se encontraron clientes. Puedes crear uno.',
+                              onChanged: (_) => setState(() {}),
                             ),
-                          ); // Ofrece registrar el cliente ausente.
-                        }
-                        return ListView.separated(
-                          itemCount: resultados.length,
-                          separatorBuilder: (context, index) => const Divider(
-                            height: 1,
-                            thickness: 1,
-                            color: Color(0x33000000),
-                          ),
-                          itemBuilder: (context, index) {
-                            final cliente = resultados[index];
-                            return MenuItemButton(
-                              style: ButtonStyle(
-                                foregroundColor: const WidgetStatePropertyAll(
-                                  Colors.black,
+                          );
+                          final botonCrear = SizedBox(
+                            width: 240,
+                            height: 56,
+                            child: CartaNavegacion.accion(
+                              onPressed: _crearCliente,
+                              icon: const Icon(Icons.person_add_alt_1),
+                              label: const Text('CREAR CLIENTE'),
+                              conservarEstiloOriginal: true,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFBDBDBD),
+                                foregroundColor: Colors.black,
+                                elevation: 0,
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 12),
+                                textStyle: Theme.of(context)
+                                    .textTheme
+                                    .labelLarge
+                                    ?.copyWith(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                              ),
+                            ),
+                          );
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const Text(
+                                'BUSCAR CLIENTE',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                overlayColor: const WidgetStatePropertyAll(
-                                  Color(0x22000000),
+                              ),
+                              const SizedBox(height: 10),
+                              if (constraints.maxWidth >= 520)
+                                Row(
+                                  children: [
+                                    Expanded(child: campoBusqueda),
+                                    const SizedBox(width: 12),
+                                    botonCrear,
+                                  ],
+                                )
+                              else ...[
+                                campoBusqueda,
+                                const SizedBox(height: 12),
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: botonCrear,
                                 ),
-                                backgroundColor:
-                                    WidgetStateProperty.resolveWith(
-                                      (estados) =>
-                                          estados.contains(
+                              ],
+                            ],
+                          );
+                        },
+                      ), // Mantiene el buscador largo y el botón a su lado.
+                      const SizedBox(
+                        height: 12,
+                      ), // Separa la búsqueda de los resultados.
+                      Expanded(
+                        child: FutureBuilder<List<Cliente>>(
+                          future: _clientes,
+                          builder: (context, estado) {
+                            // Conserva el catálogo durante la búsqueda.
+                            if (estado.hasError) {
+                              return Column(
+                                children: [
+                                  const Text(
+                                      'No se pudieron cargar los clientes.'),
+                                  CartaNavegacion.accion(
+                                    onPressed: () => setState(
+                                      () => _clientes = _consultarClientes(),
+                                    ),
+                                    child: const Text('REINTENTAR'),
+                                  ),
+                                ],
+                              ); // Permite reintentar.
+                            }
+                            if (!estado.hasData) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              ); // Muestra la carga.
+                            }
+                            final texto = _busquedaCliente.text
+                                .trim()
+                                .toLowerCase(); // Normaliza el texto.
+                            final resultados = estado.data!
+                                .where(
+                                  (cliente) =>
+                                      cliente.nombre.toLowerCase().contains(
+                                            texto,
+                                          ) ||
+                                      cliente.id.contains(texto),
+                                )
+                                .toList(); // Busca por nombre o RUT.
+                            if (resultados.isEmpty) {
+                              return const Center(
+                                child: Text(
+                                  'No se encontraron clientes. Puedes crear uno.',
+                                ),
+                              ); // Ofrece registrar el cliente ausente.
+                            }
+                            return ListView.separated(
+                              itemCount: resultados.length,
+                              separatorBuilder: (context, index) =>
+                                  const Divider(
+                                height: 1,
+                                thickness: 1,
+                                color: Color(0x33000000),
+                              ),
+                              itemBuilder: (context, index) {
+                                final cliente = resultados[index];
+                                return MenuItemButton(
+                                  style: ButtonStyle(
+                                    foregroundColor:
+                                        const WidgetStatePropertyAll(
+                                      Colors.black,
+                                    ),
+                                    overlayColor: const WidgetStatePropertyAll(
+                                      Color(0x22000000),
+                                    ),
+                                    backgroundColor:
+                                        WidgetStateProperty.resolveWith(
+                                      (estados) => estados.contains(
                                                 WidgetState.hovered,
                                               ) ||
                                               estados.contains(
@@ -341,71 +350,72 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
                                           ? const Color(0xFFB7B7B7)
                                           : const Color(0xFFE0E0E0),
                                     ),
-                              ), // Mantiene selección y foco dentro de la paleta gris.
-                              onPressed: () {
-                                setState(() => _cliente = cliente);
-                                _menuClientes.close();
-                              },
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    '${cliente.nombre} · RUT: ${cliente.id}',
+                                  ), // Mantiene selección y foco dentro de la paleta gris.
+                                  onPressed: () {
+                                    setState(() => _cliente = cliente);
+                                    _menuClientes.close();
+                                  },
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        '${cliente.nombre} · RUT: ${cliente.id}',
+                                      ),
+                                      if (cliente.vehiculos.isNotEmpty)
+                                        Text(
+                                          'Vehículos: ${cliente.vehiculos.join(', ')}',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(fontSize: 12),
+                                        ),
+                                    ],
                                   ),
-                                  if (cliente.vehiculos.isNotEmpty)
-                                    Text(
-                                      'Vehículos: ${cliente.vehiculos.join(', ')}',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                ],
-                              ),
-                            );
+                                );
+                              },
+                            ); // Separa las opciones sin cambiar la selección.
                           },
-                        ); // Separa las opciones sin cambiar la selección.
-                      },
-                    ),
-                  ), // Finaliza los resultados.
-                ],
+                        ),
+                      ), // Finaliza los resultados.
+                    ],
+                  ),
+                ),
+              ), // Finaliza el contenido.
+            ], // Finaliza las opciones.
+            builder: (context, controlador, child) => InkWell(
+              onTap: _guardando
+                  ? null
+                  : () {
+                      if (controlador.isOpen) {
+                        controlador.close();
+                      } else {
+                        controlador.open();
+                      }
+                    },
+              child: InputDecorator(
+                decoration: const InputDecoration(
+                  labelText: 'CLIENTE',
+                  filled: true,
+                  fillColor: Color(
+                    0xFFE0E0E0,
+                  ), // Conserva el fondo gris de los selectores existentes.
+                  labelStyle: TextStyle(
+                    color: Colors.black,
+                  ), // Evita el color rosado del tema.
+                  border: OutlineInputBorder(),
+                  suffixIcon: Icon(Icons.arrow_drop_down),
+                ),
+                child: Text(
+                  _cliente == null
+                      ? 'SELECCIONAR CLIENTE'
+                      : '${_cliente!.nombre} · RUT: ${_cliente!.id}',
+                ),
               ),
-            ),
-          ), // Finaliza el contenido.
-        ], // Finaliza las opciones.
-        builder: (context, controlador, child) => InkWell(
-          onTap: _guardando
-              ? null
-              : () {
-                  if (controlador.isOpen) {
-                    controlador.close();
-                  } else {
-                    controlador.open();
-                  }
-                },
-          child: InputDecorator(
-            decoration: const InputDecoration(
-              labelText: 'CLIENTE',
-              filled: true,
-              fillColor: Color(
-                0xFFE0E0E0,
-              ), // Conserva el fondo gris de los selectores existentes.
-              labelStyle: TextStyle(
-                color: Colors.black,
-              ), // Evita el color rosado del tema.
-              border: OutlineInputBorder(),
-              suffixIcon: Icon(Icons.arrow_drop_down),
-            ),
-            child: Text(
-              _cliente == null
-                  ? 'SELECCIONAR CLIENTE'
-                  : '${_cliente!.nombre} · RUT: ${_cliente!.id}',
-            ),
-          ),
-        ), // Presenta un único campo de cliente.
-      ); // Finaliza el selector.
-    },
-  ); // Finaliza la adaptación.
+            ), // Presenta un único campo de cliente.
+          ); // Finaliza el selector.
+        },
+      ); // Finaliza la adaptación.
 
   Future<void> _cargarInventario() async {
     try {
@@ -419,6 +429,7 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
             .select(
               'codigo_producto, cod_barra, stock, tipo, precio, tipo_producto(nombre_tipo)',
             )
+            .eq('activo', true)
             .gt('stock', 0)
             .order('codigo_producto');
         productos = data
@@ -531,19 +542,19 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
                             .toList(), // Conserva el producto original detrás de cada fila.
                         celdasPersonalizadas: {
                           3: (context, fila) => CartaNavegacion.accion(
-                            tipoBoton: 'icon',
-                            tooltip: 'Añadir al carrito',
-                            child: const Icon(
-                              Icons.add_circle_outline,
-                              size: 35,
-                            ), // Conserva la acción de añadir.
-                            onPressed: () {
-                              _agregarAlCarrito(
-                                fila['registro'] as ProductoVenta,
-                              );
-                              actualizarMenu(() {});
-                            }, // Añade unidades sin cerrar el menú.
-                          ),
+                                tipoBoton: 'icon',
+                                tooltip: 'Añadir al carrito',
+                                child: const Icon(
+                                  Icons.add_circle_outline,
+                                  size: 35,
+                                ), // Conserva la acción de añadir.
+                                onPressed: () {
+                                  _agregarAlCarrito(
+                                    fila['registro'] as ProductoVenta,
+                                  );
+                                  actualizarMenu(() {});
+                                }, // Añade unidades sin cerrar el menú.
+                              ),
                         }, // Finaliza las acciones de inventario.
                       ),
                     ), // Finaliza la tabla del menú superpuesto.
@@ -566,9 +577,8 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
 
   void _agregarAlCarrito(ProductoVenta producto) {
     if (_guardando) return; // Conserva el carrito durante el registro.
-    final cantidadEnCarrito = _carrito
-        .where((item) => item.id == producto.id)
-        .length;
+    final cantidadEnCarrito =
+        _carrito.where((item) => item.id == producto.id).length;
 
     if (cantidadEnCarrito >= producto.stock) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -642,7 +652,8 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
           patente: _patenteVehiculoCtrl.text.trim().toUpperCase(),
           articulos: articulos,
           revision: widget.pendiente?.revision ?? 0,
-          fechaCreacion: widget.pendiente?.fechaCreacion, // La edición conserva el día de la venta pendiente.
+          fechaCreacion: widget.pendiente
+              ?.fechaCreacion, // La edición conserva el día de la venta pendiente.
         ),
       ); // Guarda solo en este dispositivo; no descuenta stock ni crea la venta en Supabase.
       if (!mounted) return; // Evita navegar desde una página cerrada.
@@ -692,52 +703,53 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
 
   @override
   Widget build(BuildContext context) => EstructuraPagina(
-    titulo: widget.pendiente == null
-        ? 'Registro de venta nueva'
-        : 'Edición de venta pendiente',
-    activo: 'Ventas', // Conserva el encabezado de Figma.
-    padding: const EdgeInsets.fromLTRB(
-      30,
-      16,
-      30,
-      30,
-    ), // Alinea el contenido bajo la barra existente.
-    child: SingleChildScrollView(
-      child: LayoutBuilder(
-        builder: (context, espacio) => Column(
-          crossAxisAlignment: CrossAxisAlignment
-              .stretch, // Utiliza el ancho disponible sin tocar los widgets.
-          children: [
-            if (espacio.maxWidth >= 900)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment
-                    .start, // Alinea los datos y los productos desde arriba.
-                children: [
-                  Expanded(
-                    flex: 6,
-                    child: _construirFormularioCliente(context),
-                  ), // Sitúa el formulario a la izquierda.
-                  const SizedBox(
-                    width: 40,
-                  ), // Separa las columnas como en Figma.
-                  Expanded(
-                    flex: 5,
-                    child: _construirCarritoYTotal(), // Comparte el inicio vertical con el botón de regreso.
-                  ), // Sitúa productos y total a la derecha.
-                ], // Finaliza las columnas de escritorio.
-              )
-            else ...[
-              _construirFormularioCliente(
-                context,
-              ), // Conserva los datos primero en Android.
-              const SizedBox(height: 24), // Separa las secciones en móvil.
-              _construirCarritoYTotal(), // Conserva el carrito debajo del formulario.
-            ], // Finaliza la distribución adaptable.
-          ], // Finaliza el contenido de la venta.
-        ),
-      ),
-    ), // Permite desplazar la página en Android.
-  ); // Finaliza la composición de venta.
+        titulo: widget.pendiente == null
+            ? 'Registro de venta nueva'
+            : 'Edición de venta pendiente',
+        activo: 'Ventas', // Conserva el encabezado de Figma.
+        padding: const EdgeInsets.fromLTRB(
+          30,
+          16,
+          30,
+          30,
+        ), // Alinea el contenido bajo la barra existente.
+        child: SingleChildScrollView(
+          child: LayoutBuilder(
+            builder: (context, espacio) => Column(
+              crossAxisAlignment: CrossAxisAlignment
+                  .stretch, // Utiliza el ancho disponible sin tocar los widgets.
+              children: [
+                if (espacio.maxWidth >= 900)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment
+                        .start, // Alinea los datos y los productos desde arriba.
+                    children: [
+                      Expanded(
+                        flex: 6,
+                        child: _construirFormularioCliente(context),
+                      ), // Sitúa el formulario a la izquierda.
+                      const SizedBox(
+                        width: 40,
+                      ), // Separa las columnas como en Figma.
+                      Expanded(
+                        flex: 5,
+                        child:
+                            _construirCarritoYTotal(), // Comparte el inicio vertical con el botón de regreso.
+                      ), // Sitúa productos y total a la derecha.
+                    ], // Finaliza las columnas de escritorio.
+                  )
+                else ...[
+                  _construirFormularioCliente(
+                    context,
+                  ), // Conserva los datos primero en Android.
+                  const SizedBox(height: 24), // Separa las secciones en móvil.
+                  _construirCarritoYTotal(), // Conserva el carrito debajo del formulario.
+                ], // Finaliza la distribución adaptable.
+              ], // Finaliza el contenido de la venta.
+            ),
+          ),
+        ), // Permite desplazar la página en Android.
+      ); // Finaliza la composición de venta.
 
   // ==========================================================================
   // WIDGET: FORMULARIO CLIENTE
@@ -769,7 +781,9 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
           ),
         ),
 
-        const SizedBox(height: 12), // Iguala la separación entre los botones superiores y los campos de cliente y búsqueda.
+        const SizedBox(
+            height:
+                12), // Iguala la separación entre los botones superiores y los campos de cliente y búsqueda.
 
         _selectorCliente(), // Selecciona un cliente existente o recién creado.
         const SizedBox(height: 24), // Separa el cliente de la patente.
@@ -799,8 +813,8 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
                     onPressed: _guardando
                         ? null
                         : () => setState(
-                            () => _patenteVehiculoCtrl.text = patente,
-                          ),
+                              () => _patenteVehiculoCtrl.text = patente,
+                            ),
                   ),
               ],
             ),
@@ -820,7 +834,9 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
       children: [
         // Abre la selección sobre la página y conserva los productos actuales.
         Padding(
-          padding: const EdgeInsets.only(right: margenDesplazamientoTabla), // Alinea el botón con el borde visible de la tabla en escritorio y Android.
+          padding: const EdgeInsets.only(
+              right:
+                  margenDesplazamientoTabla), // Alinea el botón con el borde visible de la tabla en escritorio y Android.
           child: CartaNavegacion.accion(
             onPressed: _guardando ? null : _abrirSeleccionProductos,
             icon: const Icon(Icons.add_circle_outline),
@@ -864,28 +880,28 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
                       .map(
                         (entrada) => <String, dynamic>{
                           'producto': entrada
-                              .value
-                              .nombre, // Permite buscar por nombre.
+                              .value.nombre, // Permite buscar por nombre.
                           'precio':
                               '\$${entrada.value.precio.toStringAsFixed(0)}', // Conserva el precio del producto.
-                          'indice': entrada.key, // Conserva la posición original incluso cuando se filtra.
+                          'indice': entrada
+                              .key, // Conserva la posición original incluso cuando se filtra.
                         },
                       )
                       .toList(), // Adapta el carrito a la tabla compartida.
                   celdasPersonalizadas: {
                     2: (context, fila) => CartaNavegacion.accion(
-                      tipoBoton: 'icon', // Conserva el icono de quitar.
-                      onPressed: _guardando
-                          ? null
-                          : () => _removerDelCarrito(
-                              fila['indice'] as int,
-                            ), // Conserva el tamaño de la acción original.
-                      child: const Icon(
-                        Icons.cancel_outlined,
-                        color: Colors.red,
-                        size: 30,
-                      ), // Quita el producto original sin confundir las filas filtradas.
-                    ), // Finaliza la acción del carrito.
+                          tipoBoton: 'icon', // Conserva el icono de quitar.
+                          onPressed: _guardando
+                              ? null
+                              : () => _removerDelCarrito(
+                                    fila['indice'] as int,
+                                  ), // Conserva el tamaño de la acción original.
+                          child: const Icon(
+                            Icons.cancel_outlined,
+                            color: Colors.red,
+                            size: 30,
+                          ), // Quita el producto original sin confundir las filas filtradas.
+                        ), // Finaliza la acción del carrito.
                   }, // Finaliza las acciones personalizadas.
                 ), // Finaliza la tabla compartida del carrito.
               ), // Reserva espacio para las filas encima del total.

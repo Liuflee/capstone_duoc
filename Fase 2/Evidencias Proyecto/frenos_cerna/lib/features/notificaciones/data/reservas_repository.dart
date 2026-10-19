@@ -43,4 +43,13 @@ class ReservasRepository {
         .select('id')
         .single(); // Cambia el estado sin eliminar la reserva y detecta cambios concurrentes.
   }
+
+  Future<void> eliminar(Object id) async {
+    await SupabaseDatabase.client
+        .from('reserva_producto')
+        .delete()
+        .eq('id', id)
+        .select('id')
+        .single(); // Las reservas son solicitudes operativas y no afectan ventas cerradas.
+  }
 }
