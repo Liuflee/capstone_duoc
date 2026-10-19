@@ -409,6 +409,7 @@ class _PaginaVentasState extends State<PaginaVentas> {
                               id: 'estado',
                               etiqueta: 'ESTADO',
                               seleccionUnica: true, // Muestra ventas cerradas o pendientes, nunca ambas a la vez.
+                              seleccionUnicaSinDefecto: !widget.mostrarHistorial, // La vista diaria comienza mostrando todos los estados.
                               opcionesFijas: const [
                                 'VENTAS CERRADAS',
                                 'VENTAS PENDIENTES',

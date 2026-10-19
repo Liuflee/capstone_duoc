@@ -590,8 +590,8 @@ void main() {
         await tester.pumpAndSettle(); // Espera el catálogo combinado.
         expect(
           tester.widget<TablaDatos>(find.byType(TablaDatos)).filas,
-          hasLength(1),
-        ); // Muestra inicialmente solo las ventas cerradas.
+          hasLength(2),
+        ); // Muestra ambos estados sin un filtro inicial.
         expect(
           find.text('AGREGAR VENTA'),
           findsNothing,
