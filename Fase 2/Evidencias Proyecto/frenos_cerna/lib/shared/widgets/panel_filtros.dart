@@ -559,7 +559,9 @@ class _ChipCategoriaState<T> extends State<_ChipCategoria<T>> {
               horizontal: 12,
             ), // Separa el texto de los bordes.
             decoration: BoxDecoration(
-              color: const Color(0xFFB74545), // Usa el mismo rojo por defecto en todos los filtros.
+              color: const Color(
+                0xFFB74545,
+              ), // Usa el mismo rojo por defecto en todos los filtros.
               borderRadius: BorderRadius.circular(
                 8,
               ), // Suaviza los bordes del chip.
