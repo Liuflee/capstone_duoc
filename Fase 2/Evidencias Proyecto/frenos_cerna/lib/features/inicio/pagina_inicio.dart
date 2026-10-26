@@ -355,15 +355,17 @@ class PaginaInicio extends StatelessWidget {
                                         },
                                       ),
 
-                                      // Tarjeta de dashboard pendiente de conectar.
+                                      // Abre el resumen del negocio.
                                       CartaNavegacion(
                                         ancho: anchoTrabajo,
                                         alto: altoTrabajo,
                                         icono: Icons.dashboard_outlined,
                                         texto: 'DASHBOARD',
 
-                                        // Conserva el dashboard sin navegación hasta implementar su vista.
-                                        alPresionar: null,
+                                        alPresionar: () => Navigator.pushNamed(
+                                          context,
+                                          '/dashboard',
+                                        ),
                                       ),
                                     ],
                                   ),

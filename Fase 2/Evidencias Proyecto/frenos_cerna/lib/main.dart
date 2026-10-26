@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/features/dashboard/pagina_dashboard.dart';
 import 'package:frenos_cerna/features/ventas/presentation/pagina_ventas_historial.dart'; // Registra el acceso independiente al historial completo.
 // Importa el registro de vehículos con vinculación de clientes.
 import 'package:frenos_cerna/features/vehiculos/pagina_crear_vehiculo.dart';
@@ -52,6 +53,7 @@ class MiAplicacion extends StatelessWidget {
       title: 'Frenos Cerna',
       // Declara las rutas nuevas sin cambiar las rutas existentes.
       routes: {
+        '/dashboard': (context) => const PaginaDashboard(),
         '/sales/history': (context) => const PaginaVentasHistorial(), // Mantiene la ruta en inglés y el archivo en español.
         '/vehicles/new': (context) => const PaginaCrearVehiculo(),
         '/profile': (context) => const PaginaPerfil(),

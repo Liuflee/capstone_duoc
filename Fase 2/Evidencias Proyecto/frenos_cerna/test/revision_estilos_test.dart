@@ -271,8 +271,8 @@ void main() {
       ); // Revisa las tarjetas reales.
       expect(
         cartas.singleWhere((carta) => carta.texto == 'DASHBOARD').alPresionar,
-        isNull,
-      ); // Deja la ruta del dashboard vacía.
+        isNotNull,
+      ); // El dashboard ya cuenta con una pantalla conectada.
       if (plataforma == TargetPlatform.android) {
         final escaneo = cartas.singleWhere(
           (carta) => carta.texto == 'ESCANEAR PRODUCTO',
