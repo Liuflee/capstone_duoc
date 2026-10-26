@@ -194,6 +194,16 @@ class MenuLateral extends StatelessWidget {
       ),
     ),
 
+    InkWell(
+      onTap: () {
+        if (activo != 'Dashboard') Navigator.pushNamed(context, '/dashboard');
+      },
+      child: _MenuItem(
+        icono: Icons.dashboard_outlined,
+        texto: 'Dashboard',
+        activo: activo == 'Dashboard',
+      ),
+    ),
     // BOTÓN PAGINAS DE PRUEBA
     InkWell(
       onTap: () {

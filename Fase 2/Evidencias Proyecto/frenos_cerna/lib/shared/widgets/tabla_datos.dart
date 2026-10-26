@@ -16,13 +16,13 @@ class TablaDatos extends StatefulWidget {
   // Adapta las tablas de detalle conservando cada celda y sus acciones originales.
   static Widget desdeCeldas({
     required List<DataColumn>
-    columns, // Recibe los encabezados de la tabla anterior.
+        columns, // Recibe los encabezados de la tabla anterior.
     required List<DataRow>
-    rows, // Recibe las celdas y callbacks de los registros originales.
+        rows, // Recibe las celdas y callbacks de los registros originales.
     WidgetStateProperty<Color?>?
-    headingRowColor, // Conserva el color de encabezado configurado.
+        headingRowColor, // Conserva el color de encabezado configurado.
     TableBorder?
-    border, // Acepta el borde de la tabla anterior para conservar su color.
+        border, // Acepta el borde de la tabla anterior para conservar su color.
     double? dataRowMaxHeight, // Conserva la altura de las filas del detalle.
   }) {
     // Genera claves independientes para cada columna de datos.
@@ -72,7 +72,9 @@ class TablaDatos extends StatefulWidget {
       } // Finaliza la comparación de celdas.
       return mayor +
           (indice == 0 ? 24 : 28) +
-          (indice == columns.length - 1 ? 24 : 28); // Conserva los márgenes y la separación de columnas originales.
+          (indice == columns.length - 1
+              ? 24
+              : 28); // Conserva los márgenes y la separación de columnas originales.
     } // Finaliza el cálculo del ancho anterior.
 
     // Adapta los registros sin perder los widgets originales.
@@ -95,12 +97,14 @@ class TablaDatos extends StatefulWidget {
             : List.generate(
                 columns.length,
                 (indice) => anchoColumna(context, indice),
-              ).reduce((anterior, siguiente) => anterior + siguiente), // Conserva el ancho natural de las tablas con desplazamiento horizontal.
+              ).reduce((anterior, siguiente) =>
+                anterior +
+                siguiente), // Conserva el ancho natural de las tablas con desplazamiento horizontal.
         height: restricciones.hasBoundedHeight
             ? restricciones.maxHeight
             : (124 + rows.length * (dataRowMaxHeight ?? 70))
-                  .clamp(260.0, 520.0)
-                  .toDouble(), // Conserva el ancho del padre y permite desplazar las filas.
+                .clamp(260.0, 520.0)
+                .toDouble(), // Conserva el ancho del padre y permite desplazar las filas.
         child: TablaDatos(
           nombresColumnas: [
             for (int indice = 0; indice < columns.length; indice++)
@@ -120,29 +124,21 @@ class TablaDatos extends StatefulWidget {
             (indice) => anchoColumna(context, indice),
           ), // Conserva las proporciones naturales dentro del ancho original.
           filas: registros, // Presenta los registros adaptados.
-          altoFila:
-              dataRowMaxHeight ??
+          altoFila: dataRowMaxHeight ??
               70, // Conserva el alto configurado en el detalle.
-          colorEncabezado:
-              headingRowColor?.resolve({}) ??
+          colorEncabezado: headingRowColor?.resolve({}) ??
               const Color(
                 0xFFEF6767,
               ), // Conserva el color de la tabla anterior.
-          colorBorde:
-              border?.top.color ??
+          colorBorde: border?.top.color ??
               Colors.black, // Conserva el color del borde original.
           celdasPersonalizadas: {
-            for (
-              int indice = 0;
-              indice < columns.length;
-              indice++
-            ) // Recupera el contenido original de cada columna.
+            for (int indice = 0;
+                indice < columns.length;
+                indice++) // Recupera el contenido original de cada columna.
               indice: (context, registro) {
-                final celda =
-                    (registro['_celdas']
-                        as List<
-                          DataCell
-                        >)[indice]; // Conserva la celda del registro filtrado.
+                final celda = (registro['_celdas'] as List<DataCell>)[
+                    indice]; // Conserva la celda del registro filtrado.
                 return celda.onTap == null
                     ? celda.child
                     : InkWell(
@@ -208,17 +204,17 @@ class TablaDatos extends StatefulWidget {
     this.colorEncabezado = const Color(0xFFEF6767),
     this.colorBorde = Colors.black,
     this.mensajeSinDatos = 'No hay registros para mostrar',
-  }) : assert(nombresColumnas.length >= 1),
-       assert(camposColumnas.length == nombresColumnas.length),
-       assert(anchosColumnas.length == nombresColumnas.length),
-       assert(
-         coloresEncabezados == null ||
-             coloresEncabezados.length == nombresColumnas.length,
-       ),
-       assert(
-         coloresTextoEncabezados == null ||
-             coloresTextoEncabezados.length == nombresColumnas.length,
-       );
+  })  : assert(nombresColumnas.length >= 1),
+        assert(camposColumnas.length == nombresColumnas.length),
+        assert(anchosColumnas.length == nombresColumnas.length),
+        assert(
+          coloresEncabezados == null ||
+              coloresEncabezados.length == nombresColumnas.length,
+        ),
+        assert(
+          coloresTextoEncabezados == null ||
+              coloresTextoEncabezados.length == nombresColumnas.length,
+        );
 
   @override
   State<TablaDatos> createState() => _TablaDatosState();
@@ -230,12 +226,14 @@ class _TablaDatosState extends State<TablaDatos> {
 
   // Controla el desplazamiento vertical de las filas.
   final ScrollController _controladorScroll = ScrollController();
+  final ScrollController _controladorHorizontal = ScrollController();
 
   @override
   void dispose() {
     _buscador.dispose(); // Libera el controlador de búsqueda de la tabla.
     // Libera el controlador cuando se elimina la tabla de la pantalla.
     _controladorScroll.dispose();
+    _controladorHorizontal.dispose();
     super.dispose();
   }
 
@@ -260,8 +258,9 @@ class _TablaDatosState extends State<TablaDatos> {
 
         // Se reserva un espacio a la derecha para la barra de scroll.
         // Así el desplazamiento no tapa el contenido de la última columna.
-        const double espacioScroll = margenDesplazamientoTabla; // Comparte el margen con los filtros externos.
-        final double anchoTabla = (restricciones.maxWidth - espacioScroll)
+        const double espacioScroll =
+            margenDesplazamientoTabla; // Comparte el margen con los filtros externos.
+        final double anchoDisponible = (restricciones.maxWidth - espacioScroll)
             .clamp(0.0, double.infinity)
             .toDouble();
 
@@ -270,21 +269,25 @@ class _TablaDatosState extends State<TablaDatos> {
           (anterior, siguiente) => anterior + siguiente,
         );
 
-        // Ajusta TODAS las columnas para ocupar el ancho disponible.
-        // No se necesita desplazar la tabla horizontalmente.
-        final List<double> anchosCalculados = [];
-        double anchoAsignado = 0;
+        // Conserva un ancho legible y espacio táctil cuando las columnas no caben.
+        final escalaTexto = MediaQuery.textScalerOf(context).scale(14) / 14;
+        final anchosMinimos = List.generate(widget.anchosColumnas.length, (i) {
+          final esAccion = widget.camposColumnas[i].isEmpty;
+          return (esAccion ? 88.0 : 140.0) * escalaTexto;
+        });
+        final anchoMinimo = anchosMinimos.reduce((a, b) => a + b);
+        final anchosAdaptados = List.generate(anchosMinimos.length, (i) {
+          final proporcional =
+              anchoDisponible * widget.anchosColumnas[i] / totalAnchos;
+          return anchoDisponible < anchoMinimo
+              ? anchosMinimos[i]
+              : proporcional;
+        });
+        final anchoTabla = anchosAdaptados.reduce((a, b) => a + b);
+        final desplazarHorizontalmente = anchoTabla > anchoDisponible;
 
-        for (int indice = 0; indice < widget.anchosColumnas.length; indice++) {
-          final bool ultimaColumna = indice == widget.anchosColumnas.length - 1;
-
-          final double anchoColumna = ultimaColumna
-              ? anchoTabla - anchoAsignado
-              : anchoTabla * widget.anchosColumnas[indice] / totalAnchos;
-
-          anchosCalculados.add(anchoColumna);
-          anchoAsignado += anchoColumna;
-        }
+        // Mantiene las proporciones originales en el espacio calculado.
+        final anchosCalculados = anchosAdaptados;
 
         // Normaliza el texto de búsqueda sin distinguir tildes ni mayúsculas.
         final consulta = normalizarFiltro(_buscador.text.trim());
@@ -295,19 +298,19 @@ class _TablaDatosState extends State<TablaDatos> {
         final filasVisibles = !widget.mostrarControles || consulta.isEmpty
             ? widget.filas
             : widget.filas
-                  .where(
-                    (fila) => camposBusqueda.any(
-                      (campo) =>
-                          normalizarFiltro(fila[campo]?.toString() ?? '')
-                              .contains(consulta),
-                    ),
-                  )
-                  .toList(); // Filtra los datos mostrados sin modificar los originales.
+                .where(
+                  (fila) => camposBusqueda.any(
+                    (campo) => normalizarFiltro(fila[campo]?.toString() ?? '')
+                        .contains(consulta),
+                  ),
+                )
+                .toList(); // Filtra los datos mostrados sin modificar los originales.
 
         // El encabezado queda fuera del ListView para permanecer fijo.
         return Column(
           children: [
-            if (widget.mostrarControles) // Mantiene el buscador fuera del espacio de la cabecera y las filas.
+            if (widget
+                .mostrarControles) // Mantiene el buscador fuera del espacio de la cabecera y las filas.
               Padding(
                 padding: const EdgeInsets.only(
                   right: espacioScroll,
@@ -322,39 +325,66 @@ class _TablaDatosState extends State<TablaDatos> {
                   ), // Actualiza las filas mientras se escribe.
                 ), // Finaliza el buscador reutilizable.
               ), // Finaliza la zona independiente de controles.
-            // Encabezado de las columnas.
-            Padding(
-              padding: const EdgeInsets.only(right: espacioScroll),
-              child: _construirEncabezado(anchosCalculados),
-            ),
-
-            // Las filas utilizan solamente la altura restante.
+            if (desplazarHorizontalmente)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 8),
+                child: Text('Desliza hacia los lados para ver más columnas'),
+              ),
             Expanded(
-              child: filasVisibles.isEmpty
-                  ? Center(child: Text(widget.mensajeSinDatos))
-                  : Scrollbar(
-                      controller: _controladorScroll,
-                      thumbVisibility: true,
-                      interactive: true,
-                      child: ListView.builder(
-                        controller: _controladorScroll,
-                        itemCount: filasVisibles.length, // Cuenta únicamente los registros que cumplen la búsqueda.
-                        itemBuilder: (context, indiceFila) {
-                          // Genera solamente las filas que se necesitan mostrar.
-                          return Padding(
-                            padding: const EdgeInsets.only(
-                              right: espacioScroll,
-                            ),
-                            child: _construirFila(
-                              context,
-                              filasVisibles[indiceFila], // Conserva las acciones del registro original filtrado.
-                              indiceFila,
-                              anchosCalculados,
-                            ),
-                          );
-                        },
-                      ),
+              child: Scrollbar(
+                controller: _controladorHorizontal,
+                thumbVisibility: desplazarHorizontalmente,
+                notificationPredicate: (notification) =>
+                    notification.metrics.axis == Axis.horizontal,
+                child: SingleChildScrollView(
+                  controller: _controladorHorizontal,
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: anchoTabla + espacioScroll,
+                    height: double.infinity,
+                    child: Column(
+                      children: [
+                        // El encabezado y las filas comparten el desplazamiento horizontal.
+                        Padding(
+                          padding: const EdgeInsets.only(right: espacioScroll),
+                          child: _construirEncabezado(anchosCalculados),
+                        ),
+
+                        // Las filas utilizan solamente la altura restante.
+                        Expanded(
+                          child: filasVisibles.isEmpty
+                              ? Center(child: Text(widget.mensajeSinDatos))
+                              : Scrollbar(
+                                  controller: _controladorScroll,
+                                  thumbVisibility: true,
+                                  interactive: true,
+                                  child: ListView.builder(
+                                    controller: _controladorScroll,
+                                    itemCount: filasVisibles
+                                        .length, // Cuenta únicamente los registros que cumplen la búsqueda.
+                                    itemBuilder: (context, indiceFila) {
+                                      // Genera solamente las filas que se necesitan mostrar.
+                                      return Padding(
+                                        padding: const EdgeInsets.only(
+                                          right: espacioScroll,
+                                        ),
+                                        child: _construirFila(
+                                          context,
+                                          filasVisibles[
+                                              indiceFila], // Conserva las acciones del registro original filtrado.
+                                          indiceFila,
+                                          anchosCalculados,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                        ),
+                      ],
                     ),
+                  ),
+                ),
+              ),
             ),
           ],
         );
@@ -406,9 +436,8 @@ class _TablaDatosState extends State<TablaDatos> {
     List<double> anchos,
   ) {
     // Alterna el color gris para diferenciar visualmente las filas.
-    final Color? colorFila = indiceFila.isEven
-        ? Colors.grey[200]
-        : Colors.grey[300];
+    final Color? colorFila =
+        indiceFila.isEven ? Colors.grey[200] : Colors.grey[300];
 
     return Row(
       children: List.generate(widget.nombresColumnas.length, (indice) {
@@ -418,9 +447,8 @@ class _TablaDatosState extends State<TablaDatos> {
 
         // Obtiene el valor de la base de datos mediante el nombre del campo.
         final String campo = widget.camposColumnas[indice];
-        final String valor = campo.isEmpty
-            ? ''
-            : (fila[campo]?.toString() ?? '');
+        final String valor =
+            campo.isEmpty ? '' : (fila[campo]?.toString() ?? '');
 
         return Container(
           width: anchos[indice],
@@ -454,9 +482,8 @@ class _TablaDatosState extends State<TablaDatos> {
 
     return Border(
       left: linea,
-      right: indice == widget.nombresColumnas.length - 1
-          ? linea
-          : BorderSide.none,
+      right:
+          indice == widget.nombresColumnas.length - 1 ? linea : BorderSide.none,
       top: esEncabezado ? linea : BorderSide.none,
       bottom: linea,
     );

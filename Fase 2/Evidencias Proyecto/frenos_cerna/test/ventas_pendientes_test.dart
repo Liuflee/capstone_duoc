@@ -20,33 +20,37 @@ VentaPendiente borrador({
   String id = 'local-1',
   int revision = 0,
   int cantidad = 2,
-}) => VentaPendiente(
-  id: id,
-  rutCliente: '123',
-  nombreCliente: 'Cliente pendiente',
-  fonoCliente: '456',
-  patente: 'ABCD12',
-  revision: revision,
-  articulos: [
-    ArticuloVentaPendiente(
-      codigo: '10',
-      nombre: 'Freno',
-      categoria: 'Frenos',
-      precio: 1000,
-      cantidad: cantidad,
-      stock: 5,
-    ),
-  ],
-); // Conserva un borrador repetible.
+}) =>
+    VentaPendiente(
+      id: id,
+      rutCliente: '123',
+      nombreCliente: 'Cliente pendiente',
+      fonoCliente: '456',
+      patente: 'ABCD12',
+      revision: revision,
+      articulos: [
+        ArticuloVentaPendiente(
+          codigo: '10',
+          nombre: 'Freno',
+          categoria: 'Frenos',
+          precio: 1000,
+          cantidad: cantidad,
+          stock: 5,
+        ),
+      ],
+    ); // Conserva un borrador repetible.
 
 void main() {
   // Inicia la verificación del ciclo de venta.
-  TestWidgetsFlutterBinding.ensureInitialized(); // Habilita el almacenamiento simulado.
+  TestWidgetsFlutterBinding
+      .ensureInitialized(); // Habilita el almacenamiento simulado.
   setUp(
     () => SharedPreferences.setMockInitialValues({}),
   ); // Aísla el catálogo de cada prueba.
 
-  test('recuperar tras revisión conserva la venta y permite un nuevo intento explícito', () async {
+  test(
+      'recuperar tras revisión conserva la venta y permite un nuevo intento explícito',
+      () async {
     var fallar = true; // Simula una respuesta incierta inicial.
     final repositorio = VentasPendientesRepository(
       clave: 'recuperar',
@@ -133,11 +137,14 @@ void main() {
     expect(envios, 1); // Evita crear la misma venta dos veces.
   }); // Finaliza la protección del intermediario.
 
-  test('si falla la persistencia posterior al pago conserva el comprobante y no repite la transacción', () async {
+  test(
+      'si falla la persistencia posterior al pago conserva el comprobante y no repite la transacción',
+      () async {
     // Protege la confirmación remota ante errores locales.
     var accesos = 0; // Identifica la escritura posterior al pago.
     var envios = 0; // Cuenta transacciones remotas.
-    final almacen = await SharedPreferences.getInstance(); // Conserva un almacenamiento controlado.
+    final almacen = await SharedPreferences
+        .getInstance(); // Conserva un almacenamiento controlado.
     final repositorio = VentasPendientesRepository(
       clave: 'prueba',
       preferencias: () async {
@@ -489,7 +496,9 @@ void main() {
     },
   ); // Finaliza la recuperación de errores.
 
-  test('una desconexión conserva el envío y bloquea duplicados incluso al reiniciar', () async {
+  test(
+      'una desconexión conserva el envío y bloquea duplicados incluso al reiniciar',
+      () async {
     // Protege ventas cuyo resultado remoto se desconoce.
     var envios = 0; // Cuenta intentos de confirmación.
     final repositorio = VentasPendientesRepository(
@@ -545,7 +554,8 @@ void main() {
         await VentasPendientesRepository(clave: 'usuario-b').obtenerTodas(),
         isEmpty,
       ); // No muestra borradores de otra cuenta.
-      final almacen = await SharedPreferences.getInstance(); // Inspecciona la persistencia sin credenciales.
+      final almacen = await SharedPreferences
+          .getInstance(); // Inspecciona la persistencia sin credenciales.
       expect(
         (jsonDecode(almacen.getString('usuario-a')!) as List).every(
           (fila) => fila['estado'] == 'pendiente',
@@ -572,7 +582,8 @@ void main() {
         final cerrada = VentaRegistro(
           id: '99',
           clienteNombre: 'Cliente cerrado',
-          fechaRegistro: DateTime.now(), // Sitúa la venta controlada en el día de la prueba.
+          fechaRegistro: DateTime
+              .now(), // Sitúa la venta controlada en el día de la prueba.
           vehiculoNombre: 'Sin vehículo',
           productosResumen: 'Otro producto',
           total: 3000,
@@ -619,6 +630,8 @@ void main() {
           Offset(tamano.width - 5, tamano.height - 5),
         ); // Cierra fuera del menú sin cambiar el filtro.
         await tester.pumpAndSettle(); // Espera el cierre.
+        await tester.ensureVisible(find.byTooltip('Ver venta'));
+        await tester.pumpAndSettle();
         await tester.tap(
           find.byTooltip('Ver venta'),
         ); // Abre el detalle mediante la lupa.
@@ -663,6 +676,8 @@ void main() {
           Offset(tamano.width - 5, tamano.height - 5),
         ); // Cierra el filtro pulsando fuera.
         await tester.pumpAndSettle(); // Espera el cierre.
+        await tester.ensureVisible(find.byTooltip('Ver venta'));
+        await tester.pumpAndSettle();
         await tester.tap(find.byTooltip('Ver venta')); // Abre la venta cerrada.
         await tester.pumpAndSettle(); // Espera el detalle del historial.
         expect(
