@@ -14,10 +14,9 @@ import 'package:frenos_cerna/shared/widgets/menu_lateral.dart'; // Comprueba el 
 import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart'; // Compara acciones e iconos de tabla.
 
 class ReservasPrueba extends ReservasRepository {
-  final filas =
-      <
-        Map<String, dynamic>
-      >[]; // Conserva los registros entre vistas para simular Supabase.
+  final filas = <
+      Map<String,
+          dynamic>>[]; // Conserva los registros entre vistas para simular Supabase.
   @override
   Future<List<Map<String, dynamic>>> listar({required bool listas}) async =>
       filas
@@ -90,6 +89,8 @@ void main() {
         await tester.pumpAndSettle(); // Abre el selector sin perder el código.
         await tester.tap(find.text('CLIENTE EXISTENTE'));
         await tester.pumpAndSettle(); // Selecciona el flujo de búsqueda.
+        await tester.ensureVisible(find.byTooltip('Vincular este cliente'));
+        await tester.pumpAndSettle();
         await tester.tap(find.byTooltip('Vincular este cliente'));
         await tester.pumpAndSettle(); // Vincula el destinatario de la reserva.
         await tester.tap(find.text('RESERVAR'));
@@ -102,6 +103,8 @@ void main() {
               .single['codigo_producto'],
           'SP0-01223',
         ); // Muestra la reserva recién guardada.
+        await tester.ensureVisible(find.byTooltip('Marcar reserva lista'));
+        await tester.pumpAndSettle();
         await tester.tap(find.byTooltip('Marcar reserva lista'));
         await tester.pumpAndSettle();
         await tester.tap(find.text('CONFIRMAR'));
@@ -167,9 +170,8 @@ void main() {
       );
       await tester
           .pumpAndSettle(); // Completa la carga de las opciones existentes.
-      final campos = tester
-          .widgetList<TextFormField>(find.byType(TextFormField))
-          .toList();
+      final campos =
+          tester.widgetList<TextFormField>(find.byType(TextFormField)).toList();
       expect(campos.map((campo) => campo.controller!.text), [
         'SP0-01223',
         '14000',
@@ -251,7 +253,8 @@ void main() {
     testWidgets('Inicio ofrece escaneo o datos según $plataforma', (
       tester,
     ) async {
-      tester.view.physicalSize = const Size(1440, 1000); // Mantiene el tamaño para verificar que la decisión dependa de la plataforma.
+      tester.view.physicalSize = const Size(1440,
+          1000); // Mantiene el tamaño para verificar que la decisión dependa de la plataforma.
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
@@ -438,18 +441,16 @@ void main() {
         tester.widget<Container>(marca).color,
         const Color(0xFFE0E0E0),
       ); // Conserva el mismo fondo gris que la barra superior.
-      final decoracion =
-          tester
-                  .widget<DecoratedBox>(
-                    find
-                        .descendant(
-                          of: find.byType(MenuLateral),
-                          matching: find.byType(DecoratedBox),
-                        )
-                        .first,
-                  )
-                  .decoration
-              as BoxDecoration; // Obtiene la superficie compartida.
+      final decoracion = tester
+          .widget<DecoratedBox>(
+            find
+                .descendant(
+                  of: find.byType(MenuLateral),
+                  matching: find.byType(DecoratedBox),
+                )
+                .first,
+          )
+          .decoration as BoxDecoration; // Obtiene la superficie compartida.
       expect(
         decoracion.color,
         const Color(0xFFD6D6D6),
