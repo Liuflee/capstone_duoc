@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 // Importa los widgets visuales de Flutter.
 import 'package:flutter/material.dart';
 // Reutiliza la barra superior existente sin cambiar su diseño.
@@ -25,8 +26,8 @@ class EstructuraPagina extends StatelessWidget {
       context,
     ); // Obtiene el tamaño disponible.
     return Scaffold(
-      backgroundColor:
-          Colors.white, // Conserva el fondo de los diseños de Figma.
+      backgroundColor: PaletaTaller.de(context)
+          .fondo, // Conserva el fondo de los diseños de Figma.
       drawer: Drawer(
         child: MenuLateral(activo: activo),
       ), // Conserva la navegación en Android.

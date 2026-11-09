@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:flutter/material.dart';
 // Reutiliza el buscador del panel de filtros reutilizable.
 import 'package:frenos_cerna/shared/widgets/panel_filtros.dart';
@@ -16,13 +17,13 @@ class TablaDatos extends StatefulWidget {
   // Adapta las tablas de detalle conservando cada celda y sus acciones originales.
   static Widget desdeCeldas({
     required List<DataColumn>
-        columns, // Recibe los encabezados de la tabla anterior.
+    columns, // Recibe los encabezados de la tabla anterior.
     required List<DataRow>
-        rows, // Recibe las celdas y callbacks de los registros originales.
+    rows, // Recibe las celdas y callbacks de los registros originales.
     WidgetStateProperty<Color?>?
-        headingRowColor, // Conserva el color de encabezado configurado.
+    headingRowColor, // Conserva el color de encabezado configurado.
     TableBorder?
-        border, // Acepta el borde de la tabla anterior para conservar su color.
+    border, // Acepta el borde de la tabla anterior para conservar su color.
     double? dataRowMaxHeight, // Conserva la altura de las filas del detalle.
   }) {
     // Genera claves independientes para cada columna de datos.
@@ -72,9 +73,7 @@ class TablaDatos extends StatefulWidget {
       } // Finaliza la comparación de celdas.
       return mayor +
           (indice == 0 ? 24 : 28) +
-          (indice == columns.length - 1
-              ? 24
-              : 28); // Conserva los márgenes y la separación de columnas originales.
+          (indice == columns.length - 1 ? 24 : 28); // Conserva los márgenes y la separación de columnas originales.
     } // Finaliza el cálculo del ancho anterior.
 
     // Adapta los registros sin perder los widgets originales.
@@ -97,14 +96,12 @@ class TablaDatos extends StatefulWidget {
             : List.generate(
                 columns.length,
                 (indice) => anchoColumna(context, indice),
-              ).reduce((anterior, siguiente) =>
-                anterior +
-                siguiente), // Conserva el ancho natural de las tablas con desplazamiento horizontal.
+              ).reduce((anterior, siguiente) => anterior + siguiente), // Conserva el ancho natural de las tablas con desplazamiento horizontal.
         height: restricciones.hasBoundedHeight
             ? restricciones.maxHeight
             : (124 + rows.length * (dataRowMaxHeight ?? 70))
-                .clamp(260.0, 520.0)
-                .toDouble(), // Conserva el ancho del padre y permite desplazar las filas.
+                  .clamp(260.0, 520.0)
+                  .toDouble(), // Conserva el ancho del padre y permite desplazar las filas.
         child: TablaDatos(
           nombresColumnas: [
             for (int indice = 0; indice < columns.length; indice++)
@@ -124,21 +121,31 @@ class TablaDatos extends StatefulWidget {
             (indice) => anchoColumna(context, indice),
           ), // Conserva las proporciones naturales dentro del ancho original.
           filas: registros, // Presenta los registros adaptados.
-          altoFila: dataRowMaxHeight ??
+          altoFila:
+              dataRowMaxHeight ??
               70, // Conserva el alto configurado en el detalle.
-          colorEncabezado: headingRowColor?.resolve({}) ??
-              const Color(
-                0xFFEF6767,
+          colorEncabezado:
+              headingRowColor?.resolve({}) ??
+              PaletaTaller.de(context).adaptar(
+                Color(0xFFEF6767),
               ), // Conserva el color de la tabla anterior.
-          colorBorde: border?.top.color ??
-              Colors.black, // Conserva el color del borde original.
+          colorBorde:
+              border?.top.color ??
+              PaletaTaller.de(
+                context,
+              ).adaptar(Colors.black), // Conserva el color del borde original.
           celdasPersonalizadas: {
-            for (int indice = 0;
-                indice < columns.length;
-                indice++) // Recupera el contenido original de cada columna.
+            for (
+              int indice = 0;
+              indice < columns.length;
+              indice++
+            ) // Recupera el contenido original de cada columna.
               indice: (context, registro) {
-                final celda = (registro['_celdas'] as List<DataCell>)[
-                    indice]; // Conserva la celda del registro filtrado.
+                final celda =
+                    (registro['_celdas']
+                        as List<
+                          DataCell
+                        >)[indice]; // Conserva la celda del registro filtrado.
                 return celda.onTap == null
                     ? celda.child
                     : InkWell(
@@ -204,17 +211,17 @@ class TablaDatos extends StatefulWidget {
     this.colorEncabezado = const Color(0xFFEF6767),
     this.colorBorde = Colors.black,
     this.mensajeSinDatos = 'No hay registros para mostrar',
-  })  : assert(nombresColumnas.length >= 1),
-        assert(camposColumnas.length == nombresColumnas.length),
-        assert(anchosColumnas.length == nombresColumnas.length),
-        assert(
-          coloresEncabezados == null ||
-              coloresEncabezados.length == nombresColumnas.length,
-        ),
-        assert(
-          coloresTextoEncabezados == null ||
-              coloresTextoEncabezados.length == nombresColumnas.length,
-        );
+  }) : assert(nombresColumnas.length >= 1),
+       assert(camposColumnas.length == nombresColumnas.length),
+       assert(anchosColumnas.length == nombresColumnas.length),
+       assert(
+         coloresEncabezados == null ||
+             coloresEncabezados.length == nombresColumnas.length,
+       ),
+       assert(
+         coloresTextoEncabezados == null ||
+             coloresTextoEncabezados.length == nombresColumnas.length,
+       );
 
   @override
   State<TablaDatos> createState() => _TablaDatosState();
@@ -258,8 +265,7 @@ class _TablaDatosState extends State<TablaDatos> {
 
         // Se reserva un espacio a la derecha para la barra de scroll.
         // Así el desplazamiento no tapa el contenido de la última columna.
-        const double espacioScroll =
-            margenDesplazamientoTabla; // Comparte el margen con los filtros externos.
+        const double espacioScroll = margenDesplazamientoTabla; // Comparte el margen con los filtros externos.
         final double anchoDisponible = (restricciones.maxWidth - espacioScroll)
             .clamp(0.0, double.infinity)
             .toDouble();
@@ -298,19 +304,19 @@ class _TablaDatosState extends State<TablaDatos> {
         final filasVisibles = !widget.mostrarControles || consulta.isEmpty
             ? widget.filas
             : widget.filas
-                .where(
-                  (fila) => camposBusqueda.any(
-                    (campo) => normalizarFiltro(fila[campo]?.toString() ?? '')
-                        .contains(consulta),
-                  ),
-                )
-                .toList(); // Filtra los datos mostrados sin modificar los originales.
+                  .where(
+                    (fila) => camposBusqueda.any(
+                      (campo) =>
+                          normalizarFiltro(fila[campo]?.toString() ?? '')
+                              .contains(consulta),
+                    ),
+                  )
+                  .toList(); // Filtra los datos mostrados sin modificar los originales.
 
         // El encabezado queda fuera del ListView para permanecer fijo.
         return Column(
           children: [
-            if (widget
-                .mostrarControles) // Mantiene el buscador fuera del espacio de la cabecera y las filas.
+            if (widget.mostrarControles) // Mantiene el buscador fuera del espacio de la cabecera y las filas.
               Padding(
                 padding: const EdgeInsets.only(
                   right: espacioScroll,
@@ -360,8 +366,7 @@ class _TablaDatosState extends State<TablaDatos> {
                                   interactive: true,
                                   child: ListView.builder(
                                     controller: _controladorScroll,
-                                    itemCount: filasVisibles
-                                        .length, // Cuenta únicamente los registros que cumplen la búsqueda.
+                                    itemCount: filasVisibles.length, // Cuenta únicamente los registros que cumplen la búsqueda.
                                     itemBuilder: (context, indiceFila) {
                                       // Genera solamente las filas que se necesitan mostrar.
                                       return Padding(
@@ -370,8 +375,7 @@ class _TablaDatosState extends State<TablaDatos> {
                                         ),
                                         child: _construirFila(
                                           context,
-                                          filasVisibles[
-                                              indiceFila], // Conserva las acciones del registro original filtrado.
+                                          filasVisibles[indiceFila], // Conserva las acciones del registro original filtrado.
                                           indiceFila,
                                           anchosCalculados,
                                         ),
@@ -403,7 +407,9 @@ class _TablaDatosState extends State<TablaDatos> {
           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
           decoration: BoxDecoration(
             // Color propio de la columna o, si no hay, el color general.
-            color: widget.coloresEncabezados?[indice] ?? widget.colorEncabezado,
+            color: PaletaTaller.de(context).oscura
+                ? PaletaTaller.de(context).tabla
+                : widget.coloresEncabezados?[indice] ?? widget.colorEncabezado,
             border: _bordeCelda(indice, esEncabezado: true),
           ),
 
@@ -417,7 +423,10 @@ class _TablaDatosState extends State<TablaDatos> {
               maxLines: 1,
               softWrap: false,
               style: TextStyle(
-                color: widget.coloresTextoEncabezados?[indice] ?? Colors.black,
+                color: PaletaTaller.de(context).oscura
+                    ? PaletaTaller.de(context).texto
+                    : widget.coloresTextoEncabezados?[indice] ??
+                          PaletaTaller.de(context).adaptar(Colors.black),
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
               ),
@@ -436,8 +445,11 @@ class _TablaDatosState extends State<TablaDatos> {
     List<double> anchos,
   ) {
     // Alterna el color gris para diferenciar visualmente las filas.
-    final Color? colorFila =
-        indiceFila.isEven ? Colors.grey[200] : Colors.grey[300];
+    final Color colorFila = indiceFila.isEven
+        ? (PaletaTaller.de(context).oscura
+              ? PaletaTaller.de(context).fondo
+              : Colors.grey[200]!)
+        : PaletaTaller.de(context).adaptar(Colors.grey[300]!);
 
     return Row(
       children: List.generate(widget.nombresColumnas.length, (indice) {
@@ -447,8 +459,9 @@ class _TablaDatosState extends State<TablaDatos> {
 
         // Obtiene el valor de la base de datos mediante el nombre del campo.
         final String campo = widget.camposColumnas[indice];
-        final String valor =
-            campo.isEmpty ? '' : (fila[campo]?.toString() ?? '');
+        final String valor = campo.isEmpty
+            ? ''
+            : (fila[campo]?.toString() ?? '');
 
         return Container(
           width: anchos[indice],
@@ -478,12 +491,18 @@ class _TablaDatosState extends State<TablaDatos> {
 
   // Mantiene las líneas negras entre columnas y filas.
   Border _bordeCelda(int indice, {bool esEncabezado = false}) {
-    final BorderSide linea = BorderSide(color: widget.colorBorde, width: 1);
+    final BorderSide linea = BorderSide(
+      color: PaletaTaller.de(context).oscura
+          ? PaletaTaller.de(context).borde
+          : widget.colorBorde,
+      width: 1,
+    );
 
     return Border(
       left: linea,
-      right:
-          indice == widget.nombresColumnas.length - 1 ? linea : BorderSide.none,
+      right: indice == widget.nombresColumnas.length - 1
+          ? linea
+          : BorderSide.none,
       top: esEncabezado ? linea : BorderSide.none,
       bottom: linea,
     );

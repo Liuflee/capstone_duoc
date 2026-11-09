@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/shared/widgets/panel_filtros.dart'; // Comparte el margen de la barra de desplazamiento con la tabla.
 import 'package:frenos_cerna/features/ventas/data/ventas_pendientes_repository.dart'; // Conserva las ventas antes de confirmar el pago.
 // Espera antes de consultar un RUT ingresado.
@@ -179,8 +180,10 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
       return MenuAnchor(
         // Superpone las opciones sobre la página.
         controller: _menuClientes, // Controla el desplegable.
-        style: const MenuStyle(
-          backgroundColor: WidgetStatePropertyAll(Color(0xFFE0E0E0)),
+        style: MenuStyle(
+          backgroundColor: WidgetStatePropertyAll(
+            PaletaTaller.de(context).adaptar(Color(0xFFE0E0E0)),
+          ),
           surfaceTintColor: WidgetStatePropertyAll(Colors.transparent),
         ), // Conserva el gris del buscador y elimina el tinte rosado.
         menuChildren: [
@@ -200,10 +203,11 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
                         height: 56,
                         child: FormularioDatos.campo(
                           controller: _busquedaCliente,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             hintText: 'Nombre o RUT',
                             filled: true,
-                            fillColor: Colors.white,
+                            fillColor: PaletaTaller.de(context)
+                                .adaptar(Colors.white),
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: 16,
@@ -222,15 +226,18 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
                           label: const Text('CREAR CLIENTE'),
                           conservarEstiloOriginal: true,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFBDBDBD),
-                            foregroundColor: Colors.black,
+                            backgroundColor: PaletaTaller.de(context)
+                                .adaptar(Color(0xFFBDBDBD)),
+                            foregroundColor: PaletaTaller.de(context)
+                                .adaptar(Colors.black, tinta: true),
                             elevation: 0,
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             textStyle: Theme.of(context).textTheme.labelLarge
                                 ?.copyWith(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.black,
+                                  color: PaletaTaller.de(context)
+                                      .adaptar(Colors.black),
                                 ),
                           ),
                         ),
@@ -323,8 +330,9 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
                             final cliente = resultados[index];
                             return MenuItemButton(
                               style: ButtonStyle(
-                                foregroundColor: const WidgetStatePropertyAll(
-                                  Colors.black,
+                                foregroundColor: WidgetStatePropertyAll(
+                                  PaletaTaller.de(context)
+                                      .adaptar(Colors.black),
                                 ),
                                 overlayColor: const WidgetStatePropertyAll(
                                   Color(0x22000000),
@@ -338,8 +346,10 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
                                               estados.contains(
                                                 WidgetState.focused,
                                               )
-                                          ? const Color(0xFFB7B7B7)
-                                          : const Color(0xFFE0E0E0),
+                                          ? PaletaTaller.de(context)
+                                                .adaptar(Color(0xFFB7B7B7))
+                                          : PaletaTaller.de(context)
+                                                .adaptar(Color(0xFFE0E0E0)),
                                     ),
                               ), // Mantiene selección y foco dentro de la paleta gris.
                               onPressed: () {
@@ -384,14 +394,15 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
                   }
                 },
           child: InputDecorator(
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'CLIENTE',
               filled: true,
-              fillColor: Color(
-                0xFFE0E0E0,
+              fillColor: PaletaTaller.de(context).adaptar(
+                Color(0xFFE0E0E0),
               ), // Conserva el fondo gris de los selectores existentes.
               labelStyle: TextStyle(
-                color: Colors.black,
+                color: PaletaTaller.de(context)
+                    .adaptar(Colors.black, tinta: true),
               ), // Evita el color rosado del tema.
               border: OutlineInputBorder(),
               suffixIcon: Icon(Icons.arrow_drop_down),
@@ -691,7 +702,8 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
   // ==========================================================================
 
   @override
-  Widget build(BuildContext context) => EstructuraPagina(
+  Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
+  Widget _pagina(BuildContext context) => EstructuraPagina(
     titulo: widget.pendiente == null
         ? 'Registro de venta nueva'
         : 'Edición de venta pendiente',
@@ -752,19 +764,24 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
           tipoBoton: 'elevated',
 
           onPressed: _guardando ? null : () => Navigator.pop(context),
-          icon: const Icon(Icons.keyboard_return, color: Colors.black),
+          icon: Icon(
+            Icons.keyboard_return,
+            color: PaletaTaller.de(context).adaptar(Colors.black, tinta: true),
+          ),
           label: Text(
             widget.pendiente == null
                 ? 'VOLVER A VENTAS'
                 : 'VOLVER A VENTA PENDIENTE',
             style: TextStyle(
-              color: Colors.black,
+              color: PaletaTaller.de(context)
+                  .adaptar(Colors.black, tinta: true),
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFB7B7B7),
+            backgroundColor: PaletaTaller.de(context)
+                .adaptar(Color(0xFFB7B7B7)),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           ),
         ),
@@ -826,8 +843,10 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
             icon: const Icon(Icons.add_circle_outline),
             label: const Text('AÑADIR NUEVO PRODUCTO'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFD9D9D9),
-              foregroundColor: Colors.black,
+              backgroundColor: PaletaTaller.de(context)
+                  .adaptar(Color(0xFFD9D9D9)),
+              foregroundColor: PaletaTaller.de(context)
+                  .adaptar(Colors.black, tinta: true),
             ),
           ),
         ), // Conserva el tamaño y la acción de añadir productos.
@@ -880,9 +899,10 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
                           : () => _removerDelCarrito(
                               fila['indice'] as int,
                             ), // Conserva el tamaño de la acción original.
-                      child: const Icon(
+                      child: Icon(
                         Icons.cancel_outlined,
-                        color: Colors.red,
+                        color: PaletaTaller.de(context)
+                            .adaptar(Colors.red, tinta: true),
                         size: 30,
                       ), // Quita el producto original sin confundir las filas filtradas.
                     ), // Finaliza la acción del carrito.
@@ -890,7 +910,7 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
                 ), // Finaliza la tabla compartida del carrito.
               ), // Reserva espacio para las filas encima del total.
               Container(
-                color: Colors.red[400],
+                color: PaletaTaller.de(context).adaptar(Colors.red[400]!),
                 padding: const EdgeInsets.symmetric(
                   vertical: 15,
                   horizontal: 15,
@@ -900,8 +920,9 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
                     Expanded(
                       child: Text(
                         'PRECIO TOTAL:\$${_precioTotal.toStringAsFixed(0).replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}',
-                        style: const TextStyle(
-                          color: Colors.black,
+                        style: TextStyle(
+                          color: PaletaTaller.de(context)
+                              .adaptar(Colors.black, tinta: true),
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
@@ -924,17 +945,22 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
           tipoBoton: 'elevated',
 
           onPressed: _guardando ? null : _registrarVenta,
-          icon: const Icon(Icons.download, color: Colors.black),
+          icon: Icon(
+            Icons.download,
+            color: PaletaTaller.de(context).adaptar(Colors.black, tinta: true),
+          ),
           label: Text(
             widget.pendiente == null ? 'REGISTRAR VENTA' : 'GUARDAR CAMBIOS',
             style: TextStyle(
-              color: Colors.black,
+              color: PaletaTaller.de(context)
+                  .adaptar(Colors.black, tinta: true),
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFB7B7B7),
+            backgroundColor: PaletaTaller.de(context)
+                .adaptar(Color(0xFFB7B7B7)),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           ),
         ),

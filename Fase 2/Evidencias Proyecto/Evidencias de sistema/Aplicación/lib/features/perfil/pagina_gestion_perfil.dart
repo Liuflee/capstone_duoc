@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:flutter/material.dart'; // Construye las vistas de perfiles.
 import 'package:frenos_cerna/features/perfil/data/perfiles_repository.dart'; // Conserva las operaciones reales de consulta y gestión.
 import 'package:frenos_cerna/shared/widgets/estructura_pagina.dart'; // Reutiliza las barras y el menú.
@@ -50,7 +51,8 @@ class _PaginaSeleccionarPerfilState extends State<PaginaSeleccionarPerfil> {
   } // Recupera solamente perfiles visibles para la sesión.
 
   @override // Presenta el selector con tabla y acciones existentes.
-  Widget build(BuildContext context) => EstructuraPagina(
+  Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
+  Widget _pagina(BuildContext context) => EstructuraPagina(
     titulo: 'Seleccionar perfil ${widget.tipo.nombre.toLowerCase()}',
     activo: 'Perfil',
     child: Column(
@@ -68,7 +70,9 @@ class _PaginaSeleccionarPerfilState extends State<PaginaSeleccionarPerfil> {
         const SizedBox(height: 24), // Separa las acciones de la tabla.
         Expanded(
           child: FutureBuilder<List<PerfilGestion>>(
-            key: ObjectKey(_perfiles), // Reinicia la tabla al solicitar una consulta nueva.
+            key: ObjectKey(
+              _perfiles,
+            ), // Reinicia la tabla al solicitar una consulta nueva.
             future: _perfiles,
             builder: (context, estado) {
               // Conserva la carga y los errores de permisos.
@@ -309,7 +313,8 @@ class _PaginaGestionPerfilState extends State<PaginaGestionPerfil> {
   } // Finaliza la eliminación.
 
   @override // Conserva un diseño común y limita las funciones según el modo.
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
+  Widget _pagina(BuildContext context) {
     // Presenta nombre y rol a partir de datos reales.
     final tipo =
         _perfil?.tipo ??
@@ -355,13 +360,14 @@ class _PaginaGestionPerfilState extends State<PaginaGestionPerfil> {
                   Center(
                     child: CircleAvatar(
                       radius: 44,
-                      backgroundColor: const Color(0xFFBDBDBD),
+                      backgroundColor: PaletaTaller.de(context)
+                          .adaptar(Color(0xFFBDBDBD)),
                       child: Icon(
                         tipo == TipoPerfil.dueno
                             ? Icons.business_center_outlined
                             : Icons.build_outlined,
                         size: 42,
-                        color: Colors.black,
+                        color: PaletaTaller.de(context).adaptar(Colors.black),
                       ),
                     ),
                   ), // Distingue ambos tipos sin fotografías.
@@ -466,8 +472,10 @@ class _PaginaGestionPerfilState extends State<PaginaGestionPerfil> {
                         icon: const Icon(Icons.person_remove_outlined),
                         label: const Text('ELIMINAR PERFIL'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFD96363),
-                          foregroundColor: Colors.black,
+                          backgroundColor: PaletaTaller.de(context)
+                              .adaptar(Color(0xFFD96363)),
+                          foregroundColor: PaletaTaller.de(context)
+                              .adaptar(Colors.black, tinta: true),
                         ),
                       ),
                     ), // Presenta la eliminación solo en su propia vista.

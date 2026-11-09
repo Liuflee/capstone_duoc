@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/features/ventas/data/ventas_pendientes_repository.dart'; // Integra las ventas todavía locales.
 import 'package:frenos_cerna/features/ventas/presentation/pagina_detalle_venta_pendiente.dart'; // Abre el historial de una venta sin pago.
 import 'package:frenos_cerna/shared/widgets/panel_filtros.dart'; // Filtra las ventas por estado, periodo y búsqueda.
@@ -99,10 +100,10 @@ class _PaginaVentasState extends State<PaginaVentas> {
       children: [
         CircleAvatar(
           radius: 20,
-          backgroundColor: Colors.red[300],
-          child: const Icon(
+          backgroundColor: PaletaTaller.de(context).adaptar(Colors.red[300]!),
+          child: Icon(
             Icons.person_outline,
-            color: Colors.black,
+            color: PaletaTaller.de(context).adaptar(Colors.black, tinta: true),
             size: 30,
           ),
         ),
@@ -154,7 +155,11 @@ class _PaginaVentasState extends State<PaginaVentas> {
       tipoBoton: 'icon',
 
       tooltip: 'Ver venta',
-      child: const Icon(Icons.search, size: 40, color: Colors.black),
+      child: Icon(
+        Icons.search,
+        size: 40,
+        color: PaletaTaller.de(context).adaptar(Colors.black, tinta: true),
+      ),
 
       onPressed: () async {
         // Abre el detalle según el estado real.
@@ -187,7 +192,8 @@ class _PaginaVentasState extends State<PaginaVentas> {
   } // Finaliza la celda con la acción de detalle.
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
+  Widget _pagina(BuildContext context) {
     final esPantallaGrande =
         MediaQuery.of(context).size.width >=
         700; // Comparte el punto de adaptación del menú principal.
@@ -261,7 +267,7 @@ class _PaginaVentasState extends State<PaginaVentas> {
         : filasVentas;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: PaletaTaller.de(context).fondo,
 
       // ============================================================
       // APP BAR

@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:flutter/material.dart';
 
 class CampoFormulario extends StatefulWidget {
@@ -61,21 +62,25 @@ class _CampoFormularioState extends State<CampoFormulario> {
         // Borde normal
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Colors.grey),
+          borderSide: BorderSide(
+            color: PaletaTaller.de(context).adaptar(Colors.grey, linea: true),
+          ),
         ),
 
         // Borde cuando el campo está seleccionado
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color.fromARGB(255, 183, 58, 58),
+          borderSide: BorderSide(
+            color: PaletaTaller.de(context)
+                .adaptar(Color.fromARGB(255, 183, 58, 58), linea: true),
             width: 2,
           ),
         ),
         filled: true,
-        fillColor: Colors.white,
-        floatingLabelStyle: const TextStyle(
-          color: Color.fromARGB(255, 183, 58, 58),
+        fillColor: PaletaTaller.de(context).adaptar(Colors.white),
+        floatingLabelStyle: TextStyle(
+          color: PaletaTaller.de(context)
+              .adaptar(Color.fromARGB(255, 183, 58, 58), tinta: true),
         ),
       ),
     );

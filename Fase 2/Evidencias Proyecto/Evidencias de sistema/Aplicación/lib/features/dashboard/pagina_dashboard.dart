@@ -1,3 +1,5 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
+
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -51,7 +53,8 @@ class _PaginaDashboardState extends State<PaginaDashboard> {
   }
 
   @override
-  Widget build(BuildContext context) => EstructuraPagina(
+  Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
+  Widget _pagina(BuildContext context) => EstructuraPagina(
     titulo: 'Dashboard',
     activo: 'Dashboard',
     padding: const EdgeInsets.all(24),
@@ -142,9 +145,14 @@ class _PaginaDashboardState extends State<PaginaDashboard> {
                           (periodo) => ChoiceChip(
                             label: Text(periodo.etiqueta),
                             selected: _periodo == periodo,
-                            selectedColor: const Color(0xFFF7DCDC),
-                            backgroundColor: const Color(0xFFF1F1F1),
-                            labelStyle: const TextStyle(color: Colors.black),
+                            selectedColor: PaletaTaller.de(context)
+                                .adaptar(Color(0xFFF7DCDC)),
+                            backgroundColor: PaletaTaller.de(context)
+                                .adaptar(Color(0xFFF1F1F1)),
+                            labelStyle: TextStyle(
+                              color: PaletaTaller.de(context)
+                                  .adaptar(Colors.black, tinta: true),
+                            ),
                             onSelected: (_) =>
                                 setState(() => _periodo = periodo),
                           ),
@@ -156,18 +164,25 @@ class _PaginaDashboardState extends State<PaginaDashboard> {
                     children: [
                       Text(
                         '${_fecha(_periodo.inicio(_actualizado))} – ${_fecha(_actualizado)}',
-                        style: const TextStyle(fontSize: 12),
+                        style: TextStyle(fontSize: 12),
                       ),
                       IconButton(
                         tooltip: 'Actualizar dashboard',
                         onPressed: cargando ? null : () => setState(_consultar),
-                        icon: const Icon(Icons.refresh, color: _tinta),
+                        icon: Icon(
+                          Icons.refresh,
+                          color: PaletaTaller.de(context)
+                              .adaptar(_tinta, tinta: true),
+                        ),
                       ),
                     ],
                   ),
                 ],
               ),
-              if (cargando) const LinearProgressIndicator(color: _rojo),
+              if (cargando)
+                LinearProgressIndicator(
+                  color: PaletaTaller.de(context).adaptar(_rojo),
+                ),
               if (!cargando && fallos.isNotEmpty)
                 _Aviso(
                   texto:
@@ -247,7 +262,7 @@ class _PaginaDashboardState extends State<PaginaDashboard> {
                                       producto.nombre,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -260,8 +275,9 @@ class _PaginaDashboardState extends State<PaginaDashboard> {
                                       producto.cantidad <= 0
                                           ? 'SIN STOCK'
                                           : '${producto.cantidad} unid.',
-                                      style: const TextStyle(
-                                        color: _tinta,
+                                      style: TextStyle(
+                                        color: PaletaTaller.de(context)
+                                            .adaptar(_tinta, tinta: true),
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -305,24 +321,21 @@ class _PaginaDashboardState extends State<PaginaDashboard> {
                             .map(
                               (venta) => ListTile(
                                 contentPadding: EdgeInsets.zero,
-                                leading: const Icon(
+                                leading: Icon(
                                   Icons.receipt_long_outlined,
-                                  color: _tinta,
+                                  color: PaletaTaller.de(context)
+                                      .adaptar(_tinta, tinta: true),
                                 ),
                                 title: Text(
                                   venta.clienteNombre,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
                                 subtitle: Text(
                                   '${_fecha(venta.fechaRegistro!)} · ${venta.vehiculoNombre}',
                                 ),
                                 trailing: Text(
                                   _pesos(venta.total),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
                                 onTap: () => _abrir(
                                   PaginaDetalleVenta(
@@ -344,7 +357,11 @@ class _PaginaDashboardState extends State<PaginaDashboard> {
                   padding: const EdgeInsets.only(top: 16),
                   child: Text(
                     '$sinFecha ventas sin fecha registrada quedan fuera del período. Puedes consultarlas en el historial completo.',
-                    style: const TextStyle(fontSize: 12, color: _tinta),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: PaletaTaller.de(context)
+                          .adaptar(_tinta, tinta: true),
+                    ),
                   ),
                 ),
               const SizedBox(height: 20),
@@ -354,14 +371,18 @@ class _PaginaDashboardState extends State<PaginaDashboard> {
                 alignment: WrapAlignment.spaceBetween,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  const Text(
+                  Text(
                     'Stock y pendientes muestran el estado actual;\nno cambian con el período.',
-                    style: TextStyle(fontSize: 12, color: Colors.black54),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: PaletaTaller.de(context)
+                          .adaptar(Colors.black54, tinta: true),
+                    ),
                   ),
                   CartaNavegacion.accion(
                     onPressed: () =>
                         _abrir(const PaginaVentas(mostrarHistorial: true)),
-                    icon: const Icon(Icons.schedule),
+                    icon: Icon(Icons.schedule),
                     label: const Text('VER VENTAS'),
                   ),
                 ],
@@ -390,11 +411,15 @@ class _Indicador extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
-      color: destacado ? const Color(0xFFF7DCDC) : const Color(0xFFF1F1F1),
+      color: destacado
+          ? PaletaTaller.de(context).adaptar(Color(0xFFF7DCDC))
+          : PaletaTaller.de(context).adaptar(Color(0xFFF1F1F1)),
       borderRadius: BorderRadius.circular(10),
       border: Border(
         top: BorderSide(
-          color: destacado ? _rojo : const Color(0xFFBDBDBD),
+          color: destacado
+              ? PaletaTaller.de(context).adaptar(_rojo)
+              : PaletaTaller.de(context).adaptar(Color(0xFFBDBDBD)),
           width: 4,
         ),
       ),
@@ -402,19 +427,23 @@ class _Indicador extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icono, color: _tinta, size: 28),
+        Icon(
+          icono,
+          color: PaletaTaller.de(context).adaptar(_tinta, tinta: true),
+          size: 28,
+        ),
         const SizedBox(height: 12),
         Text(
           titulo,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         Text(
           valor,
-          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        Text(detalle, style: const TextStyle(fontSize: 12)),
+        Text(detalle, style: TextStyle(fontSize: 12)),
       ],
     ),
   );
@@ -438,7 +467,9 @@ class _Panel extends StatelessWidget {
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(10),
-      border: Border.all(color: const Color(0xFFD6D6D6)),
+      border: Border.all(
+        color: PaletaTaller.de(context).adaptar(Color(0xFFD6D6D6), linea: true),
+      ),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -451,18 +482,18 @@ class _Panel extends StatelessWidget {
           children: [
             Text(
               titulo,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
             ),
             if (accion != null)
               TextButton(
                 onPressed: alPresionar,
-                style: TextButton.styleFrom(foregroundColor: _tinta),
+                style: TextButton.styleFrom(
+                  foregroundColor: PaletaTaller.de(context)
+                      .adaptar(_tinta, tinta: true),
+                ),
                 child: Text(
                   accion!,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                 ),
               ),
           ],
@@ -470,10 +501,17 @@ class _Panel extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           subtitulo,
-          style: const TextStyle(fontSize: 12, color: Colors.black54),
+          style: TextStyle(
+            fontSize: 12,
+            color: PaletaTaller.de(context)
+                .adaptar(Colors.black54, tinta: true),
+          ),
         ),
         const SizedBox(height: 16),
-        Material(color: Colors.white, child: child),
+        Material(
+          color: PaletaTaller.de(context).adaptar(Colors.white, tinta: true),
+          child: child,
+        ),
       ],
     ),
   );
@@ -519,7 +557,7 @@ class _GraficoIngresos extends StatelessWidget {
       children: [
         Text(
           'Máximo diario: ${_pesos(maximo)}',
-          style: const TextStyle(fontSize: 12),
+          style: TextStyle(fontSize: 12),
         ),
         const SizedBox(height: 16),
         LayoutBuilder(
@@ -563,8 +601,9 @@ class _GraficoIngresos extends StatelessWidget {
                                     : math.max(2, totales[i] / maximo * 130),
                                 decoration: BoxDecoration(
                                   color: totales[i] == 0
-                                      ? const Color(0xFFD6D6D6)
-                                      : _rojo,
+                                      ? PaletaTaller.de(context)
+                                            .adaptar(Color(0xFFD6D6D6))
+                                      : PaletaTaller.de(context).adaptar(_rojo),
                                   borderRadius: const BorderRadius.vertical(
                                     top: Radius.circular(4),
                                   ),
@@ -597,7 +636,7 @@ class _GraficoIngresos extends StatelessWidget {
                               _fecha(fechas[i]),
                               textAlign: TextAlign.center,
                               maxLines: 1,
-                              style: const TextStyle(fontSize: 11),
+                              style: TextStyle(fontSize: 11),
                             ),
                           ),
                         )
@@ -623,7 +662,11 @@ class _Vacio extends StatelessWidget {
     padding: const EdgeInsets.symmetric(vertical: 28),
     child: Column(
       children: [
-        Icon(icono, color: Colors.black45, size: 32),
+        Icon(
+          icono,
+          color: PaletaTaller.de(context).adaptar(Colors.black45, tinta: true),
+          size: 32,
+        ),
         const SizedBox(height: 12),
         Text(texto, textAlign: TextAlign.center),
       ],
@@ -640,9 +683,14 @@ class _Aviso extends StatelessWidget {
     margin: const EdgeInsets.only(top: 12),
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: const Color(0xFFF7DCDC),
+      color: PaletaTaller.de(context).adaptar(Color(0xFFF7DCDC)),
       borderRadius: BorderRadius.circular(10),
     ),
-    child: Text(texto, style: const TextStyle(color: _tinta)),
+    child: Text(
+      texto,
+      style: TextStyle(
+        color: PaletaTaller.de(context).adaptar(_tinta, tinta: true),
+      ),
+    ),
   );
 }

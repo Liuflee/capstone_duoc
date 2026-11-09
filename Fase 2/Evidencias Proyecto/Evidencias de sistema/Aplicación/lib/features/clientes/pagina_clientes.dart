@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/features/clientes/pagina_ver_cliente.dart'; // Abre el perfil sin edición.
 // Importa los campos de formulario reutilizables.
 
@@ -55,9 +56,7 @@ class Cliente {
             if (marca is Map) marca['marca'],
             if (modelo is Map) modelo['modelo'],
           ].where((parte) => parte != null && parte.toString().isNotEmpty);
-          return partes.isEmpty
-              ? patente
-              : '${partes.join(' ')} ($patente)';
+          return partes.isEmpty ? patente : '${partes.join(' ')} ($patente)';
         })
         .toList();
     return Cliente(
@@ -146,11 +145,12 @@ class _PaginaClientesState extends State<PaginaClientes> {
   // Permite consultar y editar clientes sin eliminar registros.
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
+  Widget _pagina(BuildContext context) {
     return Scaffold(
       // Conserva la navegación lateral en pantallas pequeñas.
       drawer: const Drawer(child: MenuLateral(activo: 'Clientes')),
-      backgroundColor: Colors.white,
+      backgroundColor: PaletaTaller.de(context).fondo,
 
       // Obtiene el ancho y alto disponibles para reproducir la estructura de Inicio.
       body: LayoutBuilder(
@@ -197,7 +197,9 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                 alto: 70, // Da espacio al icono y al texto de la tarjeta.
                                 texto: 'AÑADIR CLIENTE', // Describe la acción de navegación.
                                 icono: Icons.person_add_alt_1, // Identifica visualmente el registro de clientes.
-                                color: Colors.grey[400], // Conserva el color de la acción anterior.
+                                color: PaletaTaller.de(context).adaptar(
+                                  Colors.grey[400]!,
+                                ), // Conserva el color de la acción anterior.
                                 alPresionar: () async {
                                   // Abre el formulario al pulsar la tarjeta.
                                   final actualizado =
@@ -234,24 +236,27 @@ class _PaginaClientesState extends State<PaginaClientes> {
                               Expanded(
                                 // Panel reutilizable que combina buscador, categoría y tabla.
                                 child: PanelFiltros<Cliente>(
-                                  datos:
-                                      clientes, // Filtra los clientes recuperados de Supabase.
-                                  textoAyuda:
-                                      'BUSCAR CLIENTE (NOMBRE, RUT, FONO O VEHÍCULO)', // Describe toda la búsqueda disponible.
+                                  datos: clientes, // Filtra los clientes recuperados de Supabase.
+                                  textoAyuda: 'BUSCAR CLIENTE (NOMBRE, RUT, FONO O VEHÍCULO)', // Describe toda la búsqueda disponible.
                                   camposBusqueda: [
-                                    (cliente) => cliente.nombre, // Busca en el nombre.
-                                    (cliente) => cliente.id, // Busca en el RUT.
-                                    (cliente) => cliente.numero, // Busca en el teléfono.
-                                    (cliente) => cliente.vehiculo, // Busca por las patentes.
                                     (cliente) =>
-                                        cliente.vehiculos.join(' '), // Busca por marca, modelo o patente.
+                                        cliente.nombre, // Busca en el nombre.
+                                    (cliente) => cliente.id, // Busca en el RUT.
+                                    (cliente) =>
+                                        cliente.numero, // Busca en el teléfono.
+                                    (cliente) => cliente
+                                        .vehiculo, // Busca por las patentes.
+                                    (cliente) => cliente.vehiculos.join(
+                                      ' ',
+                                    ), // Busca por marca, modelo o patente.
                                   ],
                                   categorias: [
                                     // Permite separar clientes con y sin vehículos registrados.
                                     CategoriaFiltro<Cliente>(
                                       id: 'vehiculos',
                                       etiqueta: 'VEHÍCULOS',
-                                      valor: (cliente) => cliente.vehiculos.isEmpty
+                                      valor: (cliente) =>
+                                          cliente.vehiculos.isEmpty
                                           ? 'SIN REGISTRAR'
                                           : 'CON VEHÍCULOS',
                                     ),
@@ -265,7 +270,8 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                             'nombre': cliente.nombre,
                                             'numero': cliente.numero,
                                             'rut': cliente.id,
-                                            'vehiculos': cliente.vehiculos.isEmpty
+                                            'vehiculos':
+                                                cliente.vehiculos.isEmpty
                                                 ? 'Sin vehículos'
                                                 : cliente.vehiculos.join('\n'),
                                             'cliente': cliente,
@@ -273,158 +279,182 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                         )
                                         .toList();
                                     return TablaDatos(
-                                  mostrarControles: false, // El panel ya muestra el buscador y las categorías.
-                                  // Encabezados visibles de la tabla.
-                                  nombresColumnas: const [
-                                    'NOMBRE',
-                                    'NÚMERO',
-                                    'RUT',
-                                    'VEHÍCULOS',
-                                    'CAMBIAR',
-                                    'VER',
-                                  ],
+                                      mostrarControles: false, // El panel ya muestra el buscador y las categorías.
+                                      // Encabezados visibles de la tabla.
+                                      nombresColumnas: const [
+                                        'NOMBRE',
+                                        'NÚMERO',
+                                        'RUT',
+                                        'VEHÍCULOS',
+                                        'CAMBIAR',
+                                        'VER',
+                                      ],
 
-                                  // Campos asociados a los valores de cada registro.
-                                  // Las columnas de acciones no necesitan campo.
-                                  camposColumnas: const [
-                                    'nombre',
-                                    'numero',
-                                    'rut',
-                                    'vehiculos',
-                                    '',
-                                    '',
-                                  ],
+                                      // Campos asociados a los valores de cada registro.
+                                      // Las columnas de acciones no necesitan campo.
+                                      camposColumnas: const [
+                                        'nombre',
+                                        'numero',
+                                        'rut',
+                                        'vehiculos',
+                                        '',
+                                        '',
+                                      ],
 
-                                  // Ancho proporcional de cada columna.
-                                  // El widget los ajusta para ocupar el espacio total.
-                                  anchosColumnas: const [
-                                    330,
-                                    150,
-                                    150,
-                                    260,
-                                    120,
-                                    120,
-                                  ],
+                                      // Ancho proporcional de cada columna.
+                                      // El widget los ajusta para ocupar el espacio total.
+                                      anchosColumnas: const [
+                                        330,
+                                        150,
+                                        150,
+                                        260,
+                                        120,
+                                        120,
+                                      ],
 
-                                  // Color de cada cabecera (null usa colorEncabezado).
-                                  coloresEncabezados: const [
-                                    Color.fromARGB(255, 253, 116, 116),
-                                    Color.fromARGB(255, 207, 81, 81),
-                                    Color.fromARGB(255, 253, 116, 116),
-                                    Color.fromARGB(255, 253, 116, 116),
-                                    Color.fromARGB(255, 253, 116, 116),
-                                    Color.fromARGB(255, 207, 81, 81),
-                                  ],
+                                      // Color de cada cabecera (null usa colorEncabezado).
+                                      coloresEncabezados: [
+                                        PaletaTaller.de(context).adaptar(
+                                          Color.fromARGB(255, 253, 116, 116),
+                                        ),
+                                        PaletaTaller.de(context).adaptar(
+                                          Color.fromARGB(255, 207, 81, 81),
+                                        ),
+                                        PaletaTaller.de(context).adaptar(
+                                          Color.fromARGB(255, 253, 116, 116),
+                                        ),
+                                        PaletaTaller.de(context).adaptar(
+                                          Color.fromARGB(255, 253, 116, 116),
+                                        ),
+                                        PaletaTaller.de(context).adaptar(
+                                          Color.fromARGB(255, 253, 116, 116),
+                                        ),
+                                        PaletaTaller.de(context).adaptar(
+                                          Color.fromARGB(255, 207, 81, 81),
+                                        ),
+                                      ],
 
-                                  // Color del texto de cada cabecera (null usa blanco).
-                                  coloresTextoEncabezados: const [
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                  ],
+                                      // Color del texto de cada cabecera (null usa blanco).
+                                      coloresTextoEncabezados: const [
+                                        null,
+                                        null,
+                                        null,
+                                        null,
+                                        null,
+                                        null,
+                                      ],
 
-                                  // Resultados de Supabase ya filtrados por el buscador.
-                                  filas: filasClientes,
+                                      // Resultados de Supabase ya filtrados por el buscador.
+                                      filas: filasClientes,
 
-                                  // Personaliza las columnas que contienen widgets.
-                                  celdasPersonalizadas: {
-                                    // Columna 0: nombre con avatar del cliente.
-                                    0: (context, fila) {
-                                      final cliente =
-                                          fila['cliente'] as Cliente;
+                                      // Personaliza las columnas que contienen widgets.
+                                      celdasPersonalizadas: {
+                                        // Columna 0: nombre con avatar del cliente.
+                                        0: (context, fila) {
+                                          final cliente =
+                                              fila['cliente'] as Cliente;
 
-                                      return Row(
-                                        children: [
-                                          CircleAvatar(
-                                            backgroundColor: Colors.red[300],
-                                            child: const Icon(
-                                              Icons.person,
-                                              color: Colors.black,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 10),
-                                          Expanded(
-                                            child: Text(
-                                              cliente.nombre,
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
+                                          return Row(
+                                            children: [
+                                              CircleAvatar(
+                                                backgroundColor:
+                                                    PaletaTaller.de(
+                                                      context,
+                                                    ).adaptar(Colors.red[300]!),
+                                                child: Icon(
+                                                  Icons.person,
+                                                  color:
+                                                      PaletaTaller.de(context)
+                                                          .adaptar(
+                                                            Colors.black,
+                                                            tinta: true,
+                                                          ),
+                                                ),
                                               ),
-                                            ),
+                                              const SizedBox(width: 10),
+                                              Expanded(
+                                                child: Text(
+                                                  cliente.nombre,
+                                                  maxLines: 2,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          );
+                                        },
+
+                                        3: (context, fila) => Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 8,
                                           ),
-                                        ],
-                                      );
-                                    },
+                                          child: Text(
+                                            fila['vehiculos'] as String,
+                                            maxLines: 4,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        // Columna 4: botón de edición del cliente.
+                                        4: (context, fila) {
+                                          final cliente =
+                                              fila['cliente'] as Cliente;
 
-                                    3: (context, fila) => Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 8,
-                                      ),
-                                      child: Text(
-                                        fila['vehiculos'] as String,
-                                        maxLines: 4,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                    // Columna 4: botón de edición del cliente.
-                                    4: (context, fila) {
-                                      final cliente =
-                                          fila['cliente'] as Cliente;
+                                          return CartaNavegacion.accion(
+                                            // Conserva las medidas y la función de la acción original.
+                                            tipoBoton: 'icon',
 
-                                      return CartaNavegacion.accion(
-                                        // Conserva las medidas y la función de la acción original.
-                                        tipoBoton: 'icon',
+                                            tooltip: 'Editar cliente',
+                                            child: const Icon(
+                                              Icons.edit,
+                                              size: 30,
+                                            ),
+                                            onPressed: () async {
+                                              final actualizado =
+                                                  await Navigator.push<bool>(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          PaginaEditarCliente(
+                                                            cliente: cliente,
+                                                          ),
+                                                    ),
+                                                  );
 
-                                        tooltip: 'Editar cliente',
-                                        child: const Icon(Icons.edit, size: 30),
-                                        onPressed: () async {
-                                          final actualizado =
-                                              await Navigator.push<bool>(
+                                              // Actualiza la tabla si el cliente fue editado.
+                                              if (!mounted) return;
+                                              if (actualizado == true) {
+                                                await _cargarClientes();
+                                              }
+                                            },
+                                          );
+                                        },
+                                        5: (context, fila) =>
+                                            CartaNavegacion.accion(
+                                              tipoBoton: 'icon',
+                                              tooltip: 'Ver cliente',
+                                              onPressed: () => Navigator.push(
                                                 context,
                                                 MaterialPageRoute(
+                                                  settings: const RouteSettings(
+                                                    name: '/clients/view',
+                                                  ),
                                                   builder: (context) =>
-                                                      PaginaEditarCliente(
-                                                        cliente: cliente,
+                                                      PaginaVerCliente(
+                                                        cliente:
+                                                            fila['cliente']
+                                                                as Cliente,
                                                       ),
                                                 ),
-                                              );
-
-                                          // Actualiza la tabla si el cliente fue editado.
-                                          if (!mounted) return;
-                                          if (actualizado == true) {
-                                            await _cargarClientes();
-                                          }
-                                        },
-                                      );
-                                    },
-                                    5: (context, fila) =>
-                                        CartaNavegacion.accion(
-                                          tipoBoton: 'icon',
-                                          tooltip: 'Ver cliente',
-                                          onPressed: () => Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              settings: const RouteSettings(
-                                                name: '/clients/view',
                                               ),
-                                              builder: (context) =>
-                                                  PaginaVerCliente(
-                                                    cliente:
-                                                        fila['cliente']
-                                                            as Cliente,
-                                                  ),
-                                            ),
-                                          ),
-                                          child: const Icon(
-                                            Icons.search,
-                                            size: 28,
-                                          ),
-                                        ), // Consulta el perfil sin habilitar edición.
-                                  },
+                                              child: const Icon(
+                                                Icons.search,
+                                                size: 28,
+                                              ),
+                                            ), // Consulta el perfil sin habilitar edición.
+                                      },
                                     ); // Finaliza la tabla construida con los clientes filtrados.
                                   }, // Finaliza la construcción del contenido.
                                 ), // Finaliza el panel de filtros reutilizable.

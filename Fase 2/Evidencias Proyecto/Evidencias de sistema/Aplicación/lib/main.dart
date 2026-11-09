@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/features/dashboard/pagina_dashboard.dart';
 import 'package:frenos_cerna/features/ventas/presentation/pagina_ventas_historial.dart'; // Registra el acceso independiente al historial completo.
 // Importa el registro de vehículos con vinculación de clientes.
@@ -32,6 +33,7 @@ Future<void> main() async {
 
   // Inicializa la conexión con Supabase
   await SupabaseDatabase.initialize();
+  await PaletaTaller.cargar();
 
   // Ejecuta la aplicación
   runApp(const MiAplicacion());
@@ -45,85 +47,89 @@ class MiAplicacion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Configuración general de la aplicación
-    return MaterialApp(
-      // Oculta la etiqueta de DEBUG
-      debugShowCheckedModeBanner: false,
+    return ValueListenableBuilder<PaletaTaller>(
+      valueListenable: PaletaTaller.seleccion,
+      builder: (context, paleta, _) => MaterialApp(
+        // Oculta la etiqueta de DEBUG
+        debugShowCheckedModeBanner: false,
 
-      // Nombre de la aplicación
-      title: 'Frenos Cerna',
-      // Declara las rutas nuevas sin cambiar las rutas existentes.
-      routes: {
-        '/dashboard': (context) => const PaginaDashboard(),
-        '/sales/history': (context) => const PaginaVentasHistorial(), // Mantiene la ruta en inglés y el archivo en español.
-        '/vehicles/new': (context) => const PaginaCrearVehiculo(),
-        '/profile': (context) => const PaginaPerfil(),
-        '/options': (context) => const PaginaOpciones(),
-        '/information': (context) => const PaginaInformacion(),
-        '/data': (context) => const PaginaDatos(),
-        '/products/new': (context) => const PaginaCrearProducto(),
-        '/notifications/reserve': (context) => const PaginaReservaProducto(),
-        '/notifications/reserved': (context) =>
-            const PaginaProductosReservados(),
-      },
-      // Aplica las preferencias sin modificar los widgets compartidos.
-      builder: (context, child) => AnimatedBuilder(
-        animation: PreferenciasVisuales.instancia,
-        builder: (context, _) {
-          final ajustes = PreferenciasVisuales.instancia;
-          final entorno = MediaQuery.of(context);
-          return ColorFiltered(
-            colorFilter: ColorFilter.matrix(ajustes.matriz),
-            child: MediaQuery(
-              data: entorno.copyWith(
-                textScaler: TextScaler.linear(
-                  entorno.textScaler.scale(1) * ajustes.texto,
-                ),
-              ),
-              child: ColoredBox(
-                color: const Color(0xFFE0E0E0), // Prolonga el gris del encabezado detrás de la barra de estado.
-                child: SafeArea(
-                  bottom: false, // Conserva el tratamiento inferior de cada página y del teclado.
-                  child: child!, // Mantiene todas las rutas debajo de la barra de estado y fuera de los recortes laterales.
-                ),
-              ),
-            ),
-          );
+        // Nombre de la aplicación
+        title: 'Frenos Cerna',
+        color: paleta.fondo,
+        // Declara las rutas nuevas sin cambiar las rutas existentes.
+        routes: {
+          '/dashboard': (context) => const PaginaDashboard(),
+          '/sales/history': (context) => const PaginaVentasHistorial(), // Mantiene la ruta en inglés y el archivo en español.
+          '/vehicles/new': (context) => const PaginaCrearVehiculo(),
+          '/profile': (context) => const PaginaPerfil(),
+          '/options': (context) => const PaginaOpciones(),
+          '/information': (context) => const PaginaInformacion(),
+          '/data': (context) => const PaginaDatos(),
+          '/products/new': (context) => const PaginaCrearProducto(),
+          '/notifications/reserve': (context) => const PaginaReservaProducto(),
+          '/notifications/reserved': (context) =>
+              const PaginaProductosReservados(),
         },
-      ),
-
-      // Configuración visual general
-      theme: ThemeData(
-        // Fuente predeterminada
-        fontFamily: 'Courier',
-
-        // Configuración de las transiciones entre páginas
-        pageTransitionsTheme: const PageTransitionsTheme(
-          builders: {
-            // Deshabilita animaciones de navegación en Windows
-            TargetPlatform.windows: _SinAnimacionPageTransitionsBuilder(),
-
-            // Deshabilita animaciones de navegación en Linux
-            TargetPlatform.linux: _SinAnimacionPageTransitionsBuilder(),
-
-            // Deshabilita animaciones de navegación en macOS
-            TargetPlatform.macOS: _SinAnimacionPageTransitionsBuilder(),
+        // Aplica las preferencias sin modificar los widgets compartidos.
+        builder: (context, child) => AnimatedBuilder(
+          animation: PreferenciasVisuales.instancia,
+          builder: (context, _) {
+            final ajustes = PreferenciasVisuales.instancia;
+            final entorno = MediaQuery.of(context);
+            return ColorFiltered(
+              colorFilter: ColorFilter.matrix(ajustes.matriz),
+              child: MediaQuery(
+                data: entorno.copyWith(
+                  textScaler: TextScaler.linear(
+                    entorno.textScaler.scale(1) * ajustes.texto,
+                  ),
+                ),
+                child: ColoredBox(
+                  color: paleta.fondo, // Prolonga el gris del encabezado detrás de la barra de estado.
+                  child: SafeArea(
+                    bottom: false, // Conserva el tratamiento inferior de cada página y del teclado.
+                    child: ColoredBox(color: paleta.fondo, child: child!), // Mantiene todas las rutas debajo de la barra de estado y fuera de los recortes laterales.
+                  ),
+                ),
+              ),
+            );
           },
         ),
+
+        // Configuración visual general
+        theme: ThemeData(
+          // Fuente predeterminada
+          fontFamily: 'Courier',
+
+          // Configuración de las transiciones entre páginas
+          pageTransitionsTheme: const PageTransitionsTheme(
+            builders: {
+              // Deshabilita animaciones de navegación en Windows
+              TargetPlatform.windows: _SinAnimacionPageTransitionsBuilder(),
+
+              // Deshabilita animaciones de navegación en Linux
+              TargetPlatform.linux: _SinAnimacionPageTransitionsBuilder(),
+
+              // Deshabilita animaciones de navegación en macOS
+              TargetPlatform.macOS: _SinAnimacionPageTransitionsBuilder(),
+            },
+          ),
+        ),
+
+        // Configuración de las rutas de navegación
+        onGenerateRoute: (settings) {
+          // Ruta correspondiente a la página de inicio
+          if (settings.name == NavegacionRutas.inicio) {
+            // Navega a la página de inicio sin animación
+            return NavegacionRutas.sinAnimacion(const PuertaAutenticacion());
+          }
+
+          // Devuelve null cuando no reconoce la ruta
+          return null;
+        },
+
+        home: const PuertaAutenticacion(),
       ),
-
-      // Configuración de las rutas de navegación
-      onGenerateRoute: (settings) {
-        // Ruta correspondiente a la página de inicio
-        if (settings.name == NavegacionRutas.inicio) {
-          // Navega a la página de inicio sin animación
-          return NavegacionRutas.sinAnimacion(const PuertaAutenticacion());
-        }
-
-        // Devuelve null cuando no reconoce la ruta
-        return null;
-      },
-
-      home: const PuertaAutenticacion(),
     );
   }
 }

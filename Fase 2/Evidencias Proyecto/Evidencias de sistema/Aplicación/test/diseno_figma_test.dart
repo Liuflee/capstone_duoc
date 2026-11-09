@@ -79,6 +79,7 @@ void main() {
       expect(calidad.items!.map((item) => item.value), [
         10,
         -1,
+        -2,
       ]); // Excluye las calidades de discos.
       await tester.tap(selectores.at(1));
       await tester.pumpAndSettle(); // Abre las calidades permitidas.
@@ -96,6 +97,7 @@ void main() {
       expect(calidad.items!.map((item) => item.value), [
         20,
         -1,
+        -2,
       ]); // Muestra solo las calidades vinculadas a discos.
       for (final esCalidad in [false, true]) {
         await tester.ensureVisible(

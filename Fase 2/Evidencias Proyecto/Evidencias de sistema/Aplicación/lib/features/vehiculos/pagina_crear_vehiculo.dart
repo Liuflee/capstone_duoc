@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 // Importa Flutter y las páginas necesarias para vincular clientes.
 import 'package:flutter/material.dart';
 import 'package:frenos_cerna/core/data/supabase_database.dart';
@@ -66,8 +67,9 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
     final registros = esModelo
         ? _modelos.where((fila) => fila['id_marca'] == _marca).toList()
         : _marcas; // Limita los modelos a su marca.
-    final etiqueta =
-        esModelo ? 'MODELO' : 'MARCA'; // Identifica el catálogo solicitado.
+    final etiqueta = esModelo
+        ? 'MODELO'
+        : 'MARCA'; // Identifica el catálogo solicitado.
     return InputDecorator(
       // Mantiene el borde de los campos existentes.
       decoration: InputDecoration(
@@ -103,36 +105,38 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
             if (registros.isNotEmpty)
               DropdownMenuItem(
                 value: -3,
-                child: Text(esModelo
-                    ? 'EDITAR NOMBRE DEL MODELO'
-                    : 'EDITAR NOMBRE DE LA MARCA'),
+                child: Text(
+                  esModelo
+                      ? 'EDITAR NOMBRE DEL MODELO'
+                      : 'EDITAR NOMBRE DE LA MARCA',
+                ),
               ),
           ], // Finaliza las opciones.
           onChanged:
               _guardando || _editandoCatalogo || (esModelo && _marca == null)
-                  ? null
-                  : (valor) {
-                      // Bloquea modelos hasta seleccionar una marca.
-                      if (valor == -1) {
-                        // Distingue la acción de creación de una selección.
-                        _agregarCatalogo(
-                          esModelo: esModelo,
-                        ); // Solicita nombre y confirmación antes de guardar.
-                      } else if (valor == -3) {
-                        _editarCatalogo(esModelo: esModelo);
+              ? null
+              : (valor) {
+                  // Bloquea modelos hasta seleccionar una marca.
+                  if (valor == -1) {
+                    // Distingue la acción de creación de una selección.
+                    _agregarCatalogo(
+                      esModelo: esModelo,
+                    ); // Solicita nombre y confirmación antes de guardar.
+                  } else if (valor == -3) {
+                    _editarCatalogo(esModelo: esModelo);
+                  } else {
+                    // Aplica la selección existente.
+                    setState(() {
+                      // Actualiza los campos relacionados.
+                      if (esModelo) {
+                        _modelo = valor;
                       } else {
-                        // Aplica la selección existente.
-                        setState(() {
-                          // Actualiza los campos relacionados.
-                          if (esModelo) {
-                            _modelo = valor;
-                          } else {
-                            _marca = valor;
-                            _modelo = null;
-                          } // Descarta el modelo anterior cuando cambia la marca.
-                        }); // Conserva patente, kilometraje y cliente.
-                      } // Finaliza la selección.
-                    }, // Finaliza la reacción al menú.
+                        _marca = valor;
+                        _modelo = null;
+                      } // Descarta el modelo anterior cuando cambia la marca.
+                    }); // Conserva patente, kilometraje y cliente.
+                  } // Finaliza la selección.
+                }, // Finaliza la reacción al menú.
         ), // Finaliza el desplegable.
       ), // Finaliza el contenedor sin subrayado.
     ); // Finaliza el campo del catálogo.
@@ -159,8 +163,9 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
       ),
     );
     if (registro == null || !mounted) return;
-    final controlador =
-        TextEditingController(text: registro[columna].toString());
+    final controlador = TextEditingController(
+      text: registro[columna].toString(),
+    );
     try {
       final nombre = await showDialog<String>(
         context: context,
@@ -169,8 +174,9 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
           content: TextField(controller: controlador, autofocus: true),
           actions: [
             CartaNavegacion.accion(
-                onPressed: () => Navigator.pop(dialogo),
-                child: const Text('CANCELAR')),
+              onPressed: () => Navigator.pop(dialogo),
+              child: const Text('CANCELAR'),
+            ),
             CartaNavegacion.accion(
               onPressed: () {
                 final texto = controlador.text.trim();
@@ -184,24 +190,30 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
       if (nombre == null || !mounted || nombre == registro[columna]) return;
       setState(() => _editandoCatalogo = true);
       await SupabaseDatabase.client
-          .from(esModelo
-              ? SupabaseTables.modelosVehiculo
-              : SupabaseTables.marcasVehiculo)
-          .update({columna: nombre}).eq('id', registro['id']);
+          .from(
+            esModelo
+                ? SupabaseTables.modelosVehiculo
+                : SupabaseTables.marcasVehiculo,
+          )
+          .update({columna: nombre})
+          .eq('id', registro['id']);
       if (!mounted) return;
       setState(() {
-        final fila = (esModelo ? _modelos : _marcas)
-            .firstWhere((item) => item['id'] == registro['id']);
+        final fila = (esModelo ? _modelos : _marcas).firstWhere(
+          (item) => item['id'] == registro['id'],
+        );
         fila[columna] = nombre;
         (esModelo ? _modelos : _marcas).sort(
-            (a, b) => a[columna].toString().compareTo(b[columna].toString()));
+          (a, b) => a[columna].toString().compareTo(b[columna].toString()),
+        );
       });
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Nombre actualizado.')));
     } catch (error) {
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('No se pudo actualizar el nombre: $error')));
+          SnackBar(content: Text('No se pudo actualizar el nombre: $error')),
+        );
     } finally {
       controlador.dispose();
       if (mounted) setState(() => _editandoCatalogo = false);
@@ -218,8 +230,9 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
     ); // Bloquea cambios de marca durante la creación.
     final controlador =
         TextEditingController(); // Conserva el nombre escrito en el diálogo.
-    final tipo =
-        esModelo ? 'MODELO' : 'MARCA'; // Describe el registro solicitado.
+    final tipo = esModelo
+        ? 'MODELO'
+        : 'MARCA'; // Describe el registro solicitado.
     final idMarca =
         _marca; // Conserva la relación del modelo con la marca elegida.
     try {
@@ -293,9 +306,7 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
       final columna = esModelo
           ? 'modelo'
           : 'marca'; // Utiliza el nombre real de cada columna.
-      final actuales = await SupabaseDatabase.client
-          .from(tabla)
-          .select(); // Consulta los registros para evitar duplicados por mayúsculas o espacios.
+      final actuales = await SupabaseDatabase.client.from(tabla).select(); // Consulta los registros para evitar duplicados por mayúsculas o espacios.
       final coincidencias = actuales.where(
         (fila) =>
             fila[columna].toString().trim().toLowerCase() ==
@@ -303,7 +314,7 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
             (!esModelo || fila['id_marca'] == idMarca),
       ); // Compara modelos solamente dentro de su marca.
       final Map<String, dynamic>
-          registro; // Conserva el registro existente o recién creado.
+      registro; // Conserva el registro existente o recién creado.
       if (coincidencias.isNotEmpty) {
         // Reutiliza una coincidencia existente.
         registro = Map<String, dynamic>.from(
@@ -386,16 +397,14 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
           24,
           24, // Conserva los márgenes seguros en móvil y ventanas pequeñas.
         ),
-        alignment: Alignment
-            .center, // Presenta la selección en el centro horizontal del área de contenido.
-        backgroundColor: Colors.white, // Usa el fondo blanco de las páginas.
+        alignment: Alignment.center, // Presenta la selección en el centro horizontal del área de contenido.
+        backgroundColor: PaletaTaller.de(context)
+            .fondo, // Usa el fondo blanco de las páginas.
         surfaceTintColor:
             Colors.transparent, // Evita el tinte rosado del tema Material.
         child: SizedBox(
-          key: const ValueKey(
-              'dialogo_vincular_cliente'), // Permite verificar el eje del diálogo sin incluir la barrera modal.
-          width:
-              440, // Mantiene un ancho cómodo y se adapta a las pantallas pequeñas.
+          key: const ValueKey('dialogo_vincular_cliente'), // Permite verificar el eje del diálogo sin incluir la barrera modal.
+          width: 440, // Mantiene un ancho cómodo y se adapta a las pantallas pequeñas.
           child: SingleChildScrollView(
             child: SafeArea(
               child: Padding(
@@ -467,8 +476,9 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
     setState(() => _guardando = true); // Bloquea registros duplicados.
     try {
       await SupabaseDatabase.client.from(SupabaseTables.vehiculos).insert({
-        'patente':
-            _patente.text.trim().toUpperCase(), // Guarda la clave de vehículo.
+        'patente': _patente.text
+            .trim()
+            .toUpperCase(), // Guarda la clave de vehículo.
         'kilometraje': double.parse(
           _kilometraje.text.trim().replaceAll(',', '.'),
         ), // Guarda el kilometraje numérico.
@@ -496,127 +506,122 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
   } // Finaliza el registro.
 
   @override // Construye el formulario y la sección de vinculación.
-  Widget build(BuildContext context) => EstructuraPagina(
-        titulo: 'Registro de vehículo',
-        activo: 'Vehiculos',
-        child: SingleChildScrollView(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: 1000,
-              ), // Mantiene un ancho cómodo en escritorio.
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: CartaNavegacion.accion(
-                      onPressed:
-                          _guardando ? null : () => Navigator.pop(context),
-                      icon: const Icon(Icons.keyboard_return),
-                      label: const Text('VOLVER A VEHÍCULOS'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF2A0A0),
-                        foregroundColor: Colors.black,
-                      ),
+  Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
+  Widget _pagina(BuildContext context) => EstructuraPagina(
+    titulo: 'Registro de vehículo',
+    activo: 'Vehiculos',
+    child: SingleChildScrollView(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: 1000,
+          ), // Mantiene un ancho cómodo en escritorio.
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: CartaNavegacion.accion(
+                  onPressed: _guardando ? null : () => Navigator.pop(context),
+                  icon: const Icon(Icons.keyboard_return),
+                  label: const Text('VOLVER A VEHÍCULOS'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: PaletaTaller.de(context)
+                        .adaptar(Color(0xFFF2A0A0)),
+                    foregroundColor: PaletaTaller.de(context)
+                        .adaptar(Colors.black, tinta: true),
+                  ),
+                ),
+              ), // Conserva la navegación de regreso.
+              const SizedBox(
+                height: 32,
+              ), // Separa la navegación del formulario.
+              FormularioDatos(
+                claveFormulario: _clave,
+                ancho: 1000,
+                campos: [
+                  CampoFormularioDatos(
+                    controlador: _patente,
+                    etiqueta: 'PATENTE:',
+                    textoAyuda: 'Patente del vehículo',
+                    habilitado: !_guardando,
+                    validador: (valor) => (valor ?? '').trim().isEmpty
+                        ? 'Ingresa la patente'
+                        : null,
+                  ), // Configura la clave obligatoria.
+                  CampoFormularioDatos(
+                    controlador: _kilometraje,
+                    etiqueta: 'KILOMETRAJE:',
+                    textoAyuda: 'Kilometraje actual',
+                    tipoTeclado: const TextInputType.numberWithOptions(
+                      decimal: true,
                     ),
-                  ), // Conserva la navegación de regreso.
-                  const SizedBox(
-                    height: 32,
-                  ), // Separa la navegación del formulario.
-                  FormularioDatos(
-                    claveFormulario: _clave,
-                    ancho: 1000,
-                    campos: [
-                      CampoFormularioDatos(
-                        controlador: _patente,
-                        etiqueta: 'PATENTE:',
-                        textoAyuda: 'Patente del vehículo',
-                        habilitado: !_guardando,
-                        validador: (valor) => (valor ?? '').trim().isEmpty
-                            ? 'Ingresa la patente'
-                            : null,
-                      ), // Configura la clave obligatoria.
-                      CampoFormularioDatos(
-                        controlador: _kilometraje,
-                        etiqueta: 'KILOMETRAJE:',
-                        textoAyuda: 'Kilometraje actual',
-                        tipoTeclado: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        habilitado: !_guardando,
-                        validador: (valor) {
-                          final numero = double.tryParse(
-                            (valor ?? '').trim().replaceAll(',', '.'),
-                          );
-                          return numero == null ||
-                                  !numero.isFinite ||
-                                  numero < 0
-                              ? 'Ingresa un kilometraje válido'
-                              : null;
-                        },
-                      ), // Valida el valor numérico.
-                    ],
-                  ), // Finaliza los campos de texto.
-                  const SizedBox(
-                      height: 16), // Separa los catálogos de los campos.
-                  _selectorCatalogo(
-                    esModelo: false,
-                  ), // Selecciona o añade la marca.
-                  const SizedBox(height: 20), // Separa ambos catálogos.
-                  _selectorCatalogo(
-                    esModelo: true,
-                  ), // Exige una marca antes de elegir modelo.
-                  if (_errorCatalogos != null) ...[
-                    Text(
-                      'No se pudieron cargar marcas y modelos: $_errorCatalogos',
-                    ),
-                    CartaNavegacion.accion(
-                      onPressed: _cargarCatalogos,
-                      child: const Text('REINTENTAR CATÁLOGOS'),
-                    ),
-                  ], // Permite recuperar la carga sin borrar campos.
-                  const SizedBox(
-                    height: 36,
-                  ), // Separa los datos del apartado de cliente.
-                  const Text(
-                    'CLIENTE VINCULADO',
-                    style: TextStyle(fontSize: 22),
-                  ), // Identifica la relación obligatoria.
-                  const SizedBox(
-                      height: 12), // Separa el título de la selección.
-                  Text(
-                    _cliente == null
-                        ? 'Todavía no has seleccionado un cliente.'
-                        : '${_cliente!.nombre} · RUT: ${_cliente!.id}',
-                  ), // Confirma el cliente que se guardará.
-                  const SizedBox(height: 16), // Separa el cliente de la acción.
-                  CartaNavegacion.accion(
-                    onPressed: _guardando ? null : _vincularCliente,
-                    icon: const Icon(Icons.link),
-                    label: Text(
-                      _cliente == null
-                          ? 'VINCULAR CON CLIENTE'
-                          : 'CAMBIAR CLIENTE',
-                    ),
-                  ), // Permite elegir un cliente sin salir del registro.
-                  const SizedBox(
-                      height: 32), // Separa la vinculación del guardado.
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: CartaNavegacion(
-                      ancho: 240,
-                      alto: 70,
-                      texto: _guardando ? 'GUARDANDO...' : 'REGISTRAR VEHÍCULO',
-                      icono: Icons.download,
-                      color: const Color(0xFFB7B7B7),
-                      alPresionar: _guardando ? null : _registrar,
-                    ),
-                  ), // Registra el vehículo y su cliente.
+                    habilitado: !_guardando,
+                    validador: (valor) {
+                      final numero = double.tryParse(
+                        (valor ?? '').trim().replaceAll(',', '.'),
+                      );
+                      return numero == null || !numero.isFinite || numero < 0
+                          ? 'Ingresa un kilometraje válido'
+                          : null;
+                    },
+                  ), // Valida el valor numérico.
                 ],
-              ), // Finaliza el contenido.
-            ),
-          ),
+              ), // Finaliza los campos de texto.
+              const SizedBox(height: 16), // Separa los catálogos de los campos.
+              _selectorCatalogo(
+                esModelo: false,
+              ), // Selecciona o añade la marca.
+              const SizedBox(height: 20), // Separa ambos catálogos.
+              _selectorCatalogo(
+                esModelo: true,
+              ), // Exige una marca antes de elegir modelo.
+              if (_errorCatalogos != null) ...[
+                Text(
+                  'No se pudieron cargar marcas y modelos: $_errorCatalogos',
+                ),
+                CartaNavegacion.accion(
+                  onPressed: _cargarCatalogos,
+                  child: const Text('REINTENTAR CATÁLOGOS'),
+                ),
+              ], // Permite recuperar la carga sin borrar campos.
+              const SizedBox(
+                height: 36,
+              ), // Separa los datos del apartado de cliente.
+              const Text(
+                'CLIENTE VINCULADO',
+                style: TextStyle(fontSize: 22),
+              ), // Identifica la relación obligatoria.
+              const SizedBox(height: 12), // Separa el título de la selección.
+              Text(
+                _cliente == null
+                    ? 'Todavía no has seleccionado un cliente.'
+                    : '${_cliente!.nombre} · RUT: ${_cliente!.id}',
+              ), // Confirma el cliente que se guardará.
+              const SizedBox(height: 16), // Separa el cliente de la acción.
+              CartaNavegacion.accion(
+                onPressed: _guardando ? null : _vincularCliente,
+                icon: const Icon(Icons.link),
+                label: Text(
+                  _cliente == null ? 'VINCULAR CON CLIENTE' : 'CAMBIAR CLIENTE',
+                ),
+              ), // Permite elegir un cliente sin salir del registro.
+              const SizedBox(height: 32), // Separa la vinculación del guardado.
+              Align(
+                alignment: Alignment.centerRight,
+                child: CartaNavegacion(
+                  ancho: 240,
+                  alto: 70,
+                  texto: _guardando ? 'GUARDANDO...' : 'REGISTRAR VEHÍCULO',
+                  icono: Icons.download,
+                  color: PaletaTaller.de(context).adaptar(Color(0xFFB7B7B7)),
+                  alPresionar: _guardando ? null : _registrar,
+                ),
+              ), // Registra el vehículo y su cliente.
+            ],
+          ), // Finaliza el contenido.
         ),
-      ); // Finaliza la página conservada durante la navegación.
+      ),
+    ),
+  ); // Finaliza la página conservada durante la navegación.
 } // Finaliza el estado de registro.

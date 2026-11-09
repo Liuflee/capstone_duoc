@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:flutter/material.dart'; // Construye las secciones de perfiles.
 import 'package:frenos_cerna/shared/widgets/estructura_pagina.dart'; // Reutiliza el marco compartido.
 import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart'; // Mantiene las cartas de acción del proyecto.
@@ -40,8 +41,10 @@ class PaginaPerfil extends StatelessWidget {
     // Distingue visualmente dueño y mecánico.
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
-      color: const Color(0xFFF5F5F5),
-      border: Border.all(color: const Color(0xFFBDBDBD)),
+      color: PaletaTaller.de(context).adaptar(Color(0xFFF5F5F5)),
+      border: Border.all(
+        color: PaletaTaller.de(context).adaptar(Color(0xFFBDBDBD), linea: true),
+      ),
       borderRadius: BorderRadius.circular(12),
     ), // Conserva la paleta gris del proyecto.
     child: Column(
@@ -66,7 +69,7 @@ class PaginaPerfil extends StatelessWidget {
               CartaNavegacion(
                 ancho: 240,
                 alto: 140, // Duplica el alto de las tarjetas de administración de perfiles.
-                color: const Color(0xFFBDBDBD),
+                color: PaletaTaller.de(context).adaptar(Color(0xFFBDBDBD)),
                 icono: modo == ModoPerfil.crear
                     ? Icons.person_add_alt_1
                     : modo == ModoPerfil.editar
@@ -87,7 +90,8 @@ class PaginaPerfil extends StatelessWidget {
     ), // Finaliza la distribución.
   ); // Finaliza el bloque de un tipo de perfil.
   @override // Construye la página principal de perfiles.
-  Widget build(BuildContext context) => EstructuraPagina(
+  Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
+  Widget _pagina(BuildContext context) => EstructuraPagina(
     titulo: 'Perfiles',
     activo: 'Perfil',
     child: SingleChildScrollView(

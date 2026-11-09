@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 // Abre el registro conservando el listado debajo de la nueva ruta.
 import 'package:frenos_cerna/features/vehiculos/pagina_crear_vehiculo.dart';
 // Importa la barra superior común a las páginas.
@@ -137,13 +138,14 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
+  Widget _pagina(BuildContext context) {
     final esPantallaGrande =
         MediaQuery.of(context).size.width >=
         700; // Comparte el punto de adaptación del menú principal.
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: PaletaTaller.de(context).fondo,
       appBar: PreferredSize(
         // Comparte el diez por ciento de altura con la página principal.
         preferredSize: Size.fromHeight(
@@ -199,8 +201,10 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                         icon: const Icon(Icons.add),
                         label: const Text('REGISTRAR VEHÍCULO'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFB7B7B7),
-                          foregroundColor: Colors.black,
+                          backgroundColor: PaletaTaller.de(context)
+                              .adaptar(Color(0xFFB7B7B7)),
+                          foregroundColor: PaletaTaller.de(context)
+                              .adaptar(Colors.black, tinta: true),
                         ),
                       ),
                     ), // Abre la nueva vista y actualiza el listado al volver.
@@ -298,10 +302,12 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                                 return Row(
                                   children: [
                                     CircleAvatar(
-                                      backgroundColor: Colors.red[300],
-                                      child: const Icon(
+                                      backgroundColor: PaletaTaller.de(context)
+                                          .adaptar(Colors.red[300]!),
+                                      child: Icon(
                                         Icons.person_outline,
-                                        color: Colors.black,
+                                        color: PaletaTaller.de(context)
+                                            .adaptar(Colors.black, tinta: true),
                                       ),
                                     ),
                                     const SizedBox(width: 10),
@@ -330,10 +336,11 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                                   tipoBoton: 'icon',
 
                                   tooltip: 'Revisar vehículo',
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.search,
                                     size: 35,
-                                    color: Colors.black,
+                                    color: PaletaTaller.de(context)
+                                        .adaptar(Colors.black),
                                   ),
                                   onPressed: () {
                                     Navigator.push(

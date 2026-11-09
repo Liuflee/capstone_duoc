@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 // Importa Flutter, la conexión existente y la tabla compartida.
 import 'package:flutter/material.dart';
 import 'package:frenos_cerna/core/data/supabase_database.dart';
@@ -26,8 +27,10 @@ Future<Cliente?> seleccionarClienteExistente(
   return showDialog<Cliente>(
     context: context,
     builder: (dialogo) => Dialog(
-      backgroundColor: Colors.white, // Comparte el fondo de las páginas de la aplicación.
-      surfaceTintColor: Colors.transparent, // Evita el tinte rosado del tema Material.
+      backgroundColor: PaletaTaller.de(context)
+          .fondo, // Comparte el fondo de las páginas de la aplicación.
+      surfaceTintColor:
+          Colors.transparent, // Evita el tinte rosado del tema Material.
       insetPadding: const EdgeInsets.all(
         16,
       ), // Conserva un margen en pantallas pequeñas.

@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 // Importa Flutter, la conexión existente y los widgets compartidos.
 import 'package:flutter/material.dart';
 import 'package:frenos_cerna/core/data/supabase_database.dart';
@@ -7,10 +8,9 @@ import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
 
 // Presenta el registro como página independiente.
 class PaginaCrearProducto extends StatefulWidget {
-  final Map<String, dynamic>?
-      productoInicial; // Activa la edición con los datos existentes sin duplicar el formulario.
+  final Map<String, dynamic>? productoInicial; // Activa la edición con los datos existentes sin duplicar el formulario.
   final Future<Map<String, List<Map<String, dynamic>>>> Function()?
-      cargarCatalogos; // Permite verificar la relación con datos controlados.
+  cargarCatalogos; // Permite verificar la relación con datos controlados.
   const PaginaCrearProducto({
     super.key,
     this.cargarCatalogos,
@@ -21,8 +21,7 @@ class PaginaCrearProducto extends StatefulWidget {
 } // Finaliza la página pública.
 
 class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
-  final _codigo =
-      TextEditingController(); // Conserva la clave requerida por la base actual.
+  final _codigo = TextEditingController(); // Conserva la clave requerida por la base actual.
   final _nombre =
       TextEditingController(); // Conserva el nombre o código de barra.
   final _precio = TextEditingController(); // Conserva el precio.
@@ -49,12 +48,13 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
     if (producto != null) {
       _codigo.text = producto['codigo_producto']
           .toString(); // Muestra su identificador real.
-      _nombre.text = producto['cod_barra']?.toString() ??
+      _nombre.text =
+          producto['cod_barra']?.toString() ??
           ''; // Precarga el código de barras sin nombres inventados.
-      _precio.text =
-          producto['precio'].toString(); // Precarga el precio existente.
-      _stock.text =
-          producto['stock'].toString(); // Precarga las existencias existentes.
+      _precio.text = producto['precio']
+          .toString(); // Precarga el precio existente.
+      _stock.text = producto['stock']
+          .toString(); // Precarga las existencias existentes.
       _categoria = producto['tipo']; // Selecciona su categoría.
       _calidad = producto['calidad']; // Selecciona su calidad.
       if (_categoria != null) {
@@ -80,11 +80,11 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
   Future<void> _cargarCategorias() async {
     try {
       if (widget.cargarCatalogos != null) {
-        final catalogos = await widget
-            .cargarCatalogos!(); // Obtiene los tres catálogos de una misma fuente.
+        final catalogos = await widget.cargarCatalogos!(); // Obtiene los tres catálogos de una misma fuente.
         if (!mounted) return; // Evita actualizar un formulario cerrado.
         setState(() {
-          _categorias = catalogos['categorias'] ??
+          _categorias =
+              catalogos['categorias'] ??
               []; // Conserva las categorías recibidas.
           _calidades =
               catalogos['calidades'] ?? []; // Conserva las calidades recibidas.
@@ -101,8 +101,7 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
           .select(); // Consulta las calidades existentes.
       final relaciones = await SupabaseDatabase.client
           .from('tipo_calidad_producto')
-          .select(
-              'id_tipo, id_calidad'); // Consulta las asociaciones reales, sin ofrecer calidades de otras categorías.
+          .select('id_tipo, id_calidad'); // Consulta las asociaciones reales, sin ofrecer calidades de otras categorías.
       if (mounted) {
         _relacionesCalidad = List<Map<String, dynamic>>.from(
           relaciones,
@@ -129,10 +128,10 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
     ); // Bloquea cambios de categoría durante la creación.
     final controlador =
         TextEditingController(); // Conserva el nombre escrito en el diálogo.
-    final tipo =
-        esCalidad ? 'CALIDAD' : 'CATEGORÍA'; // Describe el registro solicitado.
-    final idCategoria =
-        _categoria; // Conserva la relación de la calidad con la categoría elegida.
+    final tipo = esCalidad
+        ? 'CALIDAD'
+        : 'CATEGORÍA'; // Describe el registro solicitado.
+    final idCategoria = _categoria; // Conserva la relación de la calidad con la categoría elegida.
     try {
       // Mantiene el formulario ante cancelaciones y errores.
       final nombre = await showDialog<String>(
@@ -202,7 +201,7 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
           ? 'nombre_calidad'
           : 'nombre_tipo'; // Identifica el nombre del catálogo.
       final Map<String, dynamic>
-          registro; // Conserva la opción creada o reutilizada.
+      registro; // Conserva la opción creada o reutilizada.
       if (esCalidad) {
         final respuesta = await SupabaseDatabase.client.rpc(
           'crear_calidad_categoria',
@@ -223,10 +222,10 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
         registro = coincidencias.isNotEmpty
             ? Map<String, dynamic>.from(coincidencias.first)
             : await SupabaseDatabase.client
-                .from(SupabaseTables.tiposProducto)
-                .insert({columna: nombre})
-                .select()
-                .single(); // Deja que la base asigne el ID.
+                  .from(SupabaseTables.tiposProducto)
+                  .insert({columna: nombre})
+                  .select()
+                  .single(); // Deja que la base asigne el ID.
       }
       if (!mounted) return; // Evita actualizar una página cerrada.
       setState(() {
@@ -291,8 +290,8 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
 
   String? _entero(String? valor) =>
       int.tryParse(valor ?? '') == null || int.parse(valor!) < 0
-          ? 'Ingresa un entero igual o mayor que cero'
-          : null; // Valida los datos numéricos.
+      ? 'Ingresa un entero igual o mayor que cero'
+      : null; // Valida los datos numéricos.
   Future<void> _registrar() async {
     if (_guardando || _editandoCatalogo || !_clave.currentState!.validate()) {
       return; // Evita registros inválidos.
@@ -343,14 +342,14 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
     if (_editandoCatalogo || (esCalidad && _categoria == null)) return;
     final registros = esCalidad
         ? _calidades
-            .where(
-              (calidad) => _relacionesCalidad.any(
-                (relacion) =>
-                    relacion['id_tipo'] == _categoria &&
-                    relacion['id_calidad'] == calidad['id'],
-              ),
-            )
-            .toList()
+              .where(
+                (calidad) => _relacionesCalidad.any(
+                  (relacion) =>
+                      relacion['id_tipo'] == _categoria &&
+                      relacion['id_calidad'] == calidad['id'],
+                ),
+              )
+              .toList()
         : _categorias;
     if (registros.isEmpty) return;
 
@@ -362,10 +361,8 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
         children: [
           for (final fila in registros)
             SimpleDialogOption(
-              onPressed: () => Navigator.pop(
-                dialogo,
-                Map<String, dynamic>.from(fila),
-              ),
+              onPressed: () =>
+                  Navigator.pop(dialogo, Map<String, dynamic>.from(fila)),
               child: Text(fila[columna]?.toString() ?? 'Sin nombre'),
             ),
         ],
@@ -402,11 +399,12 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
       setState(() => _editandoCatalogo = true);
       await SupabaseDatabase.client
           .from(
-        esCalidad
-            ? SupabaseTables.calidadesProducto
-            : SupabaseTables.tiposProducto,
-      )
-          .update({columna: nombre}).eq('id', registro['id']);
+            esCalidad
+                ? SupabaseTables.calidadesProducto
+                : SupabaseTables.tiposProducto,
+          )
+          .update({columna: nombre})
+          .eq('id', registro['id']);
       if (!mounted) return;
 
       setState(() {
@@ -417,9 +415,8 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
           (a, b) => a[columna].toString().compareTo(b[columna].toString()),
         );
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Nombre actualizado.')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Nombre actualizado.')));
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -433,126 +430,126 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
   }
 
   @override // Construye la composición de creación de producto.
-  Widget build(BuildContext context) => EstructuraPagina(
-        titulo: widget.productoInicial == null
-            ? 'Creación de producto'
-            : 'Edición de producto',
-        activo: 'Inventario',
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.stretch, // Alinea el contenido.
-            children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: CartaNavegacion.accion(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.keyboard_return),
-                  label: const Text('VOLVER A INVENTARIO'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF2A0A0),
-                    foregroundColor: Colors.black,
-                  ),
-                ),
-              ), // Coloca el regreso arriba a la izquierda.
-              const SizedBox(height: 40), // Separa navegación y formulario.
-              Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1250),
-                  child: FormularioDatos(
-                    claveFormulario: _clave,
-                    ancho: 1250,
-                    separacionFilas:
-                        28, // Centra los campos y mantiene su alineación.
-                    campos: [
-                      CampoFormularioDatos(
-                        controlador: _codigo,
-                        etiqueta: 'CÓDIGO DEL PRODUCTO:',
-                        textoAyuda: 'Ej.: SP0-01223',
-                        tipoTeclado: TextInputType.text,
-                        validador: (valor) =>
-                            valor == null || valor.trim().isEmpty
-                                ? 'Ingresa el código del producto'
-                                : null, // Exige un identificador alfanumérico.
-                        habilitado: !_guardando &&
-                            widget.productoInicial ==
-                                null, // Conserva la clave utilizada por las ventas existentes.
-                      ), // Conserva el código obligatorio.
-                      CampoFormularioDatos(
-                        controlador: _precio,
-                        etiqueta: widget.productoInicial == null
-                            ? 'PRECIO DEL PRODUCTO NUEVO:'
-                            : 'PRECIO DEL PRODUCTO:',
-                        textoAyuda: 'Precio',
-                        tipoTeclado: TextInputType.number,
-                        validador: _entero,
-                        habilitado: !_guardando,
-                      ), // Configura el precio.
-                      CampoFormularioDatos(
-                        controlador: _stock,
-                        etiqueta: widget.productoInicial == null
-                            ? 'CANTIDAD INICIAL EN BODEGA:'
-                            : 'CANTIDAD EN BODEGA:',
-                        textoAyuda: 'Cantidad',
-                        tipoTeclado: TextInputType.number,
-                        validador: _entero,
-                        habilitado: !_guardando,
-                      ), // Configura las existencias iniciales.
-                    ], // Finaliza los campos.
-                  ),
-                ),
-              ), // Finaliza el formulario centrado.
-              const SizedBox(height: 24), // Separa la categoría de los campos.
-              Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: 1250,
-                  ), // Alinea los catálogos con los campos.
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (final esCalidad in [false, true]) ...[
-                        Text(
-                          esCalidad
-                              ? (widget.productoInicial == null
-                                  ? 'CALIDAD DEL PRODUCTO NUEVO:'
-                                  : 'CALIDAD DEL PRODUCTO:')
-                              : (widget.productoInicial == null
-                                  ? 'CATEGORÍA DEL PRODUCTO NUEVO:'
-                                  : 'CATEGORÍA DEL PRODUCTO:'),
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+  Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
+  Widget _pagina(BuildContext context) => EstructuraPagina(
+    titulo: widget.productoInicial == null
+        ? 'Creación de producto'
+        : 'Edición de producto',
+    activo: 'Inventario',
+    child: SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch, // Alinea el contenido.
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: CartaNavegacion.accion(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.keyboard_return),
+              label: const Text('VOLVER A INVENTARIO'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: PaletaTaller.de(context)
+                    .adaptar(Color(0xFFF2A0A0)),
+                foregroundColor: PaletaTaller.de(context)
+                    .adaptar(Colors.black, tinta: true),
+              ),
+            ),
+          ), // Coloca el regreso arriba a la izquierda.
+          const SizedBox(height: 40), // Separa navegación y formulario.
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1250),
+              child: FormularioDatos(
+                claveFormulario: _clave,
+                ancho: 1250,
+                separacionFilas:
+                    28, // Centra los campos y mantiene su alineación.
+                campos: [
+                  CampoFormularioDatos(
+                    controlador: _codigo,
+                    etiqueta: 'CÓDIGO DEL PRODUCTO:',
+                    textoAyuda: 'Ej.: SP0-01223',
+                    tipoTeclado: TextInputType.text,
+                    validador: (valor) => valor == null || valor.trim().isEmpty
+                        ? 'Ingresa el código del producto'
+                        : null, // Exige un identificador alfanumérico.
+                    habilitado: !_guardando && widget.productoInicial == null, // Conserva la clave utilizada por las ventas existentes.
+                  ), // Conserva el código obligatorio.
+                  CampoFormularioDatos(
+                    controlador: _precio,
+                    etiqueta: widget.productoInicial == null
+                        ? 'PRECIO DEL PRODUCTO NUEVO:'
+                        : 'PRECIO DEL PRODUCTO:',
+                    textoAyuda: 'Precio',
+                    tipoTeclado: TextInputType.number,
+                    validador: _entero,
+                    habilitado: !_guardando,
+                  ), // Configura el precio.
+                  CampoFormularioDatos(
+                    controlador: _stock,
+                    etiqueta: widget.productoInicial == null
+                        ? 'CANTIDAD INICIAL EN BODEGA:'
+                        : 'CANTIDAD EN BODEGA:',
+                    textoAyuda: 'Cantidad',
+                    tipoTeclado: TextInputType.number,
+                    validador: _entero,
+                    habilitado: !_guardando,
+                  ), // Configura las existencias iniciales.
+                ], // Finaliza los campos.
+              ),
+            ),
+          ), // Finaliza el formulario centrado.
+          const SizedBox(height: 24), // Separa la categoría de los campos.
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: 1250,
+              ), // Alinea los catálogos con los campos.
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final esCalidad in [false, true]) ...[
+                    Text(
+                      esCalidad
+                          ? (widget.productoInicial == null
+                                ? 'CALIDAD DEL PRODUCTO NUEVO:'
+                                : 'CALIDAD DEL PRODUCTO:')
+                          : (widget.productoInicial == null
+                                ? 'CATEGORÍA DEL PRODUCTO NUEVO:'
+                                : 'CATEGORÍA DEL PRODUCTO:'),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ), // Identifica cada catálogo.
+                    const SizedBox(
+                      height: 10,
+                    ), // Separa el título del selector.
+                    InputDecorator(
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: PaletaTaller.de(context)
+                            .adaptar(Color(0xFFD9D9D9)),
+                        enabled:
+                            !_guardando &&
+                            !_editandoCatalogo &&
+                            (!esCalidad || _categoria != null),
+                      ), // Conserva el diseño y el orden obligatorio.
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<Object>(
+                          value: esCalidad ? _calidad : _categoria, // Usa una selección controlada para restablecer la calidad al cambiar de categoría.
+                          isExpanded: true,
+                          menuMaxHeight:
+                              300, // Permite desplazar catálogos extensos.
+                          hint: Text(
+                            esCalidad && _categoria == null
+                                ? 'SELECCIONA PRIMERO UNA CATEGORÍA'
+                                : esCalidad
+                                ? 'Calidad'
+                                : 'Categoría',
                           ),
-                        ), // Identifica cada catálogo.
-                        const SizedBox(
-                          height: 10,
-                        ), // Separa el título del selector.
-                        InputDecorator(
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: const Color(0xFFD9D9D9),
-                            enabled: !_guardando &&
-                                !_editandoCatalogo &&
-                                (!esCalidad || _categoria != null),
-                          ), // Conserva el diseño y el orden obligatorio.
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<Object>(
-                              value: esCalidad
-                                  ? _calidad
-                                  : _categoria, // Usa una selección controlada para restablecer la calidad al cambiar de categoría.
-                              isExpanded: true,
-                              menuMaxHeight:
-                                  300, // Permite desplazar catálogos extensos.
-                              hint: Text(
-                                esCalidad && _categoria == null
-                                    ? 'SELECCIONA PRIMERO UNA CATEGORÍA'
-                                    : esCalidad
-                                        ? 'Calidad'
-                                        : 'Categoría',
-                              ),
-                              items: [
-                                for (final fila in (esCalidad
+                          items: [
+                            for (final fila
+                                in (esCalidad
                                     ? _calidades.where(
                                         (calidad) => _relacionesCalidad.any(
                                           (relacion) =>
@@ -563,116 +560,121 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
                                         ),
                                       )
                                     : _categorias))
-                                  DropdownMenuItem(
-                                    value: fila['id'],
-                                    child: Text(
-                                      fila[esCalidad
-                                                  ? 'nombre_calidad'
-                                                  : 'nombre_tipo']
-                                              ?.toString() ??
-                                          'Sin nombre',
-                                    ),
-                                  ),
-                                DropdownMenuItem(
-                                  value: -1,
-                                  child: Text(
-                                    esCalidad
-                                        ? 'AÑADIR CALIDAD'
-                                        : 'AÑADIR CATEGORÍA',
-                                  ),
-                                ), // Abre el registro sin abandonar el producto.
-                                if ((esCalidad
-                                        ? _calidades.where((calidad) =>
-                                            _relacionesCalidad.any((relacion) =>
-                                                relacion['id_tipo'] ==
-                                                    _categoria &&
-                                                relacion['id_calidad'] ==
-                                                    calidad['id']))
-                                        : _categorias)
-                                    .isNotEmpty)
-                                  DropdownMenuItem(
-                                    value: -2,
-                                    child: Text(esCalidad
-                                        ? 'EDITAR NOMBRE DE CALIDAD'
-                                        : 'EDITAR NOMBRE DE CATEGORÍA'),
-                                  ),
-                              ],
-                              onChanged: _guardando ||
-                                      _editandoCatalogo ||
-                                      (esCalidad && _categoria == null)
-                                  ? null
-                                  : (valor) {
-                                      if (valor == -1) {
-                                        _agregarCatalogo(
-                                            esCalidad:
-                                                esCalidad); // Pide nombre y confirmación antes de guardar.
-                                      } else if (valor == -2) {
-                                        _editarCatalogo(esCalidad: esCalidad);
+                              DropdownMenuItem(
+                                value: fila['id'],
+                                child: Text(
+                                  fila[esCalidad
+                                              ? 'nombre_calidad'
+                                              : 'nombre_tipo']
+                                          ?.toString() ??
+                                      'Sin nombre',
+                                ),
+                              ),
+                            DropdownMenuItem(
+                              value: -1,
+                              child: Text(
+                                esCalidad
+                                    ? 'AÑADIR CALIDAD'
+                                    : 'AÑADIR CATEGORÍA',
+                              ),
+                            ), // Abre el registro sin abandonar el producto.
+                            if ((esCalidad
+                                    ? _calidades.where(
+                                        (calidad) => _relacionesCalidad.any(
+                                          (relacion) =>
+                                              relacion['id_tipo'] ==
+                                                  _categoria &&
+                                              relacion['id_calidad'] ==
+                                                  calidad['id'],
+                                        ),
+                                      )
+                                    : _categorias)
+                                .isNotEmpty)
+                              DropdownMenuItem(
+                                value: -2,
+                                child: Text(
+                                  esCalidad
+                                      ? 'EDITAR NOMBRE DE CALIDAD'
+                                      : 'EDITAR NOMBRE DE CATEGORÍA',
+                                ),
+                              ),
+                          ],
+                          onChanged:
+                              _guardando ||
+                                  _editandoCatalogo ||
+                                  (esCalidad && _categoria == null)
+                              ? null
+                              : (valor) {
+                                  if (valor == -1) {
+                                    _agregarCatalogo(esCalidad: esCalidad); // Pide nombre y confirmación antes de guardar.
+                                  } else if (valor == -2) {
+                                    _editarCatalogo(esCalidad: esCalidad);
+                                  } else {
+                                    setState(() {
+                                      if (esCalidad) {
+                                        _calidad = valor;
                                       } else {
-                                        setState(() {
-                                          if (esCalidad) {
-                                            _calidad = valor;
-                                          } else {
-                                            _categoria = valor;
-                                            _calidad = null;
-                                          }
-                                        }); // Descarta la calidad de la categoría anterior.
+                                        _categoria = valor;
+                                        _calidad = null;
                                       }
-                                    },
-                            ),
-                          ),
-                        ), // Mantiene categoría y calidad dependientes.
-                        const SizedBox(
-                          height: 28,
-                        ), // Conserva la separación de los campos.
-                      ],
-                      FormularioDatos(
-                        ancho: 1250,
-                        campos: [
-                          CampoFormularioDatos(
-                            controlador: _nombre,
-                            etiqueta: widget.productoInicial == null
-                                ? 'CÓDIGO DE BARRA DEL PRODUCTO NUEVO:'
-                                : 'CÓDIGO DE BARRA DEL PRODUCTO:',
-                            textoAyuda: 'Código de barra',
-                            habilitado: !_guardando,
-                          ), // Usa el dato admitido por el esquema actual.
-                        ], // Deja el código de barras al final.
+                                    }); // Descarta la calidad de la categoría anterior.
+                                  }
+                                },
+                        ),
                       ),
-                      if (_errorCategorias != null)
-                        Text(
-                          'No se pudieron cargar los catálogos: $_errorCategorias',
-                        ), // Informa los errores de consulta.
-                    ],
+                    ), // Mantiene categoría y calidad dependientes.
+                    const SizedBox(
+                      height: 28,
+                    ), // Conserva la separación de los campos.
+                  ],
+                  FormularioDatos(
+                    ancho: 1250,
+                    campos: [
+                      CampoFormularioDatos(
+                        controlador: _nombre,
+                        etiqueta: widget.productoInicial == null
+                            ? 'CÓDIGO DE BARRA DEL PRODUCTO NUEVO:'
+                            : 'CÓDIGO DE BARRA DEL PRODUCTO:',
+                        textoAyuda: 'Código de barra',
+                        habilitado: !_guardando,
+                      ), // Usa el dato admitido por el esquema actual.
+                    ], // Deja el código de barras al final.
                   ),
+                  if (_errorCategorias != null)
+                    Text(
+                      'No se pudieron cargar los catálogos: $_errorCategorias',
+                    ), // Informa los errores de consulta.
+                ],
+              ),
+            ),
+          ), // Comparte los mismos márgenes que el formulario superior.
+          const SizedBox(height: 30), // Separa la acción de registro.
+          Align(
+            alignment: Alignment.centerRight,
+            child: CartaNavegacion.accion(
+              onPressed: _guardando || _editandoCatalogo ? null : _registrar,
+              icon: const Icon(Icons.download),
+              label: Text(
+                _guardando
+                    ? 'GUARDANDO...'
+                    : widget.productoInicial == null
+                    ? 'REGISTRAR'
+                    : 'GUARDAR CAMBIOS',
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: PaletaTaller.de(context)
+                    .adaptar(Color(0xFFD96363)),
+                foregroundColor: PaletaTaller.de(context)
+                    .adaptar(Colors.black, tinta: true),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 18,
                 ),
-              ), // Comparte los mismos márgenes que el formulario superior.
-              const SizedBox(height: 30), // Separa la acción de registro.
-              Align(
-                alignment: Alignment.centerRight,
-                child: CartaNavegacion.accion(
-                  onPressed:
-                      _guardando || _editandoCatalogo ? null : _registrar,
-                  icon: const Icon(Icons.download),
-                  label: Text(
-                    _guardando
-                        ? 'GUARDANDO...'
-                        : widget.productoInicial == null
-                            ? 'REGISTRAR'
-                            : 'GUARDAR CAMBIOS',
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFD96363),
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 30,
-                      vertical: 18,
-                    ),
-                  ),
-                ),
-              ), // Usa la acción roja de Figma.
-            ], // Finaliza el contenido.
-          ),
-        ),
-      ); // Finaliza la página.
+              ),
+            ),
+          ), // Usa la acción roja de Figma.
+        ], // Finaliza el contenido.
+      ),
+    ),
+  ); // Finaliza la página.
 } // Finaliza el estado.

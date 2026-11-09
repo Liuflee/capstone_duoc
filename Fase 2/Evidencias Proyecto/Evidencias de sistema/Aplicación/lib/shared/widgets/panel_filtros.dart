@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 // Importa los controles visuales de Flutter.
 import 'package:flutter/material.dart';
 
@@ -40,7 +41,14 @@ class CampoBusqueda extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 48, // Comparte la altura con los filtros del panel.
-      color: Colors.grey[300], // Reproduce el fondo gris de la aplicación.
+      decoration: BoxDecoration(
+        color: PaletaTaller.de(context).adaptar(Colors.grey[300]!),
+        border: PaletaTaller.de(context).oscura
+            ? Border.all(color: PaletaTaller.de(context).borde)
+            : null,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      clipBehavior: Clip.antiAlias, // Reproduce el fondo gris de la aplicación.
       padding: const EdgeInsets.only(
         left: 10,
       ), // Separa el texto del borde izquierdo.
@@ -53,14 +61,17 @@ class CampoBusqueda extends StatelessWidget {
                   controlador, // Muestra el texto administrado por la página.
               onChanged: alCambiar, // Permite filtrar mientras se escribe.
               decoration: InputDecoration(
+                filled: false,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
                 hintText: textoAyuda, // Describe qué datos se pueden buscar.
                 border: InputBorder.none, // Conserva el diseño sin borde.
               ), // Finaliza la decoración del campo.
             ), // Finaliza el campo editable.
           ), // Asigna al texto el espacio restante.
-          const Icon(
+          Icon(
             Icons.search,
-            color: Colors.black,
+            color: PaletaTaller.de(context).adaptar(Colors.black, tinta: true),
           ), // Conserva la lupa negra.
           // Muestra la limpieza solamente cuando existe un texto escrito.
           ListenableBuilder(
@@ -73,9 +84,10 @@ class CampoBusqueda extends StatelessWidget {
                       controlador.clear(); // Borra el texto visible.
                       alCambiar(''); // Notifica que la búsqueda quedó vacía.
                     }, // Ejecuta la limpieza de un solo toque.
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.close,
-                      color: Colors.black,
+                      color: PaletaTaller.de(context)
+                          .adaptar(Colors.black, tinta: true),
                     ), // Muestra la cruz de limpieza.
                   ), // Finaliza el botón de limpieza.
           ), // Finaliza la zona que reacciona al texto.
@@ -108,7 +120,8 @@ class CategoriaFiltro<T> {
     required this.valor, // Calcula el valor de cada dato.
     this.seleccionUnica =
         false, // Conserva la selección múltiple en los demás filtros.
-    this.seleccionUnicaSinDefecto = false, // Conserva el comportamiento habitual de selección única.
+    this.seleccionUnicaSinDefecto =
+        false, // Conserva el comportamiento habitual de selección única.
     this.opcionesFijas = const [], // Por defecto conserva las opciones calculadas desde los datos.
     this.etiquetas, // Opcional: traduce valores técnicos a texto visible.
   }); // Finaliza el constructor de la categoría.
@@ -358,7 +371,8 @@ class _PanelFiltrosState<T> extends State<PanelFiltros<T>> {
                     style: TextStyle(
                       fontFamily: 'Courier',
                       fontSize: 13,
-                      color: Colors.grey[700],
+                      color: PaletaTaller.de(context)
+                          .adaptar(Colors.grey[700]!),
                     ),
                   ),
 
@@ -366,17 +380,18 @@ class _PanelFiltrosState<T> extends State<PanelFiltros<T>> {
                     const SizedBox(width: 4),
                     TextButton.icon(
                       onPressed: _limpiarTodo,
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.filter_alt_off,
                         size: 18,
-                        color: Colors.black,
+                        color: PaletaTaller.de(context)
+                            .adaptar(Colors.black, tinta: true),
                       ),
-                      label: const Text(
+                      label: Text(
                         'LIMPIAR',
                         style: TextStyle(
                           fontFamily: 'Courier',
                           fontSize: 13,
-                          color: Colors.black,
+                          color: PaletaTaller.de(context).adaptar(Colors.black),
                         ),
                       ),
                     ),
@@ -472,7 +487,7 @@ class _ChipCategoriaState<T> extends State<_ChipCategoria<T>> {
         ), // Elimina márgenes internos del desplegable.
         alignment: Alignment.bottomLeft, // Alinea el menú debajo del chip.
         backgroundColor: WidgetStatePropertyAll(
-          Colors.grey[300],
+          PaletaTaller.de(context).adaptar(Colors.grey[300]!),
         ), // Conserva el fondo gris de la aplicación.
         fixedSize: const WidgetStatePropertyAll(
           Size(280, double.infinity),
@@ -510,7 +525,7 @@ class _ChipCategoriaState<T> extends State<_ChipCategoria<T>> {
                             ? Icons.radio_button_unchecked
                             : Icons.check_box_outline_blank), // Marca las opciones elegidas.
                   size: 20,
-                  color: Colors.black,
+                  color: PaletaTaller.de(context).adaptar(Colors.black),
                 ), // Refleja la casilla de la opción.
                 const SizedBox(width: 8), // Separa la casilla del texto.
                 Expanded(
@@ -525,7 +540,8 @@ class _ChipCategoriaState<T> extends State<_ChipCategoria<T>> {
                   style: TextStyle(
                     fontFamily: 'Courier',
                     fontSize: 13,
-                    color: Colors.grey[700],
+                    color: PaletaTaller.de(context)
+                        .adaptar(Colors.grey[700]!, tinta: true),
                   ), // Mantiene la fuente de la aplicación.
                 ), // Finaliza la cantidad de la opción.
               ], // Finaliza los elementos de la opción.
@@ -538,10 +554,11 @@ class _ChipCategoriaState<T> extends State<_ChipCategoria<T>> {
                 widget.alCambiar(<String>{}), // Vacía esta categoría.
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.restart_alt,
                   size: 20,
-                  color: Colors.black,
+                  color: PaletaTaller.de(context)
+                      .adaptar(Colors.black, tinta: true),
                 ), // Identifica el reinicio de la categoría.
                 const SizedBox(width: 8), // Separa el icono del texto.
                 const Expanded(
@@ -573,7 +590,9 @@ class _ChipCategoriaState<T> extends State<_ChipCategoria<T>> {
               horizontal: 12,
             ), // Separa el texto de los bordes.
             decoration: BoxDecoration(
-              color: const Color(0xFFB74545), // Usa el mismo rojo por defecto en todos los filtros.
+              color: PaletaTaller.de(context).adaptar(
+                Color(0xFFB74545),
+              ), // Usa el mismo rojo por defecto en todos los filtros.
               borderRadius: BorderRadius.circular(
                 8,
               ), // Suaviza los bordes del chip.

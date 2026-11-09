@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart'; // Muestra el cliente local asociado a la pendiente.
 import 'package:flutter/material.dart'; // Presenta las acciones de la venta pendiente.
 import 'package:frenos_cerna/features/ventas/data/ventas_pendientes_repository.dart'; // Recupera y confirma los borradores locales.
@@ -276,8 +277,10 @@ class _PaginaDetalleVentaPendienteState
                 icon: const Icon(Icons.check_circle_outline),
                 label: Text(_ocupado ? 'ESPERA...' : 'CONFIRMAR PAGO'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFD96363),
-                  foregroundColor: Colors.black,
+                  backgroundColor: PaletaTaller.de(context)
+                      .adaptar(Color(0xFFD96363)),
+                  foregroundColor: PaletaTaller.de(context)
+                      .adaptar(Colors.black, tinta: true),
                 ), // Distingue la confirmación con el rojo existente.
               ), // Cierra la venta después de recibir el pago.
             ],

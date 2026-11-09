@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 // Importa el historial real y sus páginas de detalle.
 import 'package:frenos_cerna/features/ventas/data/ventas_repository.dart';
 import 'package:frenos_cerna/features/ventas/presentation/pagina_detalle_venta.dart';
@@ -162,7 +163,8 @@ class _PaginaEditarClienteState extends State<PaginaEditarCliente> {
   }
 
   @override
-  Widget build(BuildContext context) => EstructuraPagina(
+  Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
+  Widget _pagina(BuildContext context) => EstructuraPagina(
     titulo: 'Cliente “${widget.cliente.nombre}”',
     activo: 'Clientes', // Conserva el título dinámico.
     child: SingleChildScrollView(
@@ -291,8 +293,12 @@ class _PaginaEditarClienteState extends State<PaginaEditarCliente> {
     children: [
       CircleAvatar(
         radius: 60,
-        backgroundColor: const Color(0xFFFF6D6D),
-        child: const Icon(Icons.person_outline, size: 80, color: Colors.black),
+        backgroundColor: PaletaTaller.de(context).adaptar(Color(0xFFFF6D6D)),
+        child: Icon(
+          Icons.person_outline,
+          size: 80,
+          color: PaletaTaller.de(context).adaptar(Colors.black, tinta: true),
+        ),
       ), // Conserva el avatar del prototipo sin imagen de cliente.
       const SizedBox(height: 16), // Separa el avatar del nombre.
       Text(
@@ -311,8 +317,9 @@ class _PaginaEditarClienteState extends State<PaginaEditarCliente> {
         icon: const Icon(Icons.save_outlined),
         label: const Text('GUARDAR CAMBIOS'),
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFD96363),
-          foregroundColor: Colors.black,
+          backgroundColor: PaletaTaller.de(context).adaptar(Color(0xFFD96363)),
+          foregroundColor: PaletaTaller.de(context)
+              .adaptar(Colors.black, tinta: true),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         ),
       ), // Guarda los datos editados sin eliminar el cliente.

@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; // Permite cerrar únicamente la sesión de este dispositivo.
 import 'package:frenos_cerna/core/data/supabase_database.dart'; // Reutiliza la sesión autenticada.
 import 'package:frenos_cerna/features/autenticacion/presentation/puerta_autenticacion.dart'; // Regresa al acceso existente sin modificar su diseño.
@@ -103,16 +104,15 @@ class _ContenidoBarraSuperior extends StatelessWidget {
     } // Finaliza la salida de sesión.
   } // Finaliza la acción del usuario.
 
-  Widget _marca(double ancho) => Container(
+  Widget _marca(BuildContext context, double ancho) => Container(
     // Ocupa todo el espacio de la marca sobre el menú.
     key: const ValueKey(
       'identidad_empresa',
     ), // Conserva la referencia de distribución de la barra.
     width: ancho,
     height: double.infinity,
-    color: const Color(
-      0xFFE0E0E0,
-    ), // Iguala el fondo del logo con el gris de la barra superior.
+    color: PaletaTaller.de(context)
+        .barra, // Iguala el fondo del logo con el gris de la barra superior.
     padding: const EdgeInsets.symmetric(
       horizontal: 12,
       vertical: 8,
@@ -133,13 +133,14 @@ class _ContenidoBarraSuperior extends StatelessWidget {
           ), // Conserva el logo original con mayor presencia.
           if (ancho >= 150) ...[
             const SizedBox(width: 10),
-            const Flexible(
+            Flexible(
               child: Text(
                 'FRENOS\nCERNA',
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: Color(0xFF721919),
+                  color: PaletaTaller.de(context)
+                      .adaptar(Color(0xFF721919), tinta: true),
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.7,
@@ -152,7 +153,7 @@ class _ContenidoBarraSuperior extends StatelessWidget {
     ), // Finaliza el contenido de la marca.
   ); // Finaliza el área blanca completa.
 
-  Widget _titulo(bool compacto) => Tooltip(
+  Widget _titulo(BuildContext context, bool compacto) => Tooltip(
     message: tituloPagina,
     child: Semantics(
       header: true,
@@ -166,10 +167,14 @@ class _ContenidoBarraSuperior extends StatelessWidget {
           vertical: compacto ? 6 : 10,
         ), // Ajusta la presentación a la altura disponible.
         decoration: BoxDecoration(
-          color: const Color(0xFFF8F8F8),
+          color: PaletaTaller.de(context).adaptar(Color(0xFFF8F8F8)),
           borderRadius: BorderRadius.circular(12),
-          border: const Border(
-            left: BorderSide(color: Color(0xFFA32321), width: 4),
+          border: Border(
+            left: BorderSide(
+              color: PaletaTaller.de(context)
+                  .adaptar(Color(0xFFA32321), linea: true),
+              width: 4,
+            ),
           ),
           boxShadow: const [
             BoxShadow(
@@ -185,7 +190,8 @@ class _ContenidoBarraSuperior extends StatelessWidget {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            color: const Color(0xFF721919),
+            color: PaletaTaller.de(context)
+                .adaptar(Color(0xFF721919), tinta: true),
             fontSize: compacto ? 18 : 22,
             fontWeight: FontWeight.w700,
           ),
@@ -198,6 +204,7 @@ class _ContenidoBarraSuperior extends StatelessWidget {
     mainAxisAlignment: MainAxisAlignment.end,
     children: [
       // Conserva la información y las acciones de la cuenta.
+      SelectorPaletas(compacto: MediaQuery.sizeOf(context).width < 1400),
       if (mostrarDatos) ...[
         Expanded(
           child: Column(
@@ -209,15 +216,20 @@ class _ContenidoBarraSuperior extends StatelessWidget {
                 nombreUsuario,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Colors.black, fontSize: 14),
+                style: TextStyle(
+                  color: PaletaTaller.de(context)
+                      .adaptar(Colors.black, tinta: true),
+                  fontSize: 14,
+                ),
               ),
               if (rolUsuario != null)
                 Text(
                   rolUsuario!,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF616161),
+                  style: TextStyle(
+                    color: PaletaTaller.de(context)
+                        .adaptar(Color(0xFF616161), tinta: true),
                     fontSize: 11,
                   ),
                 ),
@@ -228,10 +240,14 @@ class _ContenidoBarraSuperior extends StatelessWidget {
       ], // Evita reducir el espacio del título en móvil.
       Tooltip(
         message: rolUsuario ?? 'Usuario',
-        child: const CircleAvatar(
+        child: CircleAvatar(
           radius: 18,
-          backgroundColor: Color(0xFFA32321),
-          child: Icon(Icons.build, color: Colors.white, size: 21),
+          backgroundColor: PaletaTaller.de(context).adaptar(Color(0xFFA32321)),
+          child: Icon(
+            Icons.build,
+            color: PaletaTaller.de(context).adaptar(Colors.white, tinta: true),
+            size: 21,
+          ),
         ),
       ), // Conserva el indicador de usuario con mayor contraste.
       if (onCerrarSesion != null)
@@ -256,17 +272,22 @@ class _ContenidoBarraSuperior extends StatelessWidget {
           700; // Comparte el punto de adaptación del menú lateral.
       final anchoMenu = escritorio ? ancho * 0.12 : 0.0; // Reserva exactamente el doce por ciento utilizado por el menú.
       final anchoUsuario = escritorio
-          ? ((ancho - anchoMenu) * 0.20).clamp(112.0, 220.0)
-          : (onCerrarSesion == null ? 44.0 : 92.0); // Limita el bloque de la cuenta sin desplazar el título.
+          ? (ancho >= 1400 ? 472.0 : 175.0)
+          : (onCerrarSesion == null ? 92.0 : 140.0); // Limita el bloque de la cuenta sin desplazar el título.
       final reserva =
           anchoUsuario +
           12; // Reserva el mismo espacio a ambos lados del título.
       return Container(
         width: ancho,
         height: alto,
-        decoration: const BoxDecoration(
-          color: Color(0xFFE0E0E0),
-          border: Border(bottom: BorderSide(color: Color(0xFFCCCCCC))),
+        decoration: BoxDecoration(
+          color: PaletaTaller.de(context).barra,
+          border: Border(
+            bottom: BorderSide(
+              color: PaletaTaller.de(context)
+                  .adaptar(Color(0xFFCCCCCC), linea: true),
+            ),
+          ),
         ),
         child: Row(
           children: [
@@ -274,7 +295,7 @@ class _ContenidoBarraSuperior extends StatelessWidget {
             if (escritorio)
               SizedBox(
                 width: anchoMenu,
-                child: _marca(anchoMenu),
+                child: _marca(context, anchoMenu),
               ), // Sitúa el logo sobre la zona del menú.
             Expanded(
               child: Stack(
@@ -286,7 +307,9 @@ class _ContenidoBarraSuperior extends StatelessWidget {
                     right: reserva,
                     top: 6,
                     bottom: 6,
-                    child: Center(child: _titulo(!escritorio || alto < 80)),
+                    child: Center(
+                      child: _titulo(context, !escritorio || alto < 80),
+                    ),
                   ), // Hace coincidir el centro del título con el centro del contenido de cada página.
                   if (!escritorio)
                     Align(

@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 // Abre el registro independiente de productos.
 import 'package:frenos_cerna/features/inventario/pagina_crear_producto.dart';
 // Importa la barra superior común a las páginas.
@@ -163,7 +164,8 @@ class _PaginaInventarioState extends State<PaginaInventario> {
   // ============================================================
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
+  Widget _pagina(BuildContext context) {
     final anchoPantalla = MediaQuery.of(context).size.width;
 
     final esPantallaGrande =
@@ -171,7 +173,7 @@ class _PaginaInventarioState extends State<PaginaInventario> {
         700; // Comparte el punto de adaptación del menú principal.
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: PaletaTaller.de(context).fondo,
 
       // ========================================================
       // APP BAR
@@ -243,19 +245,25 @@ class _PaginaInventarioState extends State<PaginaInventario> {
 
                         onPressed: _agregarProducto,
 
-                        icon: const Icon(Icons.add, color: Colors.black),
+                        icon: Icon(
+                          Icons.add,
+                          color: PaletaTaller.de(context)
+                              .adaptar(Colors.black, tinta: true),
+                        ),
 
-                        label: const Text(
+                        label: Text(
                           'AÑADIR PRODUCTO',
 
                           style: TextStyle(
-                            color: Colors.black,
+                            color: PaletaTaller.de(context)
+                                .adaptar(Colors.black, tinta: true),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
 
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey[300],
+                          backgroundColor: PaletaTaller.de(context)
+                              .adaptar(Colors.grey[300]!),
 
                           padding: const EdgeInsets.symmetric(
                             horizontal: 20,
