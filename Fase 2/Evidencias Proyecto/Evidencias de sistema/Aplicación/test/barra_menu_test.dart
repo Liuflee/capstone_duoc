@@ -282,8 +282,9 @@ void main() {
     (tester) async {
       // Comprueba posición y navegación recuperada.
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
+        MaterialApp(
+          theme: ThemeData(platform: TargetPlatform.windows),
+          home: const Scaffold(
             body: SizedBox(width: 180, child: MenuLateral(activo: 'Clientes')),
           ),
         ),

@@ -278,7 +278,7 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                           },
                                         )
                                         .toList();
-                                    return TablaDatos(
+                                    final tabla = TablaDatos(
                                       mostrarControles: false, // El panel ya muestra el buscador y las categorías.
                                       // Encabezados visibles de la tabla.
                                       nombresColumnas: const [
@@ -456,6 +456,33 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                             ), // Consulta el perfil sin habilitar edición.
                                       },
                                     ); // Finaliza la tabla construida con los clientes filtrados.
+                                    final plataforma = Theme.of(context)
+                                        .platform;
+                                    final esCelular =
+                                        plataforma == TargetPlatform.android ||
+                                        plataforma == TargetPlatform.iOS;
+                                    if (!esCelular) return tabla;
+                                    // Reutiliza las acciones existentes y muestra solo las columnas móviles.
+                                    return TablaDatos(
+                                      mostrarControles: false,
+                                      nombresColumnas: const [
+                                        'NOMBRE',
+                                        'EDITAR',
+                                        'VER',
+                                      ],
+                                      camposColumnas: const ['nombre', '', ''],
+                                      anchosColumnas: const [240, 80, 80],
+                                      filas: filasClientes,
+                                      coloresEncabezados: [
+                                        for (final indice in [0, 4, 5])
+                                          tabla.coloresEncabezados![indice],
+                                      ],
+                                      celdasPersonalizadas: {
+                                        0: tabla.celdasPersonalizadas[0]!,
+                                        1: tabla.celdasPersonalizadas[4]!,
+                                        2: tabla.celdasPersonalizadas[5]!,
+                                      },
+                                    );
                                   }, // Finaliza la construcción del contenido.
                                 ), // Finaliza el panel de filtros reutilizable.
                               ), // Finaliza el espacio restante de la página.

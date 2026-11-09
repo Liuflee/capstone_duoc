@@ -81,7 +81,9 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
     try {
       if (widget.cargarCatalogos != null) {
         final catalogos = await widget.cargarCatalogos!(); // Obtiene los tres catálogos de una misma fuente.
-        if (!mounted) return; // Evita actualizar un formulario cerrado.
+        if (!mounted || !context.mounted) {
+          return; // Evita actualizar un formulario cerrado.
+        }
         setState(() {
           _categorias =
               catalogos['categorias'] ??
@@ -102,7 +104,7 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
       final relaciones = await SupabaseDatabase.client
           .from('tipo_calidad_producto')
           .select('id_tipo, id_calidad'); // Consulta las asociaciones reales, sin ofrecer calidades de otras categorías.
-      if (mounted) {
+      if (mounted && context.mounted) {
         _relacionesCalidad = List<Map<String, dynamic>>.from(
           relaciones,
         ); // Conserva las asociaciones existentes.
@@ -118,7 +120,10 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
     } // Conserva los errores de consulta.
   }
 
-  Future<void> _agregarCatalogo({required bool esCalidad}) async {
+  Future<void> _agregarCatalogo({
+    required bool esCalidad,
+    required BuildContext context,
+  }) async {
     // Añade un registro desde el formulario del producto.
     if (_editandoCatalogo || (esCalidad && _categoria == null)) {
       return; // Evita solicitudes inválidas o repetidas.
@@ -138,11 +143,14 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
         // Solicita el nombre sin navegar a otra página.
         context: context, // Presenta el diálogo sobre el producto.
         builder: (dialogo) => AlertDialog(
+          actionsOverflowButtonSpacing: 12,
+          buttonPadding: const EdgeInsets.symmetric(horizontal: 6),
           // Contiene únicamente los datos del nuevo registro.
           title: Text('AÑADIR $tipo'), // Identifica el catálogo.
           content: SizedBox(
             width: 360,
             child: FormularioDatos(
+              ajustarAlAnchoDisponible: true,
               campos: [
                 CampoFormularioDatos(
                   controlador: controlador,
@@ -155,10 +163,32 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
           actions: [
             // Permite cancelar o revisar la creación.
             CartaNavegacion.accion(
+              conservarEstiloOriginal: true,
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(112, 48),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                backgroundColor: PaletaTaller.de(dialogo).tarjeta,
+                foregroundColor: PaletaTaller.de(dialogo).texto,
+                side: BorderSide(color: PaletaTaller.de(dialogo).borde),
+              ),
               onPressed: () => Navigator.pop(dialogo),
               child: const Text('CANCELAR'),
             ), // Cancela sin guardar.
             CartaNavegacion.accion(
+              conservarEstiloOriginal: true,
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(112, 48),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                backgroundColor: PaletaTaller.de(dialogo).tarjeta,
+                foregroundColor: PaletaTaller.de(dialogo).texto,
+                side: BorderSide(color: PaletaTaller.de(dialogo).borde),
+              ),
               onPressed: () {
                 if (controlador.text.trim().isNotEmpty) {
                   Navigator.pop(dialogo, controlador.text.trim());
@@ -169,13 +199,15 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
           ], // Finaliza las acciones del nombre.
         ), // Finaliza el diálogo de entrada.
       ); // Espera el nombre ingresado.
-      if (nombre == null || !mounted) {
+      if (nombre == null || !mounted || !context.mounted) {
         return; // Conserva todos los datos si se cancela.
       }
       final confirmado = await showDialog<bool>(
         // Pide confirmación antes de escribir en la base.
         context: context, // Mantiene el producto debajo del diálogo.
         builder: (dialogo) => AlertDialog(
+          actionsOverflowButtonSpacing: 12,
+          buttonPadding: const EdgeInsets.symmetric(horizontal: 6),
           // Presenta el nombre que se guardará.
           title: Text('CONFIRMAR $tipo'), // Identifica la operación.
           content: Text(
@@ -184,17 +216,39 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
           actions: [
             // Ofrece aceptar o cancelar explícitamente.
             CartaNavegacion.accion(
+              conservarEstiloOriginal: true,
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(112, 48),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                backgroundColor: PaletaTaller.de(dialogo).tarjeta,
+                foregroundColor: PaletaTaller.de(dialogo).texto,
+                side: BorderSide(color: PaletaTaller.de(dialogo).borde),
+              ),
               onPressed: () => Navigator.pop(dialogo, false),
               child: const Text('CANCELAR'),
             ), // Descarta la creación.
             CartaNavegacion.accion(
+              conservarEstiloOriginal: true,
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(112, 48),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                backgroundColor: PaletaTaller.de(dialogo).tarjeta,
+                foregroundColor: PaletaTaller.de(dialogo).texto,
+                side: BorderSide(color: PaletaTaller.de(dialogo).borde),
+              ),
               onPressed: () => Navigator.pop(dialogo, true),
               child: const Text('AÑADIR'),
             ), // Autoriza guardar el registro.
           ], // Finaliza las acciones de confirmación.
         ), // Finaliza la confirmación.
       ); // Espera la decisión.
-      if (confirmado != true || !mounted) {
+      if (confirmado != true || !mounted || !context.mounted) {
         return; // No realiza escrituras sin confirmar.
       }
       final columna = esCalidad
@@ -227,7 +281,9 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
                   .select()
                   .single(); // Deja que la base asigne el ID.
       }
-      if (!mounted) return; // Evita actualizar una página cerrada.
+      if (!mounted || !context.mounted) {
+        return; // Evita actualizar una página cerrada.
+      }
       setState(() {
         // Selecciona inmediatamente el registro creado o encontrado.
         final lista = esCalidad
@@ -258,14 +314,14 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
       }); // Conserva los demás datos del producto y del cliente.
     } catch (error) {
       // Muestra errores sin perder la información ingresada.
-      if (mounted) {
+      if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('No se pudo añadir el registro: $error')),
         ); // Informa el fallo de guardado.
       }
     } finally {
       // Restablece la edición aun cuando se cancela.
-      if (mounted) {
+      if (mounted && context.mounted) {
         setState(
           () => _editandoCatalogo = false,
         ); // Habilita nuevamente los selectores.
@@ -323,11 +379,11 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
             .select('codigo_producto')
             .single(); // Actualiza el producto existente sin duplicarlo ni cambiar su clave.
       }
-      if (mounted) {
+      if (mounted && context.mounted) {
         Navigator.pop(context, true); // Actualiza el inventario al regresar.
       }
     } catch (error) {
-      if (mounted) {
+      if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('No se pudo registrar el producto: $error')),
         );
@@ -338,7 +394,10 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
     } // Restablece las acciones.
   } // Finaliza el registro.
 
-  Future<void> _editarCatalogo({required bool esCalidad}) async {
+  Future<void> _editarCatalogo({
+    required bool esCalidad,
+    required BuildContext context,
+  }) async {
     if (_editandoCatalogo || (esCalidad && _categoria == null)) return;
     final registros = esCalidad
         ? _calidades
@@ -368,7 +427,7 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
         ],
       ),
     );
-    if (registro == null || !mounted) return;
+    if (registro == null || !mounted || !context.mounted) return;
 
     final controlador = TextEditingController(
       text: registro[columna]?.toString() ?? '',
@@ -377,14 +436,38 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
       final nombre = await showDialog<String>(
         context: context,
         builder: (dialogo) => AlertDialog(
+          actionsOverflowButtonSpacing: 12,
+          buttonPadding: const EdgeInsets.symmetric(horizontal: 6),
           title: Text('EDITAR ${esCalidad ? 'CALIDAD' : 'CATEGORÍA'}'),
           content: TextField(controller: controlador, autofocus: true),
           actions: [
             CartaNavegacion.accion(
+              conservarEstiloOriginal: true,
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(112, 48),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                backgroundColor: PaletaTaller.de(dialogo).tarjeta,
+                foregroundColor: PaletaTaller.de(dialogo).texto,
+                side: BorderSide(color: PaletaTaller.de(dialogo).borde),
+              ),
               onPressed: () => Navigator.pop(dialogo),
               child: const Text('CANCELAR'),
             ),
             CartaNavegacion.accion(
+              conservarEstiloOriginal: true,
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(112, 48),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                backgroundColor: PaletaTaller.de(dialogo).tarjeta,
+                foregroundColor: PaletaTaller.de(dialogo).texto,
+                side: BorderSide(color: PaletaTaller.de(dialogo).borde),
+              ),
               onPressed: () {
                 final texto = controlador.text.trim();
                 if (texto.isNotEmpty) Navigator.pop(dialogo, texto);
@@ -405,7 +488,7 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
           )
           .update({columna: nombre})
           .eq('id', registro['id']);
-      if (!mounted) return;
+      if (!mounted || !context.mounted) return;
 
       setState(() {
         final lista = esCalidad ? _calidades : _categorias;
@@ -418,7 +501,7 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Nombre actualizado.')));
     } catch (error) {
-      if (mounted) {
+      if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('No se pudo actualizar el nombre: $error')),
         );
@@ -459,6 +542,7 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1250),
               child: FormularioDatos(
+                ajustarAlAnchoDisponible: true,
                 claveFormulario: _clave,
                 ancho: 1250,
                 separacionFilas:
@@ -536,11 +620,20 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
                       ), // Conserva el diseño y el orden obligatorio.
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<Object>(
+                          dropdownColor: PaletaTaller.de(context).oscura
+                              ? PaletaTaller.de(context).tarjeta
+                              : null,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(color: PaletaTaller.de(context).texto),
+                          iconEnabledColor: PaletaTaller.de(context).texto,
                           value: esCalidad ? _calidad : _categoria, // Usa una selección controlada para restablecer la calidad al cambiar de categoría.
                           isExpanded: true,
                           menuMaxHeight:
                               300, // Permite desplazar catálogos extensos.
                           hint: Text(
+                            style: TextStyle(
+                              color: PaletaTaller.de(context).texto,
+                            ),
                             esCalidad && _categoria == null
                                 ? 'SELECCIONA PRIMERO UNA CATEGORÍA'
                                 : esCalidad
@@ -606,9 +699,15 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
                               ? null
                               : (valor) {
                                   if (valor == -1) {
-                                    _agregarCatalogo(esCalidad: esCalidad); // Pide nombre y confirmación antes de guardar.
+                                    _agregarCatalogo(
+                                      esCalidad: esCalidad,
+                                      context: context,
+                                    ); // Pide nombre y confirmación antes de guardar.
                                   } else if (valor == -2) {
-                                    _editarCatalogo(esCalidad: esCalidad);
+                                    _editarCatalogo(
+                                      esCalidad: esCalidad,
+                                      context: context,
+                                    );
                                   } else {
                                     setState(() {
                                       if (esCalidad) {
@@ -628,6 +727,7 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
                     ), // Conserva la separación de los campos.
                   ],
                   FormularioDatos(
+                    ajustarAlAnchoDisponible: true,
                     ancho: 1250,
                     campos: [
                       CampoFormularioDatos(

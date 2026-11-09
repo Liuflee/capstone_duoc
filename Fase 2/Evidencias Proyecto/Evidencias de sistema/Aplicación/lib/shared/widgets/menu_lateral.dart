@@ -179,63 +179,65 @@ class MenuLateral extends StatelessWidget {
         activo: activo == 'Vehiculos' || activo == 'Vehículos',
       ), // Añade Vehículos debajo de Clientes.
     ),
-    InkWell(
-      onTap: () => Navigator.pushNamed(context, '/profile'),
-      child: _MenuItem(
-        icono: Icons.sentiment_satisfied,
-        texto: 'Perfil',
-        activo: activo == 'Perfil',
+    if (kIsWeb || Theme.of(context).platform != TargetPlatform.android) ...[
+      InkWell(
+        onTap: () => Navigator.pushNamed(context, '/profile'),
+        child: _MenuItem(
+          icono: Icons.sentiment_satisfied,
+          texto: 'Perfil',
+          activo: activo == 'Perfil',
+        ),
+      ), // Conecta la sección de perfiles desde todas las páginas.
+      // BOTÓN INVENTARIO
+      InkWell(
+        onTap: () {
+          if (activo != 'Inventario') {
+            Navigator.pushReplacement(
+              context,
+              NavegacionRutas.sinAnimacion(const PaginaInventario()),
+            );
+          }
+        },
+        child: _MenuItem(
+          icono: Icons.cases_outlined,
+          texto: 'Inventario',
+          activo: activo == 'Inventario',
+        ),
       ),
-    ), // Conecta la sección de perfiles desde todas las páginas.
-    // BOTÓN INVENTARIO
-    InkWell(
-      onTap: () {
-        if (activo != 'Inventario') {
-          Navigator.pushReplacement(
-            context,
-            NavegacionRutas.sinAnimacion(const PaginaInventario()),
-          );
-        }
-      },
-      child: _MenuItem(
-        icono: Icons.cases_outlined,
-        texto: 'Inventario',
-        activo: activo == 'Inventario',
-      ),
-    ),
 
-    InkWell(
-      onTap: () {
-        if (activo != 'Dashboard') Navigator.pushNamed(context, '/dashboard');
-      },
-      child: _MenuItem(
-        icono: Icons.dashboard_outlined,
-        texto: 'Dashboard',
-        activo: activo == 'Dashboard',
+      InkWell(
+        onTap: () {
+          if (activo != 'Dashboard') Navigator.pushNamed(context, '/dashboard');
+        },
+        child: _MenuItem(
+          icono: Icons.dashboard_outlined,
+          texto: 'Dashboard',
+          activo: activo == 'Dashboard',
+        ),
       ),
-    ),
-    // BOTÓN PAGINAS DE PRUEBA
-    InkWell(
-      onTap: () {
-        Navigator.pushNamed(
-          context,
-          '/options',
-        ); // Abre Opciones conservando el diseño del menú.
-      },
-      child: _MenuItem(
-        icono: Icons.science_outlined,
-        texto: 'Opciones',
-        activo: activo == 'Opciones',
+      // BOTÓN PAGINAS DE PRUEBA
+      InkWell(
+        onTap: () {
+          Navigator.pushNamed(
+            context,
+            '/options',
+          ); // Abre Opciones conservando el diseño del menú.
+        },
+        child: _MenuItem(
+          icono: Icons.science_outlined,
+          texto: 'Opciones',
+          activo: activo == 'Opciones',
+        ),
       ),
-    ),
-    InkWell(
-      onTap: () => Navigator.pushNamed(context, '/information'),
-      child: _MenuItem(
-        icono: Icons.info_outline,
-        texto: 'Información',
-        activo: activo == 'Información',
-      ),
-    ), // Conecta la página de ayuda sin cambiar el estilo.
+      InkWell(
+        onTap: () => Navigator.pushNamed(context, '/information'),
+        child: _MenuItem(
+          icono: Icons.info_outline,
+          texto: 'Información',
+          activo: activo == 'Información',
+        ),
+      ), // Conecta la página de ayuda sin cambiar el estilo.
+    ],
   ]; // Finaliza las opciones.
 } // Finaliza el widget compartido.
 

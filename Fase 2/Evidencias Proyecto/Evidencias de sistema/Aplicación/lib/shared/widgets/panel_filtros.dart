@@ -372,7 +372,7 @@ class _PanelFiltrosState<T> extends State<PanelFiltros<T>> {
                       fontFamily: 'Courier',
                       fontSize: 13,
                       color: PaletaTaller.de(context)
-                          .adaptar(Colors.grey[700]!),
+                          .adaptar(Colors.grey[700]!, tinta: true),
                     ),
                   ),
 

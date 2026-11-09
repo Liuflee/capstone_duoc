@@ -14,9 +14,10 @@ import 'package:frenos_cerna/shared/widgets/menu_lateral.dart'; // Comprueba el 
 import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart'; // Compara acciones e iconos de tabla.
 
 class ReservasPrueba extends ReservasRepository {
-  final filas = <
-      Map<String,
-          dynamic>>[]; // Conserva los registros entre vistas para simular Supabase.
+  final filas =
+      <
+        Map<String, dynamic>
+      >[]; // Conserva los registros entre vistas para simular Supabase.
   @override
   Future<List<Map<String, dynamic>>> listar({required bool listas}) async =>
       filas
@@ -170,8 +171,9 @@ void main() {
       );
       await tester
           .pumpAndSettle(); // Completa la carga de las opciones existentes.
-      final campos =
-          tester.widgetList<TextFormField>(find.byType(TextFormField)).toList();
+      final campos = tester
+          .widgetList<TextFormField>(find.byType(TextFormField))
+          .toList();
       expect(campos.map((campo) => campo.controller!.text), [
         'SP0-01223',
         '14000',
@@ -253,8 +255,7 @@ void main() {
     testWidgets('Inicio ofrece escaneo o datos según $plataforma', (
       tester,
     ) async {
-      tester.view.physicalSize = const Size(1440,
-          1000); // Mantiene el tamaño para verificar que la decisión dependa de la plataforma.
+      tester.view.physicalSize = const Size(1440, 1000); // Mantiene el tamaño para verificar que la decisión dependa de la plataforma.
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
@@ -269,11 +270,17 @@ void main() {
       final cartas = tester.widgetList<CartaNavegacion>(
         find.byType(CartaNavegacion),
       ); // Revisa las tarjetas reales.
-      expect(
-        cartas.singleWhere((carta) => carta.texto == 'DASHBOARD').alPresionar,
-        isNotNull,
-      ); // El dashboard ya cuenta con una pantalla conectada.
       if (plataforma == TargetPlatform.android) {
+        expect(
+          cartas.map((c) => c.texto),
+          unorderedEquals([
+            'VENTAS DEL\nDÍA',
+            'ESCANEAR PRODUCTO',
+            'HISTORIAL\nDE VENTAS',
+            'INVENTARIO',
+            'RESERVAR PRODUCTO',
+          ]),
+        );
         final escaneo = cartas.singleWhere(
           (carta) => carta.texto == 'ESCANEAR PRODUCTO',
         );
@@ -287,6 +294,10 @@ void main() {
         ); // Mantiene el escaneo pendiente de conectar.
         expect(find.text('DATOS'), findsNothing); // Evita duplicar accesos.
       } else {
+        expect(
+          cartas.singleWhere((c) => c.texto == 'DASHBOARD').alPresionar,
+          isNotNull,
+        );
         expect(find.text('ESCANEAR PRODUCTO'), findsNothing);
         await tester.tap(find.text('DATOS'));
         await tester
@@ -441,16 +452,18 @@ void main() {
         tester.widget<Container>(marca).color,
         const Color(0xFFE0E0E0),
       ); // Conserva el mismo fondo gris que la barra superior.
-      final decoracion = tester
-          .widget<DecoratedBox>(
-            find
-                .descendant(
-                  of: find.byType(MenuLateral),
-                  matching: find.byType(DecoratedBox),
-                )
-                .first,
-          )
-          .decoration as BoxDecoration; // Obtiene la superficie compartida.
+      final decoracion =
+          tester
+                  .widget<DecoratedBox>(
+                    find
+                        .descendant(
+                          of: find.byType(MenuLateral),
+                          matching: find.byType(DecoratedBox),
+                        )
+                        .first,
+                  )
+                  .decoration
+              as BoxDecoration; // Obtiene la superficie compartida.
       expect(
         decoracion.color,
         const Color(0xFFD6D6D6),

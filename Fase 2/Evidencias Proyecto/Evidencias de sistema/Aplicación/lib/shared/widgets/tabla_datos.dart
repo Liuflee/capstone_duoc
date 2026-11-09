@@ -331,7 +331,9 @@ class _TablaDatosState extends State<TablaDatos> {
                   ), // Actualiza las filas mientras se escribe.
                 ), // Finaliza el buscador reutilizable.
               ), // Finaliza la zona independiente de controles.
-            if (desplazarHorizontalmente)
+            if (desplazarHorizontalmente &&
+                Theme.of(context).platform != TargetPlatform.android &&
+                Theme.of(context).platform != TargetPlatform.iOS)
               const Padding(
                 padding: EdgeInsets.only(bottom: 8),
                 child: Text('Desliza hacia los lados para ver más columnas'),

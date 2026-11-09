@@ -225,16 +225,16 @@ class _PaginaVerClienteState extends State<PaginaVerCliente> {
                   children: [
                     Expanded(flex: 7, child: formulario),
                     const SizedBox(width: 40),
-                    Expanded(flex: 3, child: _resumenCliente()),
+                    Expanded(flex: 3, child: _resumenCliente(context)),
                   ],
                 ) // Sitúa el resumen a la derecha como Figma.
               else ...[
                 formulario,
                 const SizedBox(height: 28),
-                _resumenCliente(),
+                _resumenCliente(context),
               ], // Apila los datos sin reducir acciones en Android.
               const SizedBox(height: 28),
-              _historialVentas(),
+              _historialVentas(context),
             ],
           ); // Finaliza la distribución del cliente.
         },
@@ -242,7 +242,7 @@ class _PaginaVerClienteState extends State<PaginaVerCliente> {
     ), // Permite desplazar la página.
   ); // Finaliza el marco común.
 
-  Widget _historialVentas() {
+  Widget _historialVentas(BuildContext context) {
     // Vista previa: muestra únicamente las ventas más recientes del cliente.
     final previa = _ventas.take(_ventasVistaPrevia).toList();
     final hayMas = _ventas.length > _ventasVistaPrevia;
@@ -368,7 +368,8 @@ class _PaginaVerClienteState extends State<PaginaVerCliente> {
   }
 
   // Resume la identidad del cliente sin fotografías.
-  Widget _resumenCliente() => Container(
+  Widget _resumenCliente(BuildContext context) => Container(
+    key: const ValueKey("resumen_cliente"),
     width: double.infinity,
     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
     decoration: BoxDecoration(
