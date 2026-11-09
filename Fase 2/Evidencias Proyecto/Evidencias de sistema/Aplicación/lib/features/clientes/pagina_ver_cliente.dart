@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 // Importa el historial real y sus páginas de detalle.
 import 'package:frenos_cerna/features/ventas/data/ventas_repository.dart';
 import 'package:frenos_cerna/features/ventas/presentation/pagina_detalle_venta.dart';
@@ -142,7 +143,8 @@ class _PaginaVerClienteState extends State<PaginaVerCliente> {
   }
 
   @override
-  Widget build(BuildContext context) => EstructuraPagina(
+  Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
+  Widget _pagina(BuildContext context) => EstructuraPagina(
     titulo: 'Ver cliente “${widget.cliente.nombre}”',
     activo: 'Clientes', // Conserva el título dinámico.
     child: SingleChildScrollView(
@@ -151,8 +153,11 @@ class _PaginaVerClienteState extends State<PaginaVerCliente> {
           final formulario = Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFFF7F7F7),
-              border: Border.all(color: const Color(0xFFE0E0E0)),
+              color: PaletaTaller.de(context).adaptar(Color(0xFFF7F7F7)),
+              border: Border.all(
+                color: PaletaTaller.de(context)
+                    .adaptar(Color(0xFFE0E0E0), linea: true),
+              ),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
@@ -256,7 +261,10 @@ class _PaginaVerClienteState extends State<PaginaVerCliente> {
               hayMas
                   ? 'Mostrando ${previa.length} de ${_ventas.length} ventas'
                   : '${_ventas.length} ${_ventas.length == 1 ? 'venta' : 'ventas'}',
-              style: const TextStyle(color: Color(0xFF616161)),
+              style: TextStyle(
+                color: PaletaTaller.de(context)
+                    .adaptar(Color(0xFF616161), tinta: true),
+              ),
             ),
           ],
         ),
@@ -275,83 +283,86 @@ class _PaginaVerClienteState extends State<PaginaVerCliente> {
         ],
         const SizedBox(height: 16),
         if (_cargandoHistorial)
-        const SizedBox(
-          height: 220,
-          child: Center(child: CircularProgressIndicator()),
-        )
-      else if (_errorHistorial != null)
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFF3F3),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Column(
-            children: [
-              Text('No se pudo cargar el historial: $_errorHistorial'),
-              const SizedBox(height: 12),
-              CartaNavegacion.accion(
-                onPressed: () {
-                  setState(() => _cargandoHistorial = true);
-                  _cargarHistorial();
-                },
-                child: const Text('REINTENTAR'),
-              ),
-            ],
-          ),
-        )
-      else if (_ventas.isEmpty)
-        Container(
-          height: 140,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: const Color(0xFFF7F7F7),
-            border: Border.all(color: const Color(0xFFE0E0E0)),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: const Text('Este cliente aún no tiene ventas registradas.'),
-        )
-      else
-        SizedBox(
-          height: 400,
-          child: TablaDatos(
-            nombresColumnas: const ['NOMBRE PRODUCTO', 'EXPANDIR'],
-            camposColumnas: const ['producto', ''],
-            anchosColumnas: const [550, 130],
-            filas: previa
-                .map(
-                  (venta) => <String, dynamic>{
-                    'producto': venta.productosResumen,
-                    'fecha': venta.fecha,
-                    'venta': venta,
+          const SizedBox(
+            height: 220,
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (_errorHistorial != null)
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: PaletaTaller.de(context).adaptar(Color(0xFFFFF3F3)),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              children: [
+                Text('No se pudo cargar el historial: $_errorHistorial'),
+                const SizedBox(height: 12),
+                CartaNavegacion.accion(
+                  onPressed: () {
+                    setState(() => _cargandoHistorial = true);
+                    _cargarHistorial();
                   },
-                )
-                .toList(),
-            celdasPersonalizadas: {
-              1: (context, fila) => CartaNavegacion.accion(
-                tipoBoton: 'icon',
-                tooltip: 'Ver detalle de venta',
-                child: const Icon(Icons.arrow_drop_down, size: 40),
-                onPressed: () {
-                  final venta = fila['venta'] as VentaRegistro;
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => PaginaDetalleVenta(
-                        idVenta: venta.id,
-                        clienteNombre: venta.clienteNombre,
-                        vehiculoNombre: venta.vehiculoNombre,
-                        total: venta.total,
-                        fecha: venta.fecha,
-                        desdeHistorial: true,
-                      ),
-                    ),
-                  );
-                },
+                  child: const Text('REINTENTAR'),
+                ),
+              ],
+            ),
+          )
+        else if (_ventas.isEmpty)
+          Container(
+            height: 140,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: PaletaTaller.de(context).adaptar(Color(0xFFF7F7F7)),
+              border: Border.all(
+                color: PaletaTaller.de(context)
+                    .adaptar(Color(0xFFE0E0E0), linea: true),
               ),
-            },
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Text('Este cliente aún no tiene ventas registradas.'),
+          )
+        else
+          SizedBox(
+            height: 400,
+            child: TablaDatos(
+              nombresColumnas: const ['NOMBRE PRODUCTO', 'EXPANDIR'],
+              camposColumnas: const ['producto', ''],
+              anchosColumnas: const [550, 130],
+              filas: previa
+                  .map(
+                    (venta) => <String, dynamic>{
+                      'producto': venta.productosResumen,
+                      'fecha': venta.fecha,
+                      'venta': venta,
+                    },
+                  )
+                  .toList(),
+              celdasPersonalizadas: {
+                1: (context, fila) => CartaNavegacion.accion(
+                  tipoBoton: 'icon',
+                  tooltip: 'Ver detalle de venta',
+                  child: const Icon(Icons.arrow_drop_down, size: 40),
+                  onPressed: () {
+                    final venta = fila['venta'] as VentaRegistro;
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PaginaDetalleVenta(
+                          idVenta: venta.id,
+                          clienteNombre: venta.clienteNombre,
+                          vehiculoNombre: venta.vehiculoNombre,
+                          total: venta.total,
+                          fecha: venta.fecha,
+                          desdeHistorial: true,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              },
+            ),
           ),
-        ),
       ],
     );
   }
@@ -361,19 +372,21 @@ class _PaginaVerClienteState extends State<PaginaVerCliente> {
     width: double.infinity,
     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
     decoration: BoxDecoration(
-      color: const Color(0xFFF7F7F7),
-      border: Border.all(color: const Color(0xFFE0E0E0)),
+      color: PaletaTaller.de(context).adaptar(Color(0xFFF7F7F7)),
+      border: Border.all(
+        color: PaletaTaller.de(context).adaptar(Color(0xFFE0E0E0), linea: true),
+      ),
       borderRadius: BorderRadius.circular(12),
     ),
     child: Column(
       children: [
         CircleAvatar(
           radius: 52,
-          backgroundColor: const Color(0xFFFF6D6D),
-          child: const Icon(
+          backgroundColor: PaletaTaller.de(context).adaptar(Color(0xFFFF6D6D)),
+          child: Icon(
             Icons.person_outline,
             size: 68,
-            color: Colors.black,
+            color: PaletaTaller.de(context).adaptar(Colors.black, tinta: true),
           ),
         ),
         const SizedBox(height: 16),

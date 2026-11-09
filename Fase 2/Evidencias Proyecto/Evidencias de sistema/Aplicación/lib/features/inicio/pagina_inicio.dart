@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/features/ventas/presentation/pagina_crear_ventas.dart'; // Abre directamente el registro de una venta.
 import 'package:frenos_cerna/features/ventas/presentation/pagina_ventas_historial.dart'; // Abre el historial completo.
 import 'package:frenos_cerna/core/data/perfil_sesion.dart'; // Conserva el perfil autenticado para toda la navegación.
@@ -30,7 +31,8 @@ class PaginaInicio extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
+  Widget _pagina(BuildContext context) {
     final plataforma = Theme.of(context).platform; // Identifica el dispositivo sin depender del tamaño de la ventana.
     final esMovil =
         plataforma == TargetPlatform.android ||
@@ -44,7 +46,7 @@ class PaginaInicio extends StatelessWidget {
       // Conserva la navegación lateral en pantallas pequeñas.
       drawer: const Drawer(child: MenuLateral(activo: 'Página Principal')),
       // Color de fondo de la página
-      backgroundColor: Colors.white,
+      backgroundColor: PaletaTaller.de(context).fondo,
 
       // Cuerpo de la página
       body: LayoutBuilder(
@@ -226,7 +228,8 @@ class PaginaInicio extends StatelessWidget {
 
                                         texto: 'NUEVA VENTA',
 
-                                        color: const Color(0xFFD96363), // Usa el rojo compartido por las acciones de registro.
+                                        color: PaletaTaller.de(context)
+                                            .adaptar(Color(0xFFD96363)), // Usa el rojo compartido por las acciones de registro.
                                         // Abre directamente el registro de una nueva venta
                                         alPresionar: () {
                                           abrirPagina(const PaginaCrearVenta());

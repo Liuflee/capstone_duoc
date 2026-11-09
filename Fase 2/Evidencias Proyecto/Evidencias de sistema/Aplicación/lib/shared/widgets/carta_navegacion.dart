@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:flutter/material.dart';
 
 // Se crea la clase CartaNavegacion, un botón reutilizable
@@ -76,19 +77,22 @@ class CartaNavegacion extends StatelessWidget {
       final base = tipoBoton == 'icon'
           ? IconButton.styleFrom(
               visualDensity: VisualDensity.standard, // Mantiene el área de 48 píxeles también en Windows.
-              foregroundColor: Colors.black,
+              foregroundColor: PaletaTaller.de(context)
+                  .adaptar(Colors.black, tinta: true),
               minimumSize: const Size(48, 48),
             ) // Conserva un área cómoda para las acciones de tabla.
           : ElevatedButton.styleFrom(
               visualDensity: VisualDensity.standard, // Evita que el escritorio reduzca los botones a un tamaño demasiado pequeño.
-              backgroundColor: const Color(0xFFBDBDBD),
-              foregroundColor: Colors.black,
+              backgroundColor: PaletaTaller.de(context)
+                  .adaptar(Color(0xFFBDBDBD)),
+              foregroundColor: PaletaTaller.de(context)
+                  .adaptar(Colors.black, tinta: true),
               minimumSize: const Size(240, 70),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.black,
+                color: PaletaTaller.de(context).adaptar(Colors.black),
               ), // Conserva la misma fuente que el resto de la aplicación.
             ); // Unifica las acciones con el gris y tamaño medio del proyecto.
       final configuracion = conservarEstiloOriginal
@@ -99,15 +103,23 @@ class CartaNavegacion extends StatelessWidget {
                 .merge(
                   tipoBoton == 'icon'
                       ? const ButtonStyle()
-                      : const ButtonStyle(
+                      : ButtonStyle(
                           fixedSize: WidgetStatePropertyAll(Size(240, 70)),
                           minimumSize: WidgetStatePropertyAll(Size(240, 70)),
                           maximumSize: WidgetStatePropertyAll(Size(240, 70)),
-                          foregroundColor: WidgetStatePropertyAll(Colors.black),
+                          foregroundColor: WidgetStatePropertyAll(
+                            PaletaTaller.de(context).adaptar(Colors.black),
+                          ),
                           elevation: WidgetStatePropertyAll(
                             0,
                           ), // Conserva la superficie plana de Añadir cliente.
-                          side: WidgetStatePropertyAll(BorderSide.none), // Evita contornos diferentes entre tipos de acción.
+                          side: WidgetStatePropertyAll(
+                            PaletaTaller.de(context).oscura
+                                ? BorderSide(
+                                    color: PaletaTaller.de(context).borde,
+                                  )
+                                : BorderSide.none,
+                          ), // Evita contornos diferentes entre tipos de acción.
                           surfaceTintColor: WidgetStatePropertyAll(
                             Colors.transparent,
                           ), // Evita tintes ajenos a la paleta.
@@ -200,10 +212,14 @@ class CartaNavegacion extends StatelessWidget {
     // Material permite aplicar los efectos visuales de InkWell
     return Material(
       // Si no recibe un color, utiliza el gris predeterminado
-      color: color ?? Colors.grey[300],
+      color: PaletaTaller.de(context).adaptar(color ?? Colors.grey[300]!),
 
-      // Redondea los bordes de la tarjeta
-      borderRadius: BorderRadius.circular(10),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: PaletaTaller.de(context).oscura
+            ? BorderSide(color: PaletaTaller.de(context).borde)
+            : BorderSide.none,
+      ),
 
       // Se crea el área interactiva de la tarjeta
       child: InkWell(
@@ -260,9 +276,10 @@ class CartaNavegacion extends StatelessWidget {
                             Text(
                               numero!,
 
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 40,
-                                color: Colors.black,
+                                color: PaletaTaller.de(context)
+                                    .adaptar(Colors.black, tinta: true),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -275,9 +292,10 @@ class CartaNavegacion extends StatelessWidget {
                               texto,
                               textAlign: TextAlign.center,
 
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.black,
+                                color: PaletaTaller.de(context)
+                                    .adaptar(Colors.black, tinta: true),
                               ),
                             ),
                           ],
@@ -306,9 +324,10 @@ class CartaNavegacion extends StatelessWidget {
                           texto,
                           textAlign: TextAlign.center,
 
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
-                            color: Colors.black,
+                            color: PaletaTaller.de(context)
+                                .adaptar(Colors.black, tinta: true),
                             fontWeight: FontWeight.bold,
                           ),
                         ),

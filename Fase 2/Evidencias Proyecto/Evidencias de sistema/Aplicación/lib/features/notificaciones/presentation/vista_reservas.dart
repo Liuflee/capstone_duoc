@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/features/clientes/pagina_crear_cliente.dart'; // Permite crear un cliente y devolverlo a la reserva.
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart'; // Conserva el cliente y su contacto.
 import 'package:frenos_cerna/features/clientes/presentation/selector_cliente.dart'; // Reutiliza la búsqueda por nombre o RUT.
@@ -53,7 +54,7 @@ class _VistaReservasState extends State<VistaReservas> {
           builder: (context, actualizar) => PopScope(
             canPop: !guardando,
             child: Dialog(
-              backgroundColor: Colors.white,
+              backgroundColor: PaletaTaller.de(context).fondo,
               surfaceTintColor:
                   Colors.transparent, // Evita tonos ajenos a la aplicación.
               insetPadding: EdgeInsets.fromLTRB(
@@ -106,8 +107,9 @@ class _VistaReservasState extends State<VistaReservas> {
                           cliente == null
                               ? 'CLIENTE: SIN SELECCIONAR'
                               : 'CLIENTE: ${cliente!.nombre} · RUT: ${cliente!.id}',
-                          style: const TextStyle(
-                            color: Colors.black, // Usa el negro de las etiquetas de la aplicación.
+                          style: TextStyle(
+                            color: PaletaTaller.de(context)
+                                .adaptar(Colors.black, tinta: true), // Usa el negro de las etiquetas de la aplicación.
                             decoration: TextDecoration.none, // Evita heredar el subrayado amarillo del contexto externo al diálogo.
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -121,7 +123,8 @@ class _VistaReservasState extends State<VistaReservas> {
                                   final existente = await showDialog<bool>(
                                     context: dialogo,
                                     builder: (opciones) => Dialog(
-                                      backgroundColor: Colors.white,
+                                      backgroundColor: PaletaTaller.de(context)
+                                          .fondo,
                                       surfaceTintColor: Colors.transparent, // Conserva el fondo compartido.
                                       insetPadding: EdgeInsets.fromLTRB(
                                         24 +
@@ -144,11 +147,13 @@ class _VistaReservasState extends State<VistaReservas> {
                                             child: Column(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                const Text(
+                                                Text(
                                                   'VINCULAR CON CLIENTE',
                                                   style: TextStyle(
                                                     fontSize: 20,
-                                                    color: Colors.black,
+                                                    color: PaletaTaller.de(
+                                                      context,
+                                                    ).adaptar(Colors.black),
                                                   ),
                                                 ), // Identifica el paso de vinculación.
                                                 const SizedBox(height: 20),
@@ -305,7 +310,7 @@ class _VistaReservasState extends State<VistaReservas> {
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (dialogo) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: PaletaTaller.de(context).fondo,
         surfaceTintColor: Colors.transparent,
         title: const Text('RESERVA LISTA'),
         content: Text('¿El producto ${fila['codigo_producto']} ya está listo?'),
@@ -340,7 +345,8 @@ class _VistaReservasState extends State<VistaReservas> {
   }
 
   @override
-  Widget build(BuildContext context) => EstructuraPagina(
+  Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
+  Widget _pagina(BuildContext context) => EstructuraPagina(
     titulo: widget.reservados ? 'Reservas listas' : 'Reservar producto',
     activo: 'Notificaciones',
     child: Column(
@@ -446,9 +452,10 @@ class _VistaReservasState extends State<VistaReservas> {
                       tipoBoton: 'icon',
                       tooltip: 'Marcar reserva lista',
                       onPressed: _ocupado ? null : () => _lista(fila),
-                      child: const Icon(
+                      child: Icon(
                         Icons.check_circle_outline,
-                        color: Colors.black,
+                        color: PaletaTaller.de(context)
+                            .adaptar(Colors.black, tinta: true),
                       ),
                     ), // Cambia el estado sin eliminar datos.
                 },

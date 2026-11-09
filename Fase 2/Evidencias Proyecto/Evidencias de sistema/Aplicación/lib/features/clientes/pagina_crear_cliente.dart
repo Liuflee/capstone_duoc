@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 // Devuelve el cliente creado al flujo que lo solicita.
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart';
 // Compone la página con los widgets existentes.
@@ -120,7 +121,8 @@ class _PaginaCrearClienteState extends State<PaginaCrearCliente> {
   }
 
   @override
-  Widget build(BuildContext context) => EstructuraPagina(
+  Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
+  Widget _pagina(BuildContext context) => EstructuraPagina(
     titulo: 'Creación de cliente',
     activo: 'Clientes', // Conserva el encabezado del prototipo.
     child: SingleChildScrollView(
@@ -134,8 +136,10 @@ class _PaginaCrearClienteState extends State<PaginaCrearCliente> {
               icon: const Icon(Icons.keyboard_return),
               label: const Text('VOLVER A CLIENTES'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFF2A0A0),
-                foregroundColor: Colors.black,
+                backgroundColor: PaletaTaller.de(context)
+                    .adaptar(Color(0xFFF2A0A0)),
+                foregroundColor: PaletaTaller.de(context)
+                    .adaptar(Colors.black, tinta: true),
               ),
             ),
           ), // Permite volver sin registrar.
@@ -181,7 +185,7 @@ class _PaginaCrearClienteState extends State<PaginaCrearCliente> {
               alto: 70,
               texto: _guardando ? 'GUARDANDO...' : 'REGISTRAR',
               icono: Icons.download,
-              color: const Color(0xFFB7B7B7),
+              color: PaletaTaller.de(context).adaptar(Color(0xFFB7B7B7)),
               alPresionar: _guardando ? null : _registrarCliente,
             ),
           ), // Mantiene el registro en la esquina inferior derecha.

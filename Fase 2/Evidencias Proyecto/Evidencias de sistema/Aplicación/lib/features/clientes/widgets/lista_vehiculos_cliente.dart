@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:flutter/material.dart';
 import 'package:frenos_cerna/features/vehiculos/pagina_vehiculos.dart';
 import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
@@ -36,7 +37,10 @@ class ListaVehiculosCliente extends StatelessWidget {
                 : error != null
                 ? 'No disponibles'
                 : '${vehiculos.length} ${vehiculos.length == 1 ? 'vehículo' : 'vehículos'}',
-            style: const TextStyle(color: Color(0xFF616161)),
+            style: TextStyle(
+              color: PaletaTaller.de(context)
+                  .adaptar(Color(0xFF616161), tinta: true),
+            ),
           ),
         ],
       ),
@@ -50,7 +54,7 @@ class ListaVehiculosCliente extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFFFFF3F3),
+            color: PaletaTaller.de(context).adaptar(Color(0xFFFFF3F3)),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Column(
@@ -72,9 +76,12 @@ class ListaVehiculosCliente extends StatelessWidget {
           LayoutBuilder(
             builder: (context, limites) => Card(
               margin: const EdgeInsets.only(bottom: 8),
-              color: Colors.white,
+              color: PaletaTaller.de(context).adaptar(Colors.white),
               shape: RoundedRectangleBorder(
-                side: const BorderSide(color: Color(0xFFE0E0E0)),
+                side: BorderSide(
+                  color: PaletaTaller.de(context)
+                      .adaptar(Color(0xFFE0E0E0), linea: true),
+                ),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Padding(
@@ -86,7 +93,7 @@ class ListaVehiculosCliente extends StatelessWidget {
                     ? Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _informacionVehiculo(vehiculo),
+                          _informacionVehiculo(context, vehiculo),
                           const SizedBox(height: 8),
                           Align(
                             alignment: Alignment.centerRight,
@@ -96,7 +103,9 @@ class ListaVehiculosCliente extends StatelessWidget {
                       )
                     : Row(
                         children: [
-                          Expanded(child: _informacionVehiculo(vehiculo)),
+                          Expanded(
+                            child: _informacionVehiculo(context, vehiculo),
+                          ),
                           const SizedBox(width: 12),
                           _botonDetalle(vehiculo),
                         ],
@@ -107,11 +116,15 @@ class ListaVehiculosCliente extends StatelessWidget {
     ],
   );
 
-  Widget _informacionVehiculo(HistorialVehiculo vehiculo) => Row(
+  Widget _informacionVehiculo(
+    BuildContext context,
+    HistorialVehiculo vehiculo,
+  ) => Row(
     children: [
-      const CircleAvatar(
-        backgroundColor: Color(0xFFFF6D6D),
-        foregroundColor: Colors.black,
+      CircleAvatar(
+        backgroundColor: PaletaTaller.de(context).adaptar(Color(0xFFFF6D6D)),
+        foregroundColor: PaletaTaller.de(context)
+            .adaptar(Colors.black, tinta: true),
         child: Icon(Icons.directions_car_outlined),
       ),
       const SizedBox(width: 12),
@@ -125,7 +138,10 @@ class ListaVehiculosCliente extends StatelessWidget {
             ),
             Text(
               'Patente: ${vehiculo.id} · Kilometraje: ${vehiculo.total.toStringAsFixed(0)} km',
-              style: const TextStyle(color: Color(0xFF616161)),
+              style: TextStyle(
+                color: PaletaTaller.de(context)
+                    .adaptar(Color(0xFF616161), tinta: true),
+              ),
             ),
           ],
         ),
@@ -133,11 +149,10 @@ class ListaVehiculosCliente extends StatelessWidget {
     ],
   );
 
-  Widget _botonDetalle(HistorialVehiculo vehiculo) =>
-      CartaNavegacion.accion(
-        tipoBoton: 'icon',
-        tooltip: 'Ver detalle de ${vehiculo.id}',
-        onPressed: () => alAbrir(vehiculo),
-        child: const Icon(Icons.search),
-      );
+  Widget _botonDetalle(HistorialVehiculo vehiculo) => CartaNavegacion.accion(
+    tipoBoton: 'icon',
+    tooltip: 'Ver detalle de ${vehiculo.id}',
+    onPressed: () => alAbrir(vehiculo),
+    child: const Icon(Icons.search),
+  );
 }

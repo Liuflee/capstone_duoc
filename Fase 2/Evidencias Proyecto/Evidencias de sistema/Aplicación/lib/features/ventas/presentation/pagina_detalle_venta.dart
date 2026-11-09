@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart'; // Representa al cliente vinculado.
 import 'package:frenos_cerna/features/clientes/pagina_ver_cliente.dart'; // Consulta el perfil sin permitir edición.
 import 'package:frenos_cerna/core/data/supabase_database.dart'; // Recupera el cliente por su clave.
@@ -189,7 +190,8 @@ class _PaginaDetalleVentaState extends State<PaginaDetalleVenta> {
   } // Finaliza la navegación al perfil.
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
+  Widget _pagina(BuildContext context) {
     final esPantallaGrande =
         MediaQuery.of(context).size.width >=
         700; // Comparte el punto de adaptación del menú principal.
@@ -204,7 +206,7 @@ class _PaginaDetalleVentaState extends State<PaginaDetalleVenta> {
         : 'VOLVER A VENTAS';
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: PaletaTaller.de(context).fondo,
       appBar: PreferredSize(
         // Comparte el diez por ciento de altura con la página principal.
         preferredSize: Size.fromHeight(
@@ -279,18 +281,23 @@ class _PaginaDetalleVentaState extends State<PaginaDetalleVenta> {
           tipoBoton: 'elevated',
 
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.keyboard_return, color: Colors.black),
+          icon: Icon(
+            Icons.keyboard_return,
+            color: PaletaTaller.de(context).adaptar(Colors.black, tinta: true),
+          ),
           label: Text(
             textoBoton,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.black,
+            style: TextStyle(
+              color: PaletaTaller.de(context)
+                  .adaptar(Colors.black, tinta: true),
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFB7B7B7),
+            backgroundColor: PaletaTaller.de(context)
+                .adaptar(Color(0xFFB7B7B7)),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           ),
         ),
@@ -298,12 +305,13 @@ class _PaginaDetalleVentaState extends State<PaginaDetalleVenta> {
 
         // CAJA DE PRECIO TOTAL
         Container(
-          color: Colors.red[400],
+          color: PaletaTaller.de(context).adaptar(Colors.red[400]!),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           child: Text(
             'PRECIO TOTAL:\$${(_totalCargado ?? widget.total).toStringAsFixed(0).replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}',
-            style: const TextStyle(
-              color: Colors.black,
+            style: TextStyle(
+              color: PaletaTaller.de(context)
+                  .adaptar(Colors.black, tinta: true),
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
@@ -320,15 +328,22 @@ class _PaginaDetalleVentaState extends State<PaginaDetalleVenta> {
           SizedBox(
             width: double.infinity,
             child: TablaDatos.desdeCeldas(
-              headingRowColor: WidgetStateProperty.all(Colors.red[400]),
-              border: TableBorder.all(color: Colors.black, width: 2),
+              headingRowColor: WidgetStateProperty.all(
+                PaletaTaller.de(context).adaptar(Colors.red[400]!),
+              ),
+              border: TableBorder.all(
+                color: PaletaTaller.de(context)
+                    .adaptar(Colors.black, linea: true),
+                width: 2,
+              ),
               dataRowMaxHeight: 80,
-              columns: const [
+              columns: [
                 DataColumn(
                   label: Text(
                     'PRODUCTO / SERVICIO',
                     style: TextStyle(
-                      color: Colors.black,
+                      color: PaletaTaller.de(context)
+                          .adaptar(Colors.black, tinta: true),
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -338,7 +353,8 @@ class _PaginaDetalleVentaState extends State<PaginaDetalleVenta> {
                   label: Text(
                     'TOTAL',
                     style: TextStyle(
-                      color: Colors.black,
+                      color: PaletaTaller.de(context)
+                          .adaptar(Colors.black, tinta: true),
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -350,7 +366,9 @@ class _PaginaDetalleVentaState extends State<PaginaDetalleVenta> {
                 final item = entrada.value;
                 return DataRow(
                   color: WidgetStateProperty.all(
-                    indice % 2 == 0 ? Colors.grey[200] : Colors.grey[300],
+                    indice % 2 == 0
+                        ? PaletaTaller.de(context).adaptar(Colors.grey[200]!)
+                        : PaletaTaller.de(context).adaptar(Colors.grey[300]!),
                   ),
                   cells: [
                     DataCell(Text(item.nombre)),
@@ -377,11 +395,11 @@ class _PaginaDetalleVentaState extends State<PaginaDetalleVenta> {
       children: [
         CircleAvatar(
           radius: 70,
-          backgroundColor: const Color(0xFFD96363),
-          child: const Icon(
+          backgroundColor: PaletaTaller.de(context).adaptar(Color(0xFFD96363)),
+          child: Icon(
             Icons.person_outline,
             size: 80,
-            color: Colors.black,
+            color: PaletaTaller.de(context).adaptar(Colors.black, tinta: true),
           ),
         ),
         const SizedBox(height: 20),
@@ -395,46 +413,54 @@ class _PaginaDetalleVentaState extends State<PaginaDetalleVenta> {
             children: [
               Container(
                 width: double.infinity,
-                color: Colors.red[400],
+                color: PaletaTaller.de(context).adaptar(Colors.red[400]!),
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'NOMBRE DE CLIENTE:',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: PaletaTaller.de(context).adaptar(Colors.black),
                       ),
                     ),
                     const SizedBox(height: 10),
                     Text(
                       widget.clienteNombre,
-                      style: const TextStyle(fontSize: 22, color: Colors.black),
+                      style: TextStyle(
+                        fontSize: 22,
+                        color: PaletaTaller.de(context)
+                            .adaptar(Colors.black, tinta: true),
+                      ),
                     ),
                   ],
                 ),
               ),
               Container(
                 width: double.infinity,
-                color: Colors.grey[400],
+                color: PaletaTaller.de(context).adaptar(Colors.grey[400]!),
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'TIPO DE AUTO:',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: PaletaTaller.de(context).adaptar(Colors.black),
                       ),
                     ),
                     const SizedBox(height: 10),
                     Text(
                       widget.vehiculoNombre.replaceAll('\n', ' '),
-                      style: const TextStyle(fontSize: 22, color: Colors.black),
+                      style: TextStyle(
+                        fontSize: 22,
+                        color: PaletaTaller.de(context)
+                            .adaptar(Colors.black, tinta: true),
+                      ),
                     ),
                   ],
                 ),
@@ -449,17 +475,23 @@ class _PaginaDetalleVentaState extends State<PaginaDetalleVenta> {
           tipoBoton: 'elevated',
 
           onPressed: _abriendoCliente ? null : _verCliente,
-          icon: const Icon(Icons.search, color: Colors.black, size: 30),
-          label: const Text(
+          icon: Icon(
+            Icons.search,
+            color: PaletaTaller.de(context).adaptar(Colors.black, tinta: true),
+            size: 30,
+          ),
+          label: Text(
             'VER CLIENTE',
             style: TextStyle(
-              color: Colors.black,
+              color: PaletaTaller.de(context)
+                  .adaptar(Colors.black, tinta: true),
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFB7B7B7),
+            backgroundColor: PaletaTaller.de(context)
+                .adaptar(Color(0xFFB7B7B7)),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           ),
         ),

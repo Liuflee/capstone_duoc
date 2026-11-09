@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/features/vehiculos/pagina_vehiculos.dart'; // Recupera el listado e historial de los vehículos.
 
 import 'dart:io' show exit; // Permite cerrar el proceso de escritorio.
@@ -28,7 +29,7 @@ class MenuLateral extends StatelessWidget {
     } // Cierra Windows o la actividad de Android.
   } // Finaliza la acción de cierre.
 
-  Widget _botonCerrar(double alto) => SafeArea(
+  Widget _botonCerrar(BuildContext context, double alto) => SafeArea(
     top: false,
     minimum: const EdgeInsets.only(bottom: 12),
     child: Padding(
@@ -56,21 +57,26 @@ class MenuLateral extends StatelessWidget {
                   Container(
                     width: alto < 500 ? 48 : 56,
                     height: alto < 500 ? 48 : 56,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFD96363),
+                    decoration: BoxDecoration(
+                      color: PaletaTaller.de(context)
+                          .adaptar(Color(0xFFD96363)),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       Icons.power_settings_new,
                       size: alto < 500 ? 28 : 32,
-                      color: Colors.black,
+                      color: PaletaTaller.de(context).adaptar(Colors.black),
                     ),
                   ), // Conserva un área de pulsación mínima de 48 píxeles.
                   const SizedBox(height: 6), // Separa el icono de su texto.
-                  const Text(
+                  Text(
                     'CERRAR\nAPLICACIÓN',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 11, color: Colors.black),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: PaletaTaller.de(context)
+                          .adaptar(Colors.black, tinta: true),
+                    ),
                   ), // Mantiene la descripción completa.
                 ],
               ),
@@ -82,12 +88,15 @@ class MenuLateral extends StatelessWidget {
   ); // Respeta los bordes seguros de Android y el borde inferior de Windows.
   @override // Mantiene el cierre visible y desplaza únicamente las opciones.
   Widget build(BuildContext context) => DecoratedBox(
-    decoration: const BoxDecoration(
-      color: Color(
-        0xFFD6D6D6,
+    decoration: BoxDecoration(
+      color: PaletaTaller.de(context).adaptar(
+        Color(0xFFD6D6D6),
       ), // Recupera el fondo gris original debajo de las opciones.
       border: Border(
-        right: BorderSide(color: Colors.black, width: 1),
+        right: BorderSide(
+          color: PaletaTaller.de(context).adaptar(Colors.black, linea: true),
+          width: 1,
+        ),
       ), // Define un borde continuo sobre el contenido.
       boxShadow: [
         BoxShadow(
@@ -110,6 +119,7 @@ class MenuLateral extends StatelessWidget {
               ),
             ), // Desplaza las opciones sin ocultar la salida.
             _botonCerrar(
+              context,
               limites.maxHeight,
             ), // Ancla el cierre al borde inferior visible.
           ],
@@ -267,14 +277,19 @@ class _MenuItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: activo
-          ? const Color.fromARGB(255, 163, 35, 33)
-          : const Color.fromARGB(255, 114, 25, 25),
+          ? PaletaTaller.de(context).adaptar(Color.fromARGB(255, 163, 35, 33))
+          : PaletaTaller.de(context).menu,
       padding: const EdgeInsets.symmetric(vertical: 15),
       child: Row(
         children: [
           const SizedBox(width: 10),
 
-          Icon(icono, color: activo ? Colors.black : Colors.white),
+          Icon(
+            icono,
+            color: activo
+                ? PaletaTaller.de(context).adaptar(Colors.black)
+                : Colors.white,
+          ),
 
           const SizedBox(width: 10),
 
@@ -282,7 +297,9 @@ class _MenuItem extends StatelessWidget {
             child: Text(
               texto,
               style: TextStyle(
-                color: activo ? Colors.black : Colors.white,
+                color: activo
+                    ? PaletaTaller.de(context).adaptar(Colors.black)
+                    : Colors.white,
                 fontSize: 12,
                 fontWeight: activo ? FontWeight.bold : FontWeight.normal,
               ),

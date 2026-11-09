@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 // Importa Flutter y las consultas existentes de ventas.
 import 'package:flutter/material.dart';
 import 'package:frenos_cerna/features/ventas/data/ventas_repository.dart';
@@ -21,7 +22,8 @@ class _PaginaDatosState extends State<PaginaDatos> {
   }
 
   @override // Construye la vista de datos reales.
-  Widget build(BuildContext context) => EstructuraPagina(
+  Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
+  Widget _pagina(BuildContext context) => EstructuraPagina(
     titulo: 'Datos',
     activo: 'Datos',
     child: FutureBuilder<List<VentaRegistro>>(

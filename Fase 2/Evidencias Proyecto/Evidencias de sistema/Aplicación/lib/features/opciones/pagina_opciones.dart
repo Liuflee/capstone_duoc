@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 // Importa los controles visuales de Flutter.
 import 'package:flutter/material.dart';
 // Reutiliza el marco común de las páginas.
@@ -57,7 +58,8 @@ class PreferenciasVisuales extends ChangeNotifier {
 class PaginaOpciones extends StatelessWidget {
   const PaginaOpciones({super.key}); // Crea la página de opciones.
   @override // Construye los controles de preferencias.
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
+  Widget _pagina(BuildContext context) {
     final preferencias =
         PreferenciasVisuales.instancia; // Obtiene los valores actuales.
     return EstructuraPagina(
@@ -86,7 +88,8 @@ class PaginaOpciones extends StatelessWidget {
                     value: preferencias.brillo,
                     min: 0.65,
                     max: 1.15,
-                    activeColor: const Color(0xFFBF2020),
+                    activeColor: PaletaTaller.de(context)
+                        .adaptar(Color(0xFFBF2020)),
                     onChanged: (valor) =>
                         preferencias.actualizar(nuevoBrillo: valor),
                   ), // Ajusta el brillo sin afectar al dispositivo.
@@ -101,7 +104,8 @@ class PaginaOpciones extends StatelessWidget {
                     value: preferencias.texto,
                     min: 0.8,
                     max: 1.3,
-                    activeColor: const Color(0xFFBF2020),
+                    activeColor: PaletaTaller.de(context)
+                        .adaptar(Color(0xFFBF2020)),
                     onChanged: (valor) =>
                         preferencias.actualizar(nuevoTexto: valor),
                   ), // Ajusta el texto de la aplicación.
@@ -116,7 +120,8 @@ class PaginaOpciones extends StatelessWidget {
                     value: preferencias.saturacion,
                     min: 0,
                     max: 1.5,
-                    activeColor: const Color(0xFFBF2020),
+                    activeColor: PaletaTaller.de(context)
+                        .adaptar(Color(0xFFBF2020)),
                     onChanged: (valor) =>
                         preferencias.actualizar(nuevaSaturacion: valor),
                   ), // Ajusta la intensidad de los colores.

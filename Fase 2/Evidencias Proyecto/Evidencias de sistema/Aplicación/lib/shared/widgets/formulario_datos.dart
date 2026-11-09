@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 // Importa los controles y herramientas de distribución de Flutter.
 import 'package:flutter/material.dart';
 // Conserva la visibilidad de contraseña y el diseño del acceso existente.
@@ -286,6 +287,7 @@ class FormularioDatos extends StatelessWidget {
                               width: anchoCelda, // Asigna el mismo ancho a todas las celdas.
                               child: fila * columnas + columna < campos.length
                                   ? _construirCampo(
+                                      context,
                                       campos[fila * columnas + columna],
                                       altoEtiqueta,
                                       estiloEtiqueta,
@@ -322,6 +324,7 @@ class FormularioDatos extends StatelessWidget {
 
   // Construye una celda con etiqueta externa y área de escritura uniforme.
   Widget _construirCampo(
+    BuildContext context,
     CampoFormularioDatos campo,
     double altoEtiqueta,
     TextStyle estiloEtiqueta,
@@ -358,7 +361,9 @@ class FormularioDatos extends StatelessWidget {
           decoration: InputDecoration(
             hintText: campo.textoAyuda, // Muestra el texto interior definido en el constructor.
             filled: true, // Habilita el fondo del área de escritura.
-            fillColor: Colors.white, // Utiliza un fondo claro para los campos.
+            fillColor: PaletaTaller.de(
+              context,
+            ).adaptar(Colors.white), // Utiliza un fondo claro para los campos.
             border: const OutlineInputBorder(), // Dibuja el borde del campo.
             contentPadding: EdgeInsets.symmetric(
               horizontal: 16,

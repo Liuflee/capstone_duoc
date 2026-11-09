@@ -1,5 +1,8 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
+
 // Importa Flutter y los widgets compartidos de la aplicación.
 import 'dart:math' as math; // Limita el ancho del buscador en pantallas anchas.
+
 import 'package:flutter/material.dart';
 import 'package:frenos_cerna/shared/widgets/estructura_pagina.dart';
 import 'package:frenos_cerna/shared/widgets/panel_filtros.dart';
@@ -28,7 +31,8 @@ class _PaginaInformacionState extends State<PaginaInformacion> {
   }
 
   @override // Construye las preguntas desplegables.
-  Widget build(BuildContext context) => EstructuraPagina(
+  Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
+  Widget _pagina(BuildContext context) => EstructuraPagina(
     titulo: 'Información',
     activo: 'Información', // Identifica la sección.
     child: LayoutBuilder(
@@ -55,18 +59,20 @@ class _PaginaInformacionState extends State<PaginaInformacion> {
             child: ListView(
               children: [
                 for (final pregunta in _preguntas.entries.where(
-                  (entrada) => normalizarFiltro(
-                    entrada.key + entrada.value,
-                  ).contains(normalizarFiltro(_busqueda.text.trim())),
+                  (entrada) =>
+                      normalizarFiltro(entrada.key + entrada.value)
+                          .contains(normalizarFiltro(_busqueda.text.trim())),
                 )) // Busca en preguntas y respuestas sin distinguir tildes.
                   Padding(
                     padding: const EdgeInsets.only(bottom: 24),
                     child: ExpansionTile(
                       key: PageStorageKey(pregunta.key),
-                      backgroundColor: const Color(0xFFD9D9D9),
-                      collapsedBackgroundColor: const Color(
-                        0xFFD9D9D9,
-                      ), // Conserva los bloques grises de Figma.
+                      backgroundColor: PaletaTaller.de(context)
+                          .adaptar(Color(0xFFD9D9D9)),
+                      collapsedBackgroundColor: PaletaTaller.de(context)
+                          .adaptar(
+                            Color(0xFFD9D9D9),
+                          ), // Conserva los bloques grises de Figma.
                       title: Text(pregunta.key),
                       childrenPadding: const EdgeInsets.all(20),
                       children: [

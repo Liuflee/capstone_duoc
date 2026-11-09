@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/core/data/supabase_database.dart'; // Consulta el vínculo real entre vehículo y cliente.
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart'; // Construye el cliente recuperado.
 import 'package:frenos_cerna/features/clientes/pagina_ver_cliente.dart'; // Abre la consulta del cliente vinculado.
@@ -82,9 +83,7 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'No se pudo abrir el cliente del vehículo: $error',
-            ),
+            content: Text('No se pudo abrir el cliente del vehículo: $error'),
           ),
         ); // Permite volver a intentarlo.
       }
@@ -92,7 +91,8 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
   } // Finaliza la ruta de Ver cliente.
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
+  Widget _pagina(BuildContext context) {
     final esPantallaGrande =
         MediaQuery.of(context).size.width >=
         700; // Comparte el punto de adaptación del menú principal.
@@ -104,7 +104,7 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
     );
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: PaletaTaller.de(context).fondo,
       appBar: PreferredSize(
         // Comparte el diez por ciento de altura con la página principal.
         preferredSize: Size.fromHeight(
@@ -176,17 +176,22 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
           tipoBoton: 'elevated',
 
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.keyboard_return, color: Colors.black),
-          label: const Text(
+          icon: Icon(
+            Icons.keyboard_return,
+            color: PaletaTaller.de(context).adaptar(Colors.black, tinta: true),
+          ),
+          label: Text(
             'VOLVER A HISTORIAL',
             style: TextStyle(
-              color: Colors.black,
+              color: PaletaTaller.de(context)
+                  .adaptar(Colors.black, tinta: true),
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFF2A0A0),
+            backgroundColor: PaletaTaller.de(context)
+                .adaptar(Color(0xFFF2A0A0)),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           ),
         ),
@@ -195,7 +200,7 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
         // El esquema solo conserva el kilometraje actual del vehículo.
         Container(
           width: double.infinity,
-          color: Colors.grey[300],
+          color: PaletaTaller.de(context).adaptar(Colors.grey[300]!),
           padding: const EdgeInsets.all(15.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -226,15 +231,22 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
           SizedBox(
             width: double.infinity,
             child: TablaDatos.desdeCeldas(
-              headingRowColor: WidgetStateProperty.all(Colors.red[400]),
-              border: TableBorder.all(color: Colors.black, width: 2),
+              headingRowColor: WidgetStateProperty.all(
+                PaletaTaller.de(context).adaptar(Colors.red[400]!),
+              ),
+              border: TableBorder.all(
+                color: PaletaTaller.de(context)
+                    .adaptar(Colors.black, linea: true),
+                width: 2,
+              ),
               dataRowMaxHeight: 60,
-              columns: const [
+              columns: [
                 DataColumn(
                   label: Text(
                     'PRODUCTOS / SERVICIOS',
                     style: TextStyle(
-                      color: Colors.black,
+                      color: PaletaTaller.de(context)
+                          .adaptar(Colors.black, tinta: true),
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -244,7 +256,8 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
                   label: Text(
                     'TOTAL',
                     style: TextStyle(
-                      color: Colors.black,
+                      color: PaletaTaller.de(context)
+                          .adaptar(Colors.black, tinta: true),
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -254,7 +267,8 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
                   label: Text(
                     'VER',
                     style: TextStyle(
-                      color: Colors.black,
+                      color: PaletaTaller.de(context)
+                          .adaptar(Colors.black, tinta: true),
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -266,7 +280,9 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
                 final venta = entrada.value;
                 return DataRow(
                   color: WidgetStateProperty.all(
-                    indice % 2 == 0 ? Colors.grey[200] : Colors.grey[300],
+                    indice % 2 == 0
+                        ? PaletaTaller.de(context).adaptar(Colors.grey[200]!)
+                        : PaletaTaller.de(context).adaptar(Colors.grey[300]!),
                   ),
                   cells: [
                     DataCell(
@@ -286,10 +302,11 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
                         // Conserva las medidas y la función de la acción original.
                         tipoBoton: 'icon',
 
-                        child: const Icon(
+                        child: Icon(
                           Icons.search,
                           size: 30,
-                          color: Colors.black,
+                          color: PaletaTaller.de(context)
+                              .adaptar(Colors.black, tinta: true),
                         ),
                         onPressed: () => Navigator.push(
                           context,
@@ -328,11 +345,11 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
       children: [
         CircleAvatar(
           radius: 70,
-          backgroundColor: const Color(0xFFD96363),
-          child: const Icon(
+          backgroundColor: PaletaTaller.de(context).adaptar(Color(0xFFD96363)),
+          child: Icon(
             Icons.person_outline,
             size: 80,
-            color: Colors.black,
+            color: PaletaTaller.de(context).adaptar(Colors.black, tinta: true),
           ),
         ),
         const SizedBox(height: 20),
@@ -348,23 +365,27 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
               // Sección superior (Roja)
               Container(
                 width: double.infinity,
-                color: Colors.red[400],
+                color: PaletaTaller.de(context).adaptar(Colors.red[400]!),
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'NOMBRE DE CLIENTE:',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: PaletaTaller.de(context).adaptar(Colors.black),
                       ),
                     ),
                     const SizedBox(height: 10),
                     Text(
                       widget.vehiculo.clienteNombre,
-                      style: const TextStyle(fontSize: 22, color: Colors.black),
+                      style: TextStyle(
+                        fontSize: 22,
+                        color: PaletaTaller.de(context)
+                            .adaptar(Colors.black, tinta: true),
+                      ),
                     ),
                   ],
                 ),
@@ -372,23 +393,27 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
               // Sección inferior (Gris)
               Container(
                 width: double.infinity,
-                color: Colors.grey[400],
+                color: PaletaTaller.de(context).adaptar(Colors.grey[400]!),
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'TIPO DE AUTO:',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: PaletaTaller.de(context).adaptar(Colors.black),
                       ),
                     ),
                     const SizedBox(height: 10),
                     Text(
                       nombreVehiculoLimpio,
-                      style: const TextStyle(fontSize: 22, color: Colors.black),
+                      style: TextStyle(
+                        fontSize: 22,
+                        color: PaletaTaller.de(context)
+                            .adaptar(Colors.black, tinta: true),
+                      ),
                     ),
                   ],
                 ),
@@ -403,17 +428,23 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
           tipoBoton: 'elevated',
 
           onPressed: _verCliente, // Abre el cliente real del vehículo.
-          icon: const Icon(Icons.search, color: Colors.black, size: 30),
-          label: const Text(
+          icon: Icon(
+            Icons.search,
+            color: PaletaTaller.de(context).adaptar(Colors.black, tinta: true),
+            size: 30,
+          ),
+          label: Text(
             'VER CLIENTE',
             style: TextStyle(
-              color: Colors.black,
+              color: PaletaTaller.de(context)
+                  .adaptar(Colors.black, tinta: true),
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFB7B7B7),
+            backgroundColor: PaletaTaller.de(context)
+                .adaptar(Color(0xFFB7B7B7)),
             padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
           ),
         ),

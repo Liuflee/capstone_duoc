@@ -180,13 +180,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(PaginaDetalleVehiculo), findsOneWidget);
     expect(
-      tester.widget<PaginaDetalleVehiculo>(
-        find.byType(PaginaDetalleVehiculo),
-      ).vehiculo.id,
+      tester
+          .widget<PaginaDetalleVehiculo>(find.byType(PaginaDetalleVehiculo))
+          .vehiculo
+          .id,
       'EFGH34',
     );
     expect(tester.takeException(), isNull);
-
   });
 
   testWidgets(
@@ -239,7 +239,10 @@ void main() {
         findsOneWidget,
       ); // Personaliza el título con el cliente consultado.
       expect(find.text('VOLVER'), findsOneWidget); // Regresa al perfil.
-      expect(tester.takeException(), isNull); // Exige ausencia de desbordamientos.
+      expect(
+        tester.takeException(),
+        isNull,
+      ); // Exige ausencia de desbordamientos.
     },
   ); // Finaliza la vista previa del historial.
 
@@ -316,15 +319,21 @@ void main() {
         tabla.nombresColumnas,
         isNot(contains('CLIENTE')),
       ); // Oculta la columna redundante al filtrar por cliente.
-      expect(
-        tabla.filas,
-        hasLength(2),
-      ); // Conserva la pendiente y la cerrada del cliente.
+      expect(tabla.filas.single['estado'], 'cerrada');
       expect(
         tabla.filas.every((fila) => fila['rut'].toString() == cliente.id),
         isTrue,
       ); // Excluye las ventas de otros clientes.
-      expect(find.byTooltip('ESTADO'), findsOneWidget); // Conserva sus filtros.
+      await tester.tap(find.byTooltip('ESTADO'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('VENTAS PENDIENTES'));
+      await tester.pumpAndSettle();
+      final pendiente = tester
+          .widget<TablaDatos>(find.byType(TablaDatos))
+          .filas
+          .single;
+      expect(pendiente['estado'], 'pendiente');
+      expect(pendiente['rut'].toString(), cliente.id);
       expect(
         find.byTooltip('PERIODO'),
         findsOneWidget,
@@ -408,7 +417,10 @@ void main() {
     await tester.tap(find.widgetWithText(ActionChip, 'EFGH34'));
     await tester.pump();
     expect(
-      tester.widget<TextFormField>(find.byType(TextFormField).first).controller!.text,
+      tester
+          .widget<TextFormField>(find.byType(TextFormField).first)
+          .controller!
+          .text,
       'EFGH34',
     );
     expect(tester.takeException(), isNull);
@@ -554,7 +566,7 @@ void main() {
         find.text('REGISTRAR\nVENTA NUEVA'),
         findsNothing,
       ); // Retira el botón grande de registro.
-      expect(find.text('AGREGAR VENTA'), findsOneWidget);
+      expect(find.text('AGREGAR VENTA'), findsNothing);
       await tester.pumpWidget(
         MaterialApp(
           home: PaginaVentasHistorial(
@@ -566,8 +578,19 @@ void main() {
       await tester.pumpAndSettle(); // Recupera el catálogo completo.
       expect(
         tester.widget<TablaDatos>(find.byType(TablaDatos)).filas,
-        hasLength(5),
-      ); // Incluye todos los días y las ventas sin fecha conocida.
+        hasLength(3),
+      ); // Incluye las cerradas de hoy, de ayer y sin fecha.
+      await tester.tap(find.byTooltip('ESTADO'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('VENTAS PENDIENTES'));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<TablaDatos>(find.byType(TablaDatos))
+            .filas
+            .map((fila) => fila['fecha']),
+        unorderedEquals([hoy, ayer]),
+      );
       expect(
         find.text('REGISTRAR\nVENTA NUEVA'),
         findsNothing,
