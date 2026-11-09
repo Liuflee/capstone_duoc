@@ -107,13 +107,14 @@ enum PaletaTaller {
         color == fondo ||
         color == barra ||
         color == menu ||
-        color == tarjeta)
-      return color;
+        color == tarjeta){
+      return color;}
     if (tinta ||
         color == Colors.black ||
         color == Colors.black54 ||
-        color == Colors.black45)
+        color == Colors.black45){
       return texto;
+      }
     if (color == Colors.white) return fondo;
     if (color.r > color.g * 1.2 && color.r > color.b * 1.2) return acento;
     return tarjeta;

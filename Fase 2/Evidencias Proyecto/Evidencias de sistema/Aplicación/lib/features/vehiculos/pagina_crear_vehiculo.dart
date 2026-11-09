@@ -210,10 +210,11 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Nombre actualizado.')));
     } catch (error) {
-      if (mounted)
+      if (mounted){
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('No se pudo actualizar el nombre: $error')),
         );
+      }
     } finally {
       controlador.dispose();
       if (mounted) setState(() => _editandoCatalogo = false);
