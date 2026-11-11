@@ -69,6 +69,11 @@ class CartaNavegacion extends StatelessWidget {
 
     // Centraliza las acciones y conserva las medidas nativas de Windows y Android.
     if (contenido != null) {
+      final enDialogo =
+          context.findAncestorWidgetOfExactType<AlertDialog>() != null;
+      final tamanoAccion = enDialogo
+          ? const Size(140, 52)
+          : const Size(240, 70);
       final formaCarta = ButtonStyle(
         shape: WidgetStatePropertyAll(
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -87,7 +92,7 @@ class CartaNavegacion extends StatelessWidget {
                   .adaptar(Color(0xFFBDBDBD)),
               foregroundColor: PaletaTaller.de(context)
                   .adaptar(Colors.black, tinta: true),
-              minimumSize: const Size(240, 70),
+              minimumSize: tamanoAccion,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
                 fontSize: 16,
@@ -104,9 +109,9 @@ class CartaNavegacion extends StatelessWidget {
                   tipoBoton == 'icon'
                       ? const ButtonStyle()
                       : ButtonStyle(
-                          fixedSize: WidgetStatePropertyAll(Size(240, 70)),
-                          minimumSize: WidgetStatePropertyAll(Size(240, 70)),
-                          maximumSize: WidgetStatePropertyAll(Size(240, 70)),
+                          fixedSize: WidgetStatePropertyAll(tamanoAccion),
+                          minimumSize: WidgetStatePropertyAll(tamanoAccion),
+                          maximumSize: WidgetStatePropertyAll(tamanoAccion),
                           foregroundColor: WidgetStatePropertyAll(
                             PaletaTaller.de(context).adaptar(Colors.black),
                           ),

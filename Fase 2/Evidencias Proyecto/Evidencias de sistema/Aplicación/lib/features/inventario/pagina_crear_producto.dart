@@ -139,7 +139,7 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
     final idCategoria = _categoria; // Conserva la relación de la calidad con la categoría elegida.
     try {
       // Mantiene el formulario ante cancelaciones y errores.
-      final nombre = await showDialog<String>(
+      final nombre = await mostrarDialogoConTema<String>(
         // Solicita el nombre sin navegar a otra página.
         context: context, // Presenta el diálogo sobre el producto.
         builder: (dialogo) => AlertDialog(
@@ -202,7 +202,7 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
       if (nombre == null || !mounted || !context.mounted) {
         return; // Conserva todos los datos si se cancela.
       }
-      final confirmado = await showDialog<bool>(
+      final confirmado = await mostrarDialogoConTema<bool>(
         // Pide confirmación antes de escribir en la base.
         context: context, // Mantiene el producto debajo del diálogo.
         builder: (dialogo) => AlertDialog(
@@ -413,7 +413,7 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
     if (registros.isEmpty) return;
 
     final columna = esCalidad ? 'nombre_calidad' : 'nombre_tipo';
-    final registro = await showDialog<Map<String, dynamic>>(
+    final registro = await mostrarDialogoConTema<Map<String, dynamic>>(
       context: context,
       builder: (dialogo) => SimpleDialog(
         title: Text('SELECCIONA ${esCalidad ? 'CALIDAD' : 'CATEGORÍA'}'),
@@ -433,7 +433,7 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
       text: registro[columna]?.toString() ?? '',
     );
     try {
-      final nombre = await showDialog<String>(
+      final nombre = await mostrarDialogoConTema<String>(
         context: context,
         builder: (dialogo) => AlertDialog(
           actionsOverflowButtonSpacing: 12,

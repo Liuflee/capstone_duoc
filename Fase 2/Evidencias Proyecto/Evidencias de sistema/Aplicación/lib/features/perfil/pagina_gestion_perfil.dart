@@ -277,9 +277,11 @@ class _PaginaGestionPerfilState extends State<PaginaGestionPerfil> {
     if (_guardando || _perfil == null || _actual?.tipo != TipoPerfil.dueno) {
       return; // Exige la sección y los permisos correctos.
     }
-    final confirmar = await showDialog<bool>(
+    final confirmar = await mostrarDialogoConTema<bool>(
       context: context,
       builder: (dialogo) => AlertDialog(
+        actionsOverflowButtonSpacing: 12,
+        buttonPadding: const EdgeInsets.symmetric(horizontal: 6),
         title: const Text('ELIMINAR PERFIL'),
         content: Text(
           '¿Eliminar el perfil de ${_perfil!.nombre}? Esta acción retira su acceso a la aplicación.',

@@ -83,9 +83,11 @@ class _PaginaDetalleVentaPendienteState
   } // Finaliza la actualización.
 
   Future<void> _recuperar() async {
-    final confirmado = await showDialog<bool>(
+    final confirmado = await mostrarDialogoConTema<bool>(
       context: context,
       builder: (dialogo) => AlertDialog(
+        actionsOverflowButtonSpacing: 12,
+        buttonPadding: const EdgeInsets.symmetric(horizontal: 6),
         title: const Text(
           'REVISAR VENTA',
         ), // Exige verificar el resultado antes de reintentar.
@@ -150,9 +152,11 @@ class _PaginaDetalleVentaPendienteState
     if (_ocupado || _requiereRevision) {
       return; // Impide confirmaciones repetidas o inseguras.
     }
-    final confirmar = await showDialog<bool>(
+    final confirmar = await mostrarDialogoConTema<bool>(
       context: context,
       builder: (dialogo) => AlertDialog(
+        actionsOverflowButtonSpacing: 12,
+        buttonPadding: const EdgeInsets.symmetric(horizontal: 6),
         title: const Text('CONFIRMAR PAGO'),
         content: const Text(
           '¿Confirmas que se recibió el pago? La venta se guardará en el historial y se descontará el stock. El servidor comprobará precios y disponibilidad actuales.',

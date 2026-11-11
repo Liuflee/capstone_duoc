@@ -459,7 +459,7 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
 
   // Abre el inventario sobre la página sin desplazar los datos de la venta.
   Future<void> _abrirSeleccionProductos() async {
-    await showDialog<void>(
+    await mostrarDialogoConTema<void>(
       context: context,
       builder: (dialogo) => StatefulBuilder(
         builder: (context, actualizarMenu) => Dialog(

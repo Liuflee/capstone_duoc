@@ -24,7 +24,7 @@ Future<Cliente?> seleccionarClienteExistente(
   final consulta =
       (cargarClientes ??
       consultar)(); // Consulta una sola vez mientras se escribe en el buscador.
-  return showDialog<Cliente>(
+  return mostrarDialogoConTema<Cliente>(
     context: context,
     builder: (dialogo) => Dialog(
       backgroundColor: PaletaTaller.de(context)

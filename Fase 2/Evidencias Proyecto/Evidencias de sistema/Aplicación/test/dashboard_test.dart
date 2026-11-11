@@ -261,6 +261,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       MaterialApp(
+        theme:ThemeData(platform:TargetPlatform.windows),
         home: const PaginaInicio(modoPrueba: true),
         routes: {
           '/dashboard': (_) => PaginaDashboard(
