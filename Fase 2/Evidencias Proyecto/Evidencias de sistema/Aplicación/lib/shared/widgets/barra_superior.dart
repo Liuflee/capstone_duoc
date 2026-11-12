@@ -2,7 +2,7 @@ import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; // Permite cerrar únicamente la sesión de este dispositivo.
 import 'package:frenos_cerna/core/data/supabase_database.dart'; // Reutiliza la sesión autenticada.
 import 'package:frenos_cerna/features/autenticacion/presentation/puerta_autenticacion.dart'; // Regresa al acceso existente sin modificar su diseño.
-import 'package:flutter/material.dart'; // Construye la identidad, el título y las acciones de la barra compartida.
+import 'package:material_ui/material_ui.dart'; // Construye la identidad, el título y las acciones de la barra compartida.
 
 import 'package:frenos_cerna/core/data/perfil_sesion.dart'; // Comparte el perfil entre páginas sin volver a cargar el nombre.
 import 'package:frenos_cerna/features/autenticacion/data/autenticacion_repository.dart'; // Recupera el nombre real del perfil.

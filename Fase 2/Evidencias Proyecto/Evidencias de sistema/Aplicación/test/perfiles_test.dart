@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart'; // Construye las vistas reales.
+import 'package:material_ui/material_ui.dart'; // Construye las vistas reales.
 import 'package:flutter_test/flutter_test.dart'; // Verifica funciones y permisos sin crear ni borrar cuentas reales.
 import 'package:frenos_cerna/features/perfil/data/perfiles_repository.dart'; // Proporciona perfiles controlados.
 import 'package:frenos_cerna/features/perfil/pagina_perfil.dart'; // Verifica las secciones y los accesos.

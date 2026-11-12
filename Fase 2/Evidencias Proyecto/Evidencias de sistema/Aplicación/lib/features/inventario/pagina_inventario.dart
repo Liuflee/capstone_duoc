@@ -7,7 +7,7 @@ import 'package:frenos_cerna/shared/widgets/barra_superior.dart';
 
 // Importa las cartas que conservan las acciones de la página.
 import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:frenos_cerna/core/data/supabase_database.dart';
 import 'package:frenos_cerna/features/inventario/pagina_edicion_producto.dart';
 import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';

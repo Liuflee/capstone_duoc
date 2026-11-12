@@ -1,6 +1,6 @@
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 // Importa Flutter, la conexión existente y los widgets compartidos.
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:frenos_cerna/core/data/supabase_database.dart';
 import 'package:frenos_cerna/shared/widgets/estructura_pagina.dart';
 import 'package:frenos_cerna/shared/widgets/formulario_datos.dart';

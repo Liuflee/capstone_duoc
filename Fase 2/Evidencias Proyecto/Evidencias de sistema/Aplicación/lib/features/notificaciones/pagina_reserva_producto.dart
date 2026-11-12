@@ -1,5 +1,5 @@
 // Reutiliza Flutter y la vista común de reservas.
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:frenos_cerna/features/notificaciones/presentation/vista_reservas.dart';
 
 // Identifica una pantalla independiente del flujo de reservas.

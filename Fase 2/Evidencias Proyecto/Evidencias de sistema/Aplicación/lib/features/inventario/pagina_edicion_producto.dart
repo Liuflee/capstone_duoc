@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart'; // Construye el acceso al formulario de edición.
+import 'package:material_ui/material_ui.dart'; // Construye el acceso al formulario de edición.
 import 'package:frenos_cerna/features/inventario/pagina_inventario.dart'; // Recibe el producto seleccionado en la tabla.
 import 'package:frenos_cerna/features/inventario/pagina_crear_producto.dart'; // Reutiliza exactamente el formulario de Añadir producto.
 

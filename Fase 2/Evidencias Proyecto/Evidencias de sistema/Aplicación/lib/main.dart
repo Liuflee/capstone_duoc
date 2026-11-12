@@ -1,7 +1,6 @@
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/features/dashboard/pagina_dashboard.dart';
 import 'package:frenos_cerna/features/ventas/presentation/pagina_ventas_historial.dart'; // Registra el acceso independiente al historial completo.
-// Importa el registro de vehículos con vinculación de clientes.
 import 'package:frenos_cerna/features/vehiculos/pagina_crear_vehiculo.dart';
 // Importa una pantalla del prototipo con ruta en inglés.
 import 'package:frenos_cerna/features/notificaciones/pagina_productos_reservados.dart';
@@ -18,7 +17,9 @@ import 'package:frenos_cerna/features/opciones/pagina_opciones.dart';
 // Importa una pantalla del prototipo con ruta en inglés.
 import 'package:frenos_cerna/features/perfil/pagina_perfil.dart';
 // Importaciones
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+// Para que funcione centrarse en la pantalla al abrir app
+import 'package:window_manager/window_manager.dart';
 
 import 'package:frenos_cerna/core/navigation/nav_rutas.dart';
 
@@ -31,11 +32,20 @@ Future<void> main() async {
   // Inicializa los servicios de Flutter
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Inicializa y configura la ventana de escritorio
+  final window = WindowManager.instance.getCurrent()!;
+
+  window.title = 'Frenos Cerna';
+  window.setSize(const Size(1200, 800).toNative(), false);
+  window.center();
+
   // Inicializa la conexión con Supabase
   await SupabaseDatabase.initialize();
   await PaletaTaller.cargar();
 
   // Ejecuta la aplicación
+  window.show();
+  window.focus();
   runApp(const MiAplicacion());
 }
 
@@ -56,6 +66,7 @@ class MiAplicacion extends StatelessWidget {
         // Nombre de la aplicación
         title: 'Frenos Cerna',
         color: paleta.fondo,
+
         // Declara las rutas nuevas sin cambiar las rutas existentes.
         routes: {
           '/dashboard': (context) => const PaginaDashboard(),
@@ -70,12 +81,14 @@ class MiAplicacion extends StatelessWidget {
           '/notifications/reserved': (context) =>
               const PaginaProductosReservados(),
         },
+
         // Aplica las preferencias sin modificar los widgets compartidos.
         builder: (context, child) => AnimatedBuilder(
           animation: PreferenciasVisuales.instancia,
           builder: (context, _) {
             final ajustes = PreferenciasVisuales.instancia;
             final entorno = MediaQuery.of(context);
+
             return ColorFiltered(
               colorFilter: ColorFilter.matrix(ajustes.matriz),
               child: MediaQuery(
@@ -85,10 +98,13 @@ class MiAplicacion extends StatelessWidget {
                   ),
                 ),
                 child: ColoredBox(
-                  color: paleta.fondo, // Prolonga el gris del encabezado detrás de la barra de estado.
+                  color: paleta.fondo,
                   child: SafeArea(
-                    bottom: false, // Conserva el tratamiento inferior de cada página y del teclado.
-                    child: ColoredBox(color: paleta.fondo, child: child!), // Mantiene todas las rutas debajo de la barra de estado y fuera de los recortes laterales.
+                    bottom: false,
+                    child: ColoredBox(
+                      color: paleta.fondo,
+                      child: child!,
+                    ),
                   ),
                 ),
               ),

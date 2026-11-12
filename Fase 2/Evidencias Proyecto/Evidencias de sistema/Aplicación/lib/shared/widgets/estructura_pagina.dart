@@ -1,6 +1,6 @@
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 // Importa los widgets visuales de Flutter.
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 // Reutiliza la barra superior existente sin cambiar su diseño.
 import 'package:frenos_cerna/shared/widgets/barra_superior.dart';
 // Reutiliza el menú lateral existente sin cambiar sus dimensiones.

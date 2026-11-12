@@ -1,5 +1,5 @@
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
-import 'package:flutter/material.dart'; // Construye las secciones de perfiles.
+import 'package:material_ui/material_ui.dart'; // Construye las secciones de perfiles.
 import 'package:frenos_cerna/shared/widgets/estructura_pagina.dart'; // Reutiliza el marco compartido.
 import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart'; // Mantiene las cartas de acción del proyecto.
 import 'package:frenos_cerna/features/perfil/data/perfiles_repository.dart'; // Reutiliza los roles y perfiles existentes.

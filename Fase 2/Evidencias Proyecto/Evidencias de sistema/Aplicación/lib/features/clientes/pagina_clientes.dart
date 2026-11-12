@@ -3,7 +3,7 @@ import 'package:frenos_cerna/features/clientes/pagina_ver_cliente.dart'; // Abre
 // Importa los campos de formulario reutilizables.
 
 // Importaciones necesarias para construir la interfaz y consultar los clientes.
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:frenos_cerna/core/data/supabase_database.dart';
 
@@ -324,7 +324,7 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                           Color.fromARGB(255, 253, 116, 116),
                                         ),
                                         PaletaTaller.de(context).adaptar(
-                                          Color.fromARGB(255, 253, 116, 116),
+                                          Color.fromARGB(255, 207, 81, 81),
                                         ),
                                         PaletaTaller.de(context).adaptar(
                                           Color.fromARGB(255, 253, 116, 116),

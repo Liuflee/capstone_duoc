@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart'; // Construye las vistas que utilizará la persona encargada.
+import 'package:material_ui/material_ui.dart'; // Construye las vistas que utilizará la persona encargada.
 import 'package:flutter_test/flutter_test.dart'; // Verifica rutas y distribución sin escrituras reales.
 import 'package:shared_preferences/shared_preferences.dart'; // Aísla las ventas locales de prueba.
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart'; // Consulta la nueva columna de información.

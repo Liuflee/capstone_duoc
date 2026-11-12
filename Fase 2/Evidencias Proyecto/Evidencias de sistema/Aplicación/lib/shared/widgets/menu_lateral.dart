@@ -5,7 +5,7 @@ import 'dart:io' show exit; // Permite cerrar el proceso de escritorio.
 
 import 'package:flutter/foundation.dart'; // Identifica la plataforma actual.
 import 'package:flutter/services.dart'; // Solicita el cierre de la actividad Android.
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:frenos_cerna/core/navigation/nav_rutas.dart';
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart';
 import 'package:frenos_cerna/features/inventario/pagina_inventario.dart';

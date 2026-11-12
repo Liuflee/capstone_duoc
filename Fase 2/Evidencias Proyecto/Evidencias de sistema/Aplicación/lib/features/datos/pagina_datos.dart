@@ -1,6 +1,6 @@
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 // Importa Flutter y las consultas existentes de ventas.
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:frenos_cerna/features/ventas/data/ventas_repository.dart';
 import 'package:frenos_cerna/shared/widgets/estructura_pagina.dart';
 import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';

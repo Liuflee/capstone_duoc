@@ -6,7 +6,7 @@ import 'package:frenos_cerna/features/vehiculos/pagina_crear_vehiculo.dart'; // 
 import 'package:frenos_cerna/features/inicio/pagina_inicio.dart'; // Comprueba las acciones por dispositivo.
 import 'package:frenos_cerna/shared/widgets/panel_filtros.dart'; // Comprueba la alineación de los controles externos.
 import 'package:frenos_cerna/shared/widgets/tabla_datos.dart'; // Compara los extremos visibles de la tabla.
-import 'package:flutter/material.dart'; // Construye los widgets tal como los usa la aplicación.
+import 'package:material_ui/material_ui.dart'; // Construye los widgets tal como los usa la aplicación.
 import 'package:flutter_test/flutter_test.dart'; // Protege las correcciones visuales solicitadas.
 import 'package:frenos_cerna/features/inventario/pagina_inventario.dart'; // Comprueba el botón que tenía texto blanco.
 import 'package:frenos_cerna/shared/widgets/barra_superior.dart'; // Comprueba el área completa de la marca.

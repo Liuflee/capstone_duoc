@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart'; // Conserva compatibilidad con los accesos anteriores.
+import 'package:material_ui/material_ui.dart'; // Conserva compatibilidad con los accesos anteriores.
 import 'package:frenos_cerna/features/ventas/presentation/pagina_ventas_historial.dart'; // Unifica todos los accesos al historial completo.
 
 class PaginaHistorialVentas extends StatelessWidget {
