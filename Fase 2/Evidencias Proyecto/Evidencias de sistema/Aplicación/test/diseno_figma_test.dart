@@ -6,7 +6,7 @@ import 'package:frenos_cerna/features/inicio/pagina_inicio.dart'; // Revisa el m
 import 'dart:io';
 import 'dart:ui' as ui;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart'; // Intercepta el cierre sin cerrar las pruebas.
 import 'package:frenos_cerna/shared/widgets/menu_lateral.dart'; // Verifica el botón real del menú.
 import 'package:flutter/rendering.dart';

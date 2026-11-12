@@ -4,7 +4,7 @@ import 'package:frenos_cerna/features/clientes/pagina_clientes.dart'; // Proporc
 import 'dart:async'; // Controla las confirmaciones simultáneas de prueba.
 import 'dart:convert'; // Comprueba la persistencia del estado de envío.
 
-import 'package:flutter/material.dart'; // Construye las vistas reales.
+import 'package:material_ui/material_ui.dart'; // Construye las vistas reales.
 import 'package:flutter_test/flutter_test.dart'; // Verifica el flujo sin escribir en Supabase.
 import 'package:shared_preferences/shared_preferences.dart'; // Simula el almacenamiento del dispositivo.
 import 'package:supabase_flutter/supabase_flutter.dart'; // Simula rechazos explícitos del servidor.

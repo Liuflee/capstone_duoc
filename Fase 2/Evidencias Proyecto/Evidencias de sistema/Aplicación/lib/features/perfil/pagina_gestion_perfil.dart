@@ -1,5 +1,5 @@
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
-import 'package:flutter/material.dart'; // Construye las vistas de perfiles.
+import 'package:material_ui/material_ui.dart'; // Construye las vistas de perfiles.
 import 'package:frenos_cerna/features/perfil/data/perfiles_repository.dart'; // Conserva las operaciones reales de consulta y gestión.
 import 'package:frenos_cerna/shared/widgets/estructura_pagina.dart'; // Reutiliza las barras y el menú.
 import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart'; // Conserva las dimensiones de las acciones.

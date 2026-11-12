@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart'; // Construye la vista independiente del historial completo.
+import 'package:material_ui/material_ui.dart'; // Construye la vista independiente del historial completo.
 import 'package:frenos_cerna/features/ventas/data/ventas_pendientes_repository.dart'; // Comparte los borradores locales del usuario.
 import 'package:frenos_cerna/features/ventas/data/ventas_repository.dart'; // Permite consultar las ventas concretadas.
 import 'package:frenos_cerna/features/ventas/presentation/pagina_ventas.dart'; // Conserva el mismo diseño y los mismos filtros de Ventas.

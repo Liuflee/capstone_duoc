@@ -1,6 +1,6 @@
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 // Importa Flutter y las páginas necesarias para vincular clientes.
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:frenos_cerna/core/data/supabase_database.dart';
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart';
 import 'package:frenos_cerna/features/clientes/pagina_crear_cliente.dart';

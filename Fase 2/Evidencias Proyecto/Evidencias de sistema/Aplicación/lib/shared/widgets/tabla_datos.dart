@@ -1,5 +1,5 @@
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 // Reutiliza el buscador del panel de filtros reutilizable.
 import 'package:frenos_cerna/shared/widgets/panel_filtros.dart';
 

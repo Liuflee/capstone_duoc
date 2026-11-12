@@ -1,5 +1,5 @@
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class CampoFormulario extends StatefulWidget {
   final TextEditingController controller;

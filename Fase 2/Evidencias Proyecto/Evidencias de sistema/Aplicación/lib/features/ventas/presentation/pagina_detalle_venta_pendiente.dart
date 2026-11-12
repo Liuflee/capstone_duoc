@@ -1,6 +1,6 @@
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart'; // Muestra el cliente local asociado a la pendiente.
-import 'package:flutter/material.dart'; // Presenta las acciones de la venta pendiente.
+import 'package:material_ui/material_ui.dart'; // Presenta las acciones de la venta pendiente.
 import 'package:frenos_cerna/features/ventas/data/ventas_pendientes_repository.dart'; // Recupera y confirma los borradores locales.
 import 'package:frenos_cerna/features/ventas/presentation/pagina_crear_ventas.dart'; // Reutiliza el formulario para editar la venta.
 import 'package:frenos_cerna/features/ventas/presentation/pagina_detalle_venta.dart'; // Conserva el mismo diseño del historial.

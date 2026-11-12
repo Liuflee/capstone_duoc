@@ -3,7 +3,7 @@ import 'package:frenos_cerna/features/ventas/presentation/pagina_crear_ventas.da
 import 'package:frenos_cerna/features/ventas/presentation/pagina_ventas_historial.dart'; // Abre el historial completo.
 import 'package:frenos_cerna/core/data/perfil_sesion.dart'; // Conserva el perfil autenticado para toda la navegación.
 // Importaciones
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:supabase_flutter/supabase_flutter.dart';
 

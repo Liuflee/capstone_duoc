@@ -2,7 +2,7 @@ import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/features/clientes/pagina_crear_cliente.dart'; // Permite crear un cliente y devolverlo a la reserva.
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart'; // Conserva el cliente y su contacto.
 import 'package:frenos_cerna/features/clientes/presentation/selector_cliente.dart'; // Reutiliza la búsqueda por nombre o RUT.
-import 'package:flutter/material.dart'; // Construye las reservas y su diálogo.
+import 'package:material_ui/material_ui.dart'; // Construye las reservas y su diálogo.
 import 'package:frenos_cerna/features/notificaciones/data/reservas_repository.dart'; // Guarda los estados en Supabase.
 import 'package:frenos_cerna/shared/widgets/estructura_pagina.dart'; // Conserva el marco compartido.
 import 'package:frenos_cerna/shared/widgets/tabla_datos.dart'; // Reutiliza la tabla y su búsqueda.

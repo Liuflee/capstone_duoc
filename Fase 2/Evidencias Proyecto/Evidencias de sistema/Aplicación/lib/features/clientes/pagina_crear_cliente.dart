@@ -4,7 +4,7 @@ import 'package:frenos_cerna/features/clientes/pagina_clientes.dart';
 // Compone la página con los widgets existentes.
 import 'package:frenos_cerna/shared/widgets/estructura_pagina.dart';
 // Importaciones
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:frenos_cerna/core/data/supabase_database.dart';
 
