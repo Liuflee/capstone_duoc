@@ -1,0 +1,89 @@
+// AUTO-GENERATED. DO NOT EDIT.
+// Any manual changes WILL BE LOST when this file is regenerated.
+
+// ignore_for_file: unused_import, unnecessary_import
+
+import 'dart:ffi' as ffi;
+
+import 'package:cnativeapi/cnativeapi.dart' as c;
+import 'package:ffi/ffi.dart' as pkg_ffi;
+
+import 'foundation/geometry.dart';
+
+class Image implements ffi.Finalizable {
+  /// Adopts a handle returned by the C API and releases it when this
+  /// object becomes unreachable.
+  Image.fromHandle(this.nativeHandle) {
+    _finalizer.attach(
+      this,
+      ffi.Pointer<ffi.Void>.fromAddress(nativeHandle),
+      detach: this,
+    );
+  }
+
+  /// Wraps a handle owned elsewhere; releasing it stays the owner's job.
+  Image.borrowed(this.nativeHandle);
+
+  /// The underlying handle-table entry.
+  final int nativeHandle;
+
+  static final _finalizer = ffi.NativeFinalizer(
+    ffi.Native.addressOf<
+      ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>
+    >(c.native_handle_finalize),
+  );
+
+  /// Releases the handle now instead of at collection.
+  void dispose() {
+    _finalizer.detach(this);
+    c.native_image_free(nativeHandle);
+  }
+
+  static Image? fromFile(String filePath) {
+    final filePathNative = filePath.toNativeUtf8().cast<ffi.Char>();
+    final handle = c.native_image_from_file(filePathNative);
+    pkg_ffi.calloc.free(filePathNative);
+    if (handle == 0) return null;
+    return Image.fromHandle(handle);
+  }
+
+  static Image? fromBase64(String base64Data) {
+    final base64DataNative = base64Data.toNativeUtf8().cast<ffi.Char>();
+    final handle = c.native_image_from_base64(base64DataNative);
+    pkg_ffi.calloc.free(base64DataNative);
+    if (handle == 0) return null;
+    return Image.fromHandle(handle);
+  }
+
+  Size get size {
+    final raw = c.native_image_get_size(nativeHandle);
+    return Size.fromNative(raw);
+  }
+
+  String? get format {
+    final resultPointer = c.native_image_get_format(nativeHandle);
+    if (resultPointer == ffi.nullptr) return null;
+    final result = resultPointer.cast<pkg_ffi.Utf8>().toDartString();
+    c.free_c_str(resultPointer);
+    return result;
+  }
+
+  String? toBase64() {
+    final resultPointer = c.native_image_to_base64(nativeHandle);
+    if (resultPointer == ffi.nullptr) return null;
+    final result = resultPointer.cast<pkg_ffi.Utf8>().toDartString();
+    c.free_c_str(resultPointer);
+    return result;
+  }
+
+  bool saveToFile(String filePath) {
+    final filePathNative = filePath.toNativeUtf8().cast<ffi.Char>();
+    final result = c.native_image_save_to_file(nativeHandle, filePathNative);
+    pkg_ffi.calloc.free(filePathNative);
+    return result;
+  }
+
+  /// Platform-specific native object behind this handle.
+  ffi.Pointer<ffi.Void> get nativeObject =>
+      c.native_image_get_native_object(nativeHandle);
+}

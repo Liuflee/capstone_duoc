@@ -1,6 +1,6 @@
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart'; // Muestra el cliente local asociado a la pendiente.
-import 'package:flutter/material.dart'; // Presenta las acciones de la venta pendiente.
+import 'package:material_ui/material_ui.dart'; // Presenta las acciones de la venta pendiente.
 import 'package:frenos_cerna/features/ventas/data/ventas_pendientes_repository.dart'; // Recupera y confirma los borradores locales.
 import 'package:frenos_cerna/features/ventas/presentation/pagina_crear_ventas.dart'; // Reutiliza el formulario para editar la venta.
 import 'package:frenos_cerna/features/ventas/presentation/pagina_detalle_venta.dart'; // Conserva el mismo diseño del historial.
@@ -83,9 +83,11 @@ class _PaginaDetalleVentaPendienteState
   } // Finaliza la actualización.
 
   Future<void> _recuperar() async {
-    final confirmado = await showDialog<bool>(
+    final confirmado = await mostrarDialogoConTema<bool>(
       context: context,
       builder: (dialogo) => AlertDialog(
+        actionsOverflowButtonSpacing: 12,
+        buttonPadding: const EdgeInsets.symmetric(horizontal: 6),
         title: const Text(
           'REVISAR VENTA',
         ), // Exige verificar el resultado antes de reintentar.
@@ -150,9 +152,11 @@ class _PaginaDetalleVentaPendienteState
     if (_ocupado || _requiereRevision) {
       return; // Impide confirmaciones repetidas o inseguras.
     }
-    final confirmar = await showDialog<bool>(
+    final confirmar = await mostrarDialogoConTema<bool>(
       context: context,
       builder: (dialogo) => AlertDialog(
+        actionsOverflowButtonSpacing: 12,
+        buttonPadding: const EdgeInsets.symmetric(horizontal: 6),
         title: const Text('CONFIRMAR PAGO'),
         content: const Text(
           '¿Confirmas que se recibió el pago? La venta se guardará en el historial y se descontará el stock. El servidor comprobará precios y disponibilidad actuales.',

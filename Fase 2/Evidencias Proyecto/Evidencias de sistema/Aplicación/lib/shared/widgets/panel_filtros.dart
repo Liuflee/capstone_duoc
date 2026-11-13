@@ -1,6 +1,6 @@
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 // Importa los controles visuales de Flutter.
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 // Comparte el espacio reservado al desplazamiento para alinear controles y tabla.
 const double margenDesplazamientoTabla = 14;
@@ -372,7 +372,7 @@ class _PanelFiltrosState<T> extends State<PanelFiltros<T>> {
                       fontFamily: 'Courier',
                       fontSize: 13,
                       color: PaletaTaller.de(context)
-                          .adaptar(Colors.grey[700]!),
+                          .adaptar(Colors.grey[700]!, tinta: true),
                     ),
                   ),
 

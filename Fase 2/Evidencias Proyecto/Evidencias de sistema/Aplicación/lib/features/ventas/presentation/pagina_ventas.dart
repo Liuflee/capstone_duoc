@@ -6,7 +6,7 @@ import 'package:frenos_cerna/shared/widgets/panel_filtros.dart'; // Filtra las v
 import 'package:frenos_cerna/shared/widgets/barra_superior.dart';
 // Importa las cartas que conservan las acciones de la página.
 import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:frenos_cerna/features/ventas/data/ventas_repository.dart';
 import 'package:frenos_cerna/features/ventas/presentation/pagina_detalle_venta.dart';
 import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
@@ -260,6 +260,12 @@ class _PaginaVentasState extends State<PaginaVentas> {
 
     // La vista de un cliente conserva solamente sus propias ventas.
     final bool soloCliente = widget.clienteId != null;
+    final plataforma = Theme.of(context).platform;
+    final esCelular =
+        plataforma == TargetPlatform.android ||
+        plataforma == TargetPlatform.iOS;
+    final bool ventasDelDia =
+        esCelular && !widget.mostrarHistorial && !soloCliente;
     final List<Map<String, dynamic>> filasVisibles = soloCliente
         ? filasVentas
               .where((fila) => fila['rut'].toString() == widget.clienteId)
@@ -447,7 +453,9 @@ class _PaginaVentasState extends State<PaginaVentas> {
                             // Encabezados visibles de la tabla.
                             // La vista por cliente omite la columna de cliente
                             // porque todas sus filas muestran el mismo nombre.
-                            nombresColumnas: soloCliente
+                            nombresColumnas: ventasDelDia
+                                ? const ["CLIENTE", "VEHÍCULO", "VER"]
+                                : soloCliente
                                 ? const ['VEHÍCULO', 'PRODUCTOS', 'VER']
                                 : const [
                                     'CLIENTE',
@@ -457,7 +465,9 @@ class _PaginaVentasState extends State<PaginaVentas> {
                                   ],
 
                             // Campos de cada columna (vacío si la celda es personalizada).
-                            camposColumnas: soloCliente
+                            camposColumnas: ventasDelDia
+                                ? const ["cliente", "vehiculo", ""]
+                                : soloCliente
                                 ? const ['vehiculo', 'productos', '']
                                 : const [
                                     'cliente',
@@ -467,12 +477,16 @@ class _PaginaVentasState extends State<PaginaVentas> {
                                   ],
 
                             // Ancho proporcional de cada columna.
-                            anchosColumnas: soloCliente
+                            anchosColumnas: ventasDelDia
+                                ? const [220, 180, 88]
+                                : soloCliente
                                 ? const [250, 450, 100]
                                 : const [200, 200, 400, 100],
 
                             // Colores de cabecera alternando entre los dos rojos.
-                            coloresEncabezados: soloCliente
+                            coloresEncabezados: ventasDelDia
+                                ? const [_rojoClaro, _rojoOscuro, _rojoClaro]
+                                : soloCliente
                                 ? const [_rojoClaro, _rojoOscuro, _rojoClaro]
                                 : const [
                                     _rojoClaro,
@@ -486,7 +500,13 @@ class _PaginaVentasState extends State<PaginaVentas> {
 
                             filas: filtrados, // Muestra las ventas que pasan los filtros.
 
-                            celdasPersonalizadas: soloCliente
+                            celdasPersonalizadas: ventasDelDia
+                                ? {
+                                    0: _celdaCliente,
+                                    1: _celdaVehiculo,
+                                    2: _celdaVer,
+                                  }
+                                : soloCliente
                                 // Sin columna de cliente, las celdas bajan un lugar.
                                 ? {
                                     0: _celdaVehiculo,

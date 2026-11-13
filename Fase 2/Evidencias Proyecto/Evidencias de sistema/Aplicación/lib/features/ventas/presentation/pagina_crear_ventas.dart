@@ -15,7 +15,7 @@ import 'package:frenos_cerna/shared/widgets/tabla_datos.dart';
 import 'package:frenos_cerna/shared/widgets/formulario_datos.dart';
 // Importa las cartas que conservan las acciones de la página.
 import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:frenos_cerna/core/data/supabase_database.dart';
 
 // ============================================================================
@@ -459,7 +459,7 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
 
   // Abre el inventario sobre la página sin desplazar los datos de la venta.
   Future<void> _abrirSeleccionProductos() async {
-    await showDialog<void>(
+    await mostrarDialogoConTema<void>(
       context: context,
       builder: (dialogo) => StatefulBuilder(
         builder: (context, actualizarMenu) => Dialog(

@@ -1,0 +1,1133 @@
+// AUTO-GENERATED. DO NOT EDIT.
+// Any manual changes WILL BE LOST when this file is regenerated.
+
+// ignore_for_file: unused_import, unnecessary_import
+
+import 'dart:async';
+import 'dart:ffi' as ffi;
+
+import 'package:cnativeapi/cnativeapi.dart' as c;
+import 'package:ffi/ffi.dart' as pkg_ffi;
+
+import 'foundation/color.dart';
+import 'foundation/event_request.dart';
+import 'foundation/geometry.dart';
+import 'view.dart';
+import 'window_shadow.dart';
+import 'window_shape.dart';
+
+import 'support.dart';
+
+import 'callbacks.dart';
+
+typedef WindowId = int;
+
+typedef WindowNumber = int;
+
+enum TitleBarStyle {
+  normal(0),
+  hidden(1);
+
+  const TitleBarStyle(this.value);
+  final int value;
+
+  static TitleBarStyle fromValue(int value) => switch (value) {
+    0 => TitleBarStyle.normal,
+    1 => TitleBarStyle.hidden,
+    _ => TitleBarStyle.normal,
+  };
+
+  c.native_title_bar_style_t get raw =>
+      c.native_title_bar_style_t.fromValue(value);
+}
+
+enum WindowDockSide {
+  none(0),
+  left(1),
+  right(2);
+
+  const WindowDockSide(this.value);
+  final int value;
+
+  static WindowDockSide fromValue(int value) => switch (value) {
+    0 => WindowDockSide.none,
+    1 => WindowDockSide.left,
+    2 => WindowDockSide.right,
+    _ => WindowDockSide.none,
+  };
+
+  c.native_window_dock_side_t get raw =>
+      c.native_window_dock_side_t.fromValue(value);
+}
+
+enum WindowCornerPreference {
+  default_(0),
+  doNotRound(1),
+  round(2),
+  roundSmall(3);
+
+  const WindowCornerPreference(this.value);
+  final int value;
+
+  static WindowCornerPreference fromValue(int value) => switch (value) {
+    0 => WindowCornerPreference.default_,
+    1 => WindowCornerPreference.doNotRound,
+    2 => WindowCornerPreference.round,
+    3 => WindowCornerPreference.roundSmall,
+    _ => WindowCornerPreference.default_,
+  };
+
+  c.native_window_corner_preference_t get raw =>
+      c.native_window_corner_preference_t.fromValue(value);
+}
+
+enum WindowProperty {
+  title(0),
+  resizable(1),
+  movable(2),
+  minimizable(3),
+  maximizable(4),
+  fullScreenable(5),
+  closable(6),
+  windowControlButtonsVisible(7),
+  alwaysOnTop(8),
+  alwaysOnBottom(9),
+  titleBarStyle(10),
+  frameless(11);
+
+  const WindowProperty(this.value);
+  final int value;
+
+  static WindowProperty fromValue(int value) => switch (value) {
+    0 => WindowProperty.title,
+    1 => WindowProperty.resizable,
+    2 => WindowProperty.movable,
+    3 => WindowProperty.minimizable,
+    4 => WindowProperty.maximizable,
+    5 => WindowProperty.fullScreenable,
+    6 => WindowProperty.closable,
+    7 => WindowProperty.windowControlButtonsVisible,
+    8 => WindowProperty.alwaysOnTop,
+    9 => WindowProperty.alwaysOnBottom,
+    10 => WindowProperty.titleBarStyle,
+    11 => WindowProperty.frameless,
+    _ => WindowProperty.title,
+  };
+
+  c.native_window_property_t get raw =>
+      c.native_window_property_t.fromValue(value);
+}
+
+enum WindowOcclusionState {
+  unknown(0),
+  visible(1),
+  occluded(2);
+
+  const WindowOcclusionState(this.value);
+  final int value;
+
+  static WindowOcclusionState fromValue(int value) => switch (value) {
+    0 => WindowOcclusionState.unknown,
+    1 => WindowOcclusionState.visible,
+    2 => WindowOcclusionState.occluded,
+    _ => WindowOcclusionState.unknown,
+  };
+
+  c.native_window_occlusion_state_t get raw =>
+      c.native_window_occlusion_state_t.fromValue(value);
+}
+
+enum VisualEffect {
+  none(0),
+  blur(1),
+  acrylic(2),
+  mica(3),
+  micaAlt(4),
+  hud(5),
+  popover(6),
+  menu(7);
+
+  const VisualEffect(this.value);
+  final int value;
+
+  static VisualEffect fromValue(int value) => switch (value) {
+    0 => VisualEffect.none,
+    1 => VisualEffect.blur,
+    2 => VisualEffect.acrylic,
+    3 => VisualEffect.mica,
+    4 => VisualEffect.micaAlt,
+    5 => VisualEffect.hud,
+    6 => VisualEffect.popover,
+    7 => VisualEffect.menu,
+    _ => VisualEffect.none,
+  };
+
+  c.native_visual_effect_t get raw => c.native_visual_effect_t.fromValue(value);
+}
+
+enum ResizeEdge {
+  top(0),
+  left(1),
+  right(2),
+  bottom(3),
+  topLeft(4),
+  topRight(5),
+  bottomLeft(6),
+  bottomRight(7);
+
+  const ResizeEdge(this.value);
+  final int value;
+
+  static ResizeEdge fromValue(int value) => switch (value) {
+    0 => ResizeEdge.top,
+    1 => ResizeEdge.left,
+    2 => ResizeEdge.right,
+    3 => ResizeEdge.bottom,
+    4 => ResizeEdge.topLeft,
+    5 => ResizeEdge.topRight,
+    6 => ResizeEdge.bottomLeft,
+    7 => ResizeEdge.bottomRight,
+    _ => ResizeEdge.top,
+  };
+
+  c.native_resize_edge_t get raw => c.native_resize_edge_t.fromValue(value);
+}
+
+/// One `WindowEvent`, in its concrete form.
+sealed class WindowEvent {
+  const WindowEvent();
+
+  WindowId get windowId;
+
+  /// Reads the event out of its C form. Returns null for a variant this
+  /// binding does not know about.
+  static WindowEvent? fromNative(c.native_window_event_t raw) {
+    if (raw.typeAsInt ==
+        c.native_window_event_type_t.NATIVE_WINDOW_EVENT_TYPE_FOCUSED.value) {
+      return WindowFocusedEvent(windowId: raw.window_id);
+    }
+    if (raw.typeAsInt ==
+        c.native_window_event_type_t.NATIVE_WINDOW_EVENT_TYPE_BLURRED.value) {
+      return WindowBlurredEvent(windowId: raw.window_id);
+    }
+    if (raw.typeAsInt ==
+        c.native_window_event_type_t.NATIVE_WINDOW_EVENT_TYPE_MINIMIZED.value) {
+      return WindowMinimizedEvent(windowId: raw.window_id);
+    }
+    if (raw.typeAsInt ==
+        c.native_window_event_type_t.NATIVE_WINDOW_EVENT_TYPE_MAXIMIZED.value) {
+      return WindowMaximizedEvent(windowId: raw.window_id);
+    }
+    if (raw.typeAsInt ==
+        c.native_window_event_type_t.NATIVE_WINDOW_EVENT_TYPE_RESTORED.value) {
+      return WindowRestoredEvent(windowId: raw.window_id);
+    }
+    if (raw.typeAsInt ==
+        c.native_window_event_type_t.NATIVE_WINDOW_EVENT_TYPE_MOVED.value) {
+      return WindowMovedEvent(
+        windowId: raw.window_id,
+        newPosition: Point.fromNative(raw.data.moved.new_position),
+      );
+    }
+    if (raw.typeAsInt ==
+        c.native_window_event_type_t.NATIVE_WINDOW_EVENT_TYPE_RESIZED.value) {
+      return WindowResizedEvent(
+        windowId: raw.window_id,
+        newSize: Size.fromNative(raw.data.resized.new_size),
+      );
+    }
+    if (raw.typeAsInt ==
+        c.native_window_event_type_t.NATIVE_WINDOW_EVENT_TYPE_CREATED.value) {
+      return WindowCreatedEvent(windowId: raw.window_id);
+    }
+    if (raw.typeAsInt ==
+        c.native_window_event_type_t.NATIVE_WINDOW_EVENT_TYPE_CLOSED.value) {
+      return WindowClosedEvent(windowId: raw.window_id);
+    }
+    if (raw.typeAsInt ==
+        c
+            .native_window_event_type_t
+            .NATIVE_WINDOW_EVENT_TYPE_ENTERED_FULL_SCREEN
+            .value) {
+      return WindowEnteredFullScreenEvent(windowId: raw.window_id);
+    }
+    if (raw.typeAsInt ==
+        c
+            .native_window_event_type_t
+            .NATIVE_WINDOW_EVENT_TYPE_EXITED_FULL_SCREEN
+            .value) {
+      return WindowExitedFullScreenEvent(windowId: raw.window_id);
+    }
+    if (raw.typeAsInt ==
+        c
+            .native_window_event_type_t
+            .NATIVE_WINDOW_EVENT_TYPE_CLOSE_REQUESTED
+            .value) {
+      return WindowCloseRequestedEvent(
+        windowId: raw.window_id,
+        request: EventRequest.borrowed(raw.data.close_requested.request),
+      );
+    }
+    if (raw.typeAsInt ==
+        c
+            .native_window_event_type_t
+            .NATIVE_WINDOW_EVENT_TYPE_PROPERTY_CHANGED
+            .value) {
+      return WindowPropertyChangedEvent(
+        windowId: raw.window_id,
+        property: WindowProperty.fromValue(
+          raw.data.property_changed.propertyAsInt,
+        ),
+      );
+    }
+    if (raw.typeAsInt ==
+        c
+            .native_window_event_type_t
+            .NATIVE_WINDOW_EVENT_TYPE_OCCLUSION_CHANGED
+            .value) {
+      return WindowOcclusionChangedEvent(
+        windowId: raw.window_id,
+        occlusionState: WindowOcclusionState.fromValue(
+          raw.data.occlusion_changed.occlusion_stateAsInt,
+        ),
+      );
+    }
+    if (raw.typeAsInt ==
+        c.native_window_event_type_t.NATIVE_WINDOW_EVENT_TYPE_DOCKED.value) {
+      return WindowDockedEvent(
+        windowId: raw.window_id,
+        side: WindowDockSide.fromValue(raw.data.docked.sideAsInt),
+      );
+    }
+    if (raw.typeAsInt ==
+        c.native_window_event_type_t.NATIVE_WINDOW_EVENT_TYPE_UNDOCKED.value) {
+      return WindowUndockedEvent(windowId: raw.window_id);
+    }
+    return null;
+  }
+}
+
+final class WindowFocusedEvent extends WindowEvent {
+  const WindowFocusedEvent({required this.windowId});
+
+  @override
+  final WindowId windowId;
+}
+
+final class WindowBlurredEvent extends WindowEvent {
+  const WindowBlurredEvent({required this.windowId});
+
+  @override
+  final WindowId windowId;
+}
+
+final class WindowMinimizedEvent extends WindowEvent {
+  const WindowMinimizedEvent({required this.windowId});
+
+  @override
+  final WindowId windowId;
+}
+
+final class WindowMaximizedEvent extends WindowEvent {
+  const WindowMaximizedEvent({required this.windowId});
+
+  @override
+  final WindowId windowId;
+}
+
+final class WindowRestoredEvent extends WindowEvent {
+  const WindowRestoredEvent({required this.windowId});
+
+  @override
+  final WindowId windowId;
+}
+
+final class WindowMovedEvent extends WindowEvent {
+  const WindowMovedEvent({required this.windowId, required this.newPosition});
+
+  @override
+  final WindowId windowId;
+  final Point newPosition;
+}
+
+final class WindowResizedEvent extends WindowEvent {
+  const WindowResizedEvent({required this.windowId, required this.newSize});
+
+  @override
+  final WindowId windowId;
+  final Size newSize;
+}
+
+final class WindowCreatedEvent extends WindowEvent {
+  const WindowCreatedEvent({required this.windowId});
+
+  @override
+  final WindowId windowId;
+}
+
+final class WindowClosedEvent extends WindowEvent {
+  const WindowClosedEvent({required this.windowId});
+
+  @override
+  final WindowId windowId;
+}
+
+final class WindowEnteredFullScreenEvent extends WindowEvent {
+  const WindowEnteredFullScreenEvent({required this.windowId});
+
+  @override
+  final WindowId windowId;
+}
+
+final class WindowExitedFullScreenEvent extends WindowEvent {
+  const WindowExitedFullScreenEvent({required this.windowId});
+
+  @override
+  final WindowId windowId;
+}
+
+final class WindowCloseRequestedEvent extends WindowEvent {
+  const WindowCloseRequestedEvent({
+    required this.windowId,
+    required this.request,
+  });
+
+  @override
+  final WindowId windowId;
+  final EventRequest request;
+}
+
+final class WindowPropertyChangedEvent extends WindowEvent {
+  const WindowPropertyChangedEvent({
+    required this.windowId,
+    required this.property,
+  });
+
+  @override
+  final WindowId windowId;
+  final WindowProperty property;
+}
+
+final class WindowOcclusionChangedEvent extends WindowEvent {
+  const WindowOcclusionChangedEvent({
+    required this.windowId,
+    required this.occlusionState,
+  });
+
+  @override
+  final WindowId windowId;
+  final WindowOcclusionState occlusionState;
+}
+
+final class WindowDockedEvent extends WindowEvent {
+  const WindowDockedEvent({required this.windowId, required this.side});
+
+  @override
+  final WindowId windowId;
+  final WindowDockSide side;
+}
+
+final class WindowUndockedEvent extends WindowEvent {
+  const WindowUndockedEvent({required this.windowId});
+
+  @override
+  final WindowId windowId;
+}
+
+class Window implements ffi.Finalizable {
+  /// Adopts a handle returned by the C API and releases it when this
+  /// object becomes unreachable.
+  Window.fromHandle(this.nativeHandle) {
+    _finalizer.attach(
+      this,
+      ffi.Pointer<ffi.Void>.fromAddress(nativeHandle),
+      detach: this,
+    );
+  }
+
+  /// Wraps a handle owned elsewhere; releasing it stays the owner's job.
+  Window.borrowed(this.nativeHandle);
+
+  /// The underlying handle-table entry.
+  final int nativeHandle;
+
+  static final _finalizer = ffi.NativeFinalizer(
+    ffi.Native.addressOf<
+      ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>
+    >(c.native_handle_finalize),
+  );
+
+  /// Releases the handle now instead of at collection.
+  void dispose() {
+    _finalizer.detach(this);
+    c.native_window_free(nativeHandle);
+  }
+
+  /// Creates a new `Window`; returns null if the native side failed.
+  static Window? create() {
+    final handle = c.native_window_create();
+    if (handle == 0) return null;
+    return Window.fromHandle(handle);
+  }
+
+  /// Creates a new `Window`; returns null if the native side failed.
+  static Window? createWithNativeWindow(ffi.Pointer<ffi.Void> nativeWindow) {
+    final handle = c.native_window_create_with_native_window(nativeWindow);
+    if (handle == 0) return null;
+    return Window.fromHandle(handle);
+  }
+
+  static bool isCloseSupported() {
+    return c.native_window_is_close_supported();
+  }
+
+  bool close() {
+    return c.native_window_close(nativeHandle);
+  }
+
+  WindowId get id {
+    return c.native_window_get_id(nativeHandle);
+  }
+
+  WindowNumber get nativeNumber {
+    return c.native_window_get_native_number(nativeHandle);
+  }
+
+  View? get contentView {
+    final handle = c.native_window_get_content_view(nativeHandle);
+    if (handle == 0) return null;
+    return View.fromHandle(handle);
+  }
+
+  void focus() {
+    c.native_window_focus(nativeHandle);
+  }
+
+  void blur() {
+    c.native_window_blur(nativeHandle);
+  }
+
+  bool get isFocused {
+    return c.native_window_is_focused(nativeHandle);
+  }
+
+  void show() {
+    c.native_window_show(nativeHandle);
+  }
+
+  void showInactive() {
+    c.native_window_show_inactive(nativeHandle);
+  }
+
+  void hide() {
+    c.native_window_hide(nativeHandle);
+  }
+
+  bool get isVisible {
+    return c.native_window_is_visible(nativeHandle);
+  }
+
+  WindowOcclusionState get occlusionState {
+    final raw = c.native_window_get_occlusion_state(nativeHandle);
+    return WindowOcclusionState.fromValue(raw.value);
+  }
+
+  static bool isOcclusionStateSupported() {
+    return c.native_window_is_occlusion_state_supported();
+  }
+
+  void maximize() {
+    c.native_window_maximize(nativeHandle);
+  }
+
+  bool setMaximizedVertically(bool isMaximizedVertically) {
+    return c.native_window_set_maximized_vertically(
+      nativeHandle,
+      isMaximizedVertically,
+    );
+  }
+
+  bool get isMaximizedVertically {
+    return c.native_window_is_maximized_vertically(nativeHandle);
+  }
+
+  static bool isVerticalMaximizeSupported() {
+    return c.native_window_is_vertical_maximize_supported();
+  }
+
+  bool dock(WindowDockSide side, double width) {
+    return c.native_window_dock(nativeHandle, side.raw, width);
+  }
+
+  bool undock() {
+    return c.native_window_undock(nativeHandle);
+  }
+
+  WindowDockSide get dockSide {
+    final raw = c.native_window_get_dock_side(nativeHandle);
+    return WindowDockSide.fromValue(raw.value);
+  }
+
+  static bool isDockingSupported() {
+    return c.native_window_is_docking_supported();
+  }
+
+  void unmaximize() {
+    c.native_window_unmaximize(nativeHandle);
+  }
+
+  bool get isMaximized {
+    return c.native_window_is_maximized(nativeHandle);
+  }
+
+  void minimize() {
+    c.native_window_minimize(nativeHandle);
+  }
+
+  void restore() {
+    c.native_window_restore(nativeHandle);
+  }
+
+  bool get isMinimized {
+    return c.native_window_is_minimized(nativeHandle);
+  }
+
+  set isFullScreen(bool value) {
+    c.native_window_set_full_screen(nativeHandle, value);
+  }
+
+  bool get isFullScreen {
+    return c.native_window_is_full_screen(nativeHandle);
+  }
+
+  set bounds(Rectangle value) {
+    final valuePointer = value.allocNative();
+    c.native_window_set_bounds(nativeHandle, valuePointer.ref);
+    Rectangle.freeNative(valuePointer);
+  }
+
+  bool animateBounds(Rectangle bounds) {
+    final boundsPointer = bounds.allocNative();
+    final result = c.native_window_animate_bounds(
+      nativeHandle,
+      boundsPointer.ref,
+    );
+    Rectangle.freeNative(boundsPointer);
+    return result;
+  }
+
+  static bool isBoundsAnimationSupported() {
+    return c.native_window_is_bounds_animation_supported();
+  }
+
+  Rectangle get bounds {
+    final raw = c.native_window_get_bounds(nativeHandle);
+    return Rectangle.fromNative(raw);
+  }
+
+  set contentBounds(Rectangle value) {
+    final valuePointer = value.allocNative();
+    c.native_window_set_content_bounds(nativeHandle, valuePointer.ref);
+    Rectangle.freeNative(valuePointer);
+  }
+
+  Rectangle get contentBounds {
+    final raw = c.native_window_get_content_bounds(nativeHandle);
+    return Rectangle.fromNative(raw);
+  }
+
+  void setSize(Size size, bool animate) {
+    final sizePointer = size.allocNative();
+    c.native_window_set_size(nativeHandle, sizePointer.ref, animate);
+    Size.freeNative(sizePointer);
+  }
+
+  Size get size {
+    final raw = c.native_window_get_size(nativeHandle);
+    return Size.fromNative(raw);
+  }
+
+  set contentSize(Size value) {
+    final valuePointer = value.allocNative();
+    c.native_window_set_content_size(nativeHandle, valuePointer.ref);
+    Size.freeNative(valuePointer);
+  }
+
+  Size get contentSize {
+    final raw = c.native_window_get_content_size(nativeHandle);
+    return Size.fromNative(raw);
+  }
+
+  set minimumSize(Size value) {
+    final valuePointer = value.allocNative();
+    c.native_window_set_minimum_size(nativeHandle, valuePointer.ref);
+    Size.freeNative(valuePointer);
+  }
+
+  Size get minimumSize {
+    final raw = c.native_window_get_minimum_size(nativeHandle);
+    return Size.fromNative(raw);
+  }
+
+  set maximumSize(Size value) {
+    final valuePointer = value.allocNative();
+    c.native_window_set_maximum_size(nativeHandle, valuePointer.ref);
+    Size.freeNative(valuePointer);
+  }
+
+  Size get maximumSize {
+    final raw = c.native_window_get_maximum_size(nativeHandle);
+    return Size.fromNative(raw);
+  }
+
+  set aspectRatio(double value) {
+    c.native_window_set_aspect_ratio(nativeHandle, value);
+  }
+
+  double get aspectRatio {
+    return c.native_window_get_aspect_ratio(nativeHandle);
+  }
+
+  set isResizable(bool value) {
+    c.native_window_set_resizable(nativeHandle, value);
+  }
+
+  bool get isResizable {
+    return c.native_window_is_resizable(nativeHandle);
+  }
+
+  set isMovable(bool value) {
+    c.native_window_set_movable(nativeHandle, value);
+  }
+
+  bool get isMovable {
+    return c.native_window_is_movable(nativeHandle);
+  }
+
+  set isMinimizable(bool value) {
+    c.native_window_set_minimizable(nativeHandle, value);
+  }
+
+  bool get isMinimizable {
+    return c.native_window_is_minimizable(nativeHandle);
+  }
+
+  set isMaximizable(bool value) {
+    c.native_window_set_maximizable(nativeHandle, value);
+  }
+
+  bool get isMaximizable {
+    return c.native_window_is_maximizable(nativeHandle);
+  }
+
+  set isFullScreenable(bool value) {
+    c.native_window_set_full_screenable(nativeHandle, value);
+  }
+
+  bool get isFullScreenable {
+    return c.native_window_is_full_screenable(nativeHandle);
+  }
+
+  set isClosable(bool value) {
+    c.native_window_set_closable(nativeHandle, value);
+  }
+
+  bool get isClosable {
+    return c.native_window_is_closable(nativeHandle);
+  }
+
+  set isWindowControlButtonsVisible(bool value) {
+    c.native_window_set_window_control_buttons_visible(nativeHandle, value);
+  }
+
+  bool get isWindowControlButtonsVisible {
+    return c.native_window_is_window_control_buttons_visible(nativeHandle);
+  }
+
+  set isAlwaysOnTop(bool value) {
+    c.native_window_set_always_on_top(nativeHandle, value);
+  }
+
+  bool get isAlwaysOnTop {
+    return c.native_window_is_always_on_top(nativeHandle);
+  }
+
+  set isAlwaysOnBottom(bool value) {
+    c.native_window_set_always_on_bottom(nativeHandle, value);
+  }
+
+  bool get isAlwaysOnBottom {
+    return c.native_window_is_always_on_bottom(nativeHandle);
+  }
+
+  bool setParentWindow(Window? parent) {
+    return c.native_window_set_parent_window(
+      nativeHandle,
+      parent?.nativeHandle ?? 0,
+    );
+  }
+
+  Window? get parentWindow {
+    final handle = c.native_window_get_parent_window(nativeHandle);
+    if (handle == 0) return null;
+    return Window.fromHandle(handle);
+  }
+
+  set isNonActivating(bool value) {
+    c.native_window_set_non_activating(nativeHandle, value);
+  }
+
+  bool get isNonActivating {
+    return c.native_window_is_non_activating(nativeHandle);
+  }
+
+  set position(Point value) {
+    final valuePointer = value.allocNative();
+    c.native_window_set_position(nativeHandle, valuePointer.ref);
+    Point.freeNative(valuePointer);
+  }
+
+  Point get position {
+    final raw = c.native_window_get_position(nativeHandle);
+    return Point.fromNative(raw);
+  }
+
+  void center() {
+    c.native_window_center(nativeHandle);
+  }
+
+  set title(String value) {
+    final valueNative = value.toNativeUtf8().cast<ffi.Char>();
+    c.native_window_set_title(nativeHandle, valueNative);
+    pkg_ffi.calloc.free(valueNative);
+  }
+
+  String? get title {
+    final resultPointer = c.native_window_get_title(nativeHandle);
+    if (resultPointer == ffi.nullptr) return null;
+    final result = resultPointer.cast<pkg_ffi.Utf8>().toDartString();
+    c.free_c_str(resultPointer);
+    return result;
+  }
+
+  bool setTitleBarColors(Color background, Color foreground) {
+    final backgroundPointer = background.allocNative();
+    final foregroundPointer = foreground.allocNative();
+    final result = c.native_window_set_title_bar_colors(
+      nativeHandle,
+      backgroundPointer.ref,
+      foregroundPointer.ref,
+    );
+    Color.freeNative(backgroundPointer);
+    Color.freeNative(foregroundPointer);
+    return result;
+  }
+
+  bool resetTitleBarColors() {
+    return c.native_window_reset_title_bar_colors(nativeHandle);
+  }
+
+  bool setFrameless(bool isFrameless) {
+    return c.native_window_set_frameless(nativeHandle, isFrameless);
+  }
+
+  bool get isFrameless {
+    return c.native_window_is_frameless(nativeHandle);
+  }
+
+  set titleBarStyle(TitleBarStyle value) {
+    c.native_window_set_title_bar_style(nativeHandle, value.raw);
+  }
+
+  TitleBarStyle get titleBarStyle {
+    final raw = c.native_window_get_title_bar_style(nativeHandle);
+    return TitleBarStyle.fromValue(raw.value);
+  }
+
+  bool setCornerPreference(WindowCornerPreference preference) {
+    return c.native_window_set_corner_preference(nativeHandle, preference.raw);
+  }
+
+  WindowCornerPreference get cornerPreference {
+    final raw = c.native_window_get_corner_preference(nativeHandle);
+    return WindowCornerPreference.fromValue(raw.value);
+  }
+
+  static bool isCornerPreferenceSupported() {
+    return c.native_window_is_corner_preference_supported();
+  }
+
+  bool setContentUnderTitleBar(bool isContentUnderTitleBar) {
+    return c.native_window_set_content_under_title_bar(
+      nativeHandle,
+      isContentUnderTitleBar,
+    );
+  }
+
+  bool get isContentUnderTitleBar {
+    return c.native_window_is_content_under_title_bar(nativeHandle);
+  }
+
+  static bool isContentUnderTitleBarSupported() {
+    return c.native_window_is_content_under_title_bar_supported();
+  }
+
+  bool setContentProtection(bool isContentProtected) {
+    return c.native_window_set_content_protection(
+      nativeHandle,
+      isContentProtected,
+    );
+  }
+
+  bool get isContentProtected {
+    return c.native_window_is_content_protected(nativeHandle);
+  }
+
+  static bool isContentProtectionSupported() {
+    return c.native_window_is_content_protection_supported();
+  }
+
+  set hasShadow(bool value) {
+    c.native_window_set_has_shadow(nativeHandle, value);
+  }
+
+  bool get hasShadow {
+    return c.native_window_has_shadow(nativeHandle);
+  }
+
+  bool setCustomShadow(WindowShadow? shadow) {
+    return c.native_window_set_custom_shadow(
+      nativeHandle,
+      shadow?.nativeHandle ?? 0,
+    );
+  }
+
+  WindowShadow? get customShadow {
+    final handle = c.native_window_get_custom_shadow(nativeHandle);
+    if (handle == 0) return null;
+    return WindowShadow.fromHandle(handle);
+  }
+
+  set opacity(double value) {
+    c.native_window_set_opacity(nativeHandle, value);
+  }
+
+  double get opacity {
+    return c.native_window_get_opacity(nativeHandle);
+  }
+
+  bool setVisualEffect(VisualEffect effect) {
+    return c.native_window_set_visual_effect(nativeHandle, effect.raw);
+  }
+
+  VisualEffect get visualEffect {
+    final raw = c.native_window_get_visual_effect(nativeHandle);
+    return VisualEffect.fromValue(raw.value);
+  }
+
+  static bool isVisualEffectSupported(VisualEffect effect) {
+    return c.native_window_is_visual_effect_supported(effect.raw);
+  }
+
+  bool setShape(WindowShape? shape) {
+    return c.native_window_set_shape(nativeHandle, shape?.nativeHandle ?? 0);
+  }
+
+  bool get isShaped {
+    return c.native_window_is_shaped(nativeHandle);
+  }
+
+  static bool isShapeSupported() {
+    return c.native_window_is_shape_supported();
+  }
+
+  bool setInputShape(WindowShape? shape) {
+    return c.native_window_set_input_shape(
+      nativeHandle,
+      shape?.nativeHandle ?? 0,
+    );
+  }
+
+  bool get isInputShaped {
+    return c.native_window_is_input_shaped(nativeHandle);
+  }
+
+  static bool isInputShapeSupported() {
+    return c.native_window_is_input_shape_supported();
+  }
+
+  set backgroundColor(Color value) {
+    final valuePointer = value.allocNative();
+    c.native_window_set_background_color(nativeHandle, valuePointer.ref);
+    Color.freeNative(valuePointer);
+  }
+
+  Color get backgroundColor {
+    final raw = c.native_window_get_background_color(nativeHandle);
+    return Color.fromNative(raw);
+  }
+
+  set isVisibleOnAllWorkspaces(bool value) {
+    c.native_window_set_visible_on_all_workspaces(nativeHandle, value);
+  }
+
+  bool get isVisibleOnAllWorkspaces {
+    return c.native_window_is_visible_on_all_workspaces(nativeHandle);
+  }
+
+  bool setVisibleOnFullScreen(bool isVisibleOnFullScreen) {
+    return c.native_window_set_visible_on_full_screen(
+      nativeHandle,
+      isVisibleOnFullScreen,
+    );
+  }
+
+  bool get isVisibleOnFullScreen {
+    return c.native_window_is_visible_on_full_screen(nativeHandle);
+  }
+
+  static bool isVisibleOnFullScreenSupported() {
+    return c.native_window_is_visible_on_full_screen_supported();
+  }
+
+  bool grabKeyboard() {
+    return c.native_window_grab_keyboard(nativeHandle);
+  }
+
+  bool ungrabKeyboard() {
+    return c.native_window_ungrab_keyboard(nativeHandle);
+  }
+
+  bool get isKeyboardGrabbed {
+    return c.native_window_is_keyboard_grabbed(nativeHandle);
+  }
+
+  static bool isKeyboardGrabSupported() {
+    return c.native_window_is_keyboard_grab_supported();
+  }
+
+  set isVisibleInTaskbar(bool value) {
+    c.native_window_set_visible_in_taskbar(nativeHandle, value);
+  }
+
+  bool get isVisibleInTaskbar {
+    return c.native_window_is_visible_in_taskbar(nativeHandle);
+  }
+
+  bool setIgnoreMouseEvents(bool isIgnoreMouseEvents, bool forward) {
+    return c.native_window_set_ignore_mouse_events(
+      nativeHandle,
+      isIgnoreMouseEvents,
+      forward,
+    );
+  }
+
+  bool get isIgnoreMouseEvents {
+    return c.native_window_is_ignore_mouse_events(nativeHandle);
+  }
+
+  bool get isMouseMoveForwardingEnabled {
+    return c.native_window_is_mouse_move_forwarding_enabled(nativeHandle);
+  }
+
+  static bool isMouseMoveForwardingSupported() {
+    return c.native_window_is_mouse_move_forwarding_supported();
+  }
+
+  set isFocusable(bool value) {
+    c.native_window_set_focusable(nativeHandle, value);
+  }
+
+  bool get isFocusable {
+    return c.native_window_is_focusable(nativeHandle);
+  }
+
+  bool showSystemMenu(Point position) {
+    final positionPointer = position.allocNative();
+    final result = c.native_window_show_system_menu(
+      nativeHandle,
+      positionPointer.ref,
+    );
+    Point.freeNative(positionPointer);
+    return result;
+  }
+
+  static bool isSystemMenuSupported() {
+    return c.native_window_is_system_menu_supported();
+  }
+
+  bool setMaximizeButtonBounds(Rectangle bounds) {
+    final boundsPointer = bounds.allocNative();
+    final result = c.native_window_set_maximize_button_bounds(
+      nativeHandle,
+      boundsPointer.ref,
+    );
+    Rectangle.freeNative(boundsPointer);
+    return result;
+  }
+
+  Rectangle get maximizeButtonBounds {
+    final raw = c.native_window_get_maximize_button_bounds(nativeHandle);
+    return Rectangle.fromNative(raw);
+  }
+
+  static bool isMaximizeButtonBoundsSupported() {
+    return c.native_window_is_maximize_button_bounds_supported();
+  }
+
+  bool performTitleBarDoubleClick() {
+    return c.native_window_perform_title_bar_double_click(nativeHandle);
+  }
+
+  void startDragging() {
+    c.native_window_start_dragging(nativeHandle);
+  }
+
+  void startResizing(ResizeEdge edge) {
+    c.native_window_start_resizing(nativeHandle, edge.raw);
+  }
+
+  /// Platform-specific native object behind this handle.
+  ffi.Pointer<ffi.Void> get nativeObject =>
+      c.native_window_get_native_object(nativeHandle);
+
+  /// Registers [callback] for every `WindowEvent` this `Window` emits.
+  ///
+  /// Delivered on the registering isolate, including events from native UI threads.
+  /// The callback may return a Future; borrowed handles stay valid until it completes.
+  /// Events queued before removal are skipped if their callback has not started.
+  ListenerId addListener(FutureOr<void> Function(WindowEvent) callback) {
+    final callable =
+        ffi.NativeCallable<
+          ffi.Void Function(
+            ffi.Pointer<c.native_window_event_t>,
+            ffi.Uint64,
+            ffi.Pointer<ffi.Void>,
+          )
+        >.listener((
+          ffi.Pointer<c.native_window_event_t> event,
+          int delivery,
+          ffi.Pointer<ffi.Void> _,
+        ) {
+          unawaited(
+            NativeCallbacks.deliverEvent(
+              delivery,
+              () => event == ffi.nullptr
+                  ? null
+                  : WindowEvent.fromNative(event.ref),
+              callback,
+            ),
+          );
+        });
+    return c.native_window_add_listener_async(
+      nativeHandle,
+      callable.nativeFunction,
+      NativeCallbacks.userData(callable),
+      NativeCallbacks.release,
+    );
+  }
+
+  /// Unregisters a listener. Returns false if unknown.
+  bool removeListener(ListenerId listenerId) =>
+      c.native_window_remove_listener(nativeHandle, listenerId);
+}

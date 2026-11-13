@@ -11,7 +11,7 @@ import 'package:frenos_cerna/shared/widgets/formulario_datos.dart';
 // Importa las cartas que conservan las acciones de la página.
 import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
 // Importaciones de Flutter y los componentes del proyecto
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:frenos_cerna/core/data/supabase_database.dart';
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart';
@@ -216,13 +216,13 @@ class _PaginaEditarClienteState extends State<PaginaEditarCliente> {
                   children: [
                     Expanded(flex: 7, child: formulario),
                     const SizedBox(width: 40),
-                    Expanded(flex: 3, child: _resumenCliente()),
+                    Expanded(flex: 3, child: _resumenCliente(context)),
                   ],
                 ) // Sitúa el resumen a la derecha como Figma.
               else ...[
                 formulario,
                 const SizedBox(height: 28),
-                _resumenCliente(),
+                _resumenCliente(context),
               ], // Apila los datos sin reducir acciones en Android.
               const SizedBox(height: 24), // Separa las acciones del historial.
               Align(
@@ -289,7 +289,7 @@ class _PaginaEditarClienteState extends State<PaginaEditarCliente> {
   ); // Finaliza el marco común.
 
   // Construye el resumen del cliente sin usar fotografías.
-  Widget _resumenCliente() => Column(
+  Widget _resumenCliente(BuildContext context) => Column(
     children: [
       CircleAvatar(
         radius: 60,

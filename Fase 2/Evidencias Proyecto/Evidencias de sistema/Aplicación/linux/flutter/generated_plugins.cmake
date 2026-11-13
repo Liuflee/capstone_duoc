@@ -6,6 +6,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   flutter_onnxruntime
   gtk
   record_linux
+  app_links_linux
   url_launcher_linux
 )
 

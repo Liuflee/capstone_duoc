@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum PaletaTaller {
@@ -107,14 +107,15 @@ enum PaletaTaller {
         color == fondo ||
         color == barra ||
         color == menu ||
-        color == tarjeta){
-      return color;}
+        color == tarjeta) {
+      return color;
+    }
     if (tinta ||
         color == Colors.black ||
         color == Colors.black54 ||
-        color == Colors.black45){
+        color == Colors.black45) {
       return texto;
-      }
+    }
     if (color == Colors.white) return fondo;
     if (color.r > color.g * 1.2 && color.r > color.b * 1.2) return acento;
     return tarjeta;
@@ -135,14 +136,38 @@ enum PaletaTaller {
       canvasColor: tarjeta,
       cardColor: tarjeta,
       dividerColor: borde,
+      hintColor: texto,
+      disabledColor: texto,
+      dropdownMenuTheme: DropdownMenuThemeData(
+        textStyle: TextStyle(color: texto),
+        menuStyle: MenuStyle(
+          backgroundColor: WidgetStatePropertyAll(tarjeta),
+          surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+        ),
+      ),
+      popupMenuTheme: PopupMenuThemeData(
+        color: tarjeta,
+        textStyle: TextStyle(color: texto),
+        surfaceTintColor: Colors.transparent,
+      ),
       iconTheme: IconThemeData(color: texto),
       textTheme: base.textTheme.apply(bodyColor: texto, displayColor: texto),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: tarjeta,
+        hintStyle: TextStyle(color: texto),
+        labelStyle: TextStyle(color: texto),
+        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: borde)),
+        disabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: borde),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: acento, width: 2),
+        ),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: tarjeta,
+        actionsPadding: const EdgeInsets.all(20),
         surfaceTintColor: Colors.transparent,
       ),
     );
@@ -199,3 +224,14 @@ class SelectorPaletas extends StatelessWidget {
     );
   }
 }
+
+// Aplica la paleta también cuando el diálogo se abre desde el State de la página.
+Future<T?> mostrarDialogoConTema<T>({
+  required BuildContext context,
+  required WidgetBuilder builder,
+  bool barrierDismissible = true,
+}) => showDialog<T>(
+  context: context,
+  barrierDismissible: barrierDismissible,
+  builder: (context) => PaginaTematica(builder: builder),
+);

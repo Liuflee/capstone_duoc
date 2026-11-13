@@ -1,6 +1,6 @@
 import 'package:frenos_cerna/main.dart'; // Comprueba el área segura aplicada a todas las rutas.
 import 'package:frenos_cerna/features/autenticacion/presentation/pagina_autenticacion.dart'; // Comprueba el regreso al login existente.
-import 'package:flutter/material.dart'; // Construye el marco compartido de las páginas.
+import 'package:material_ui/material_ui.dart'; // Construye el marco compartido de las páginas.
 import 'package:flutter_test/flutter_test.dart'; // Comprueba alineación, navegación y visibilidad.
 import 'package:frenos_cerna/shared/widgets/barra_superior.dart'; // Verifica la nueva barra común.
 import 'package:frenos_cerna/shared/widgets/menu_lateral.dart'; // Verifica el menú elevado y su cierre fijo.
@@ -282,8 +282,9 @@ void main() {
     (tester) async {
       // Comprueba posición y navegación recuperada.
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
+        MaterialApp(
+          theme: ThemeData(platform: TargetPlatform.windows),
+          home: const Scaffold(
             body: SizedBox(width: 180, child: MenuLateral(activo: 'Clientes')),
           ),
         ),

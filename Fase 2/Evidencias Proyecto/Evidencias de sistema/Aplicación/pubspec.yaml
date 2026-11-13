@@ -18,6 +18,8 @@ dependencies:
     sdk: flutter
   supabase_flutter: ^2.17.2
   shared_preferences: ^2.5.5 # Conserva las ventas pendientes en el dispositivo.
+  window_manager: ^0.6.0
+  material_ui: ^1.11.0
 
 dev_dependencies:
   integration_test:
@@ -31,3 +33,9 @@ flutter:
   assets:
     - assets/images/
     - assets/ia/
+
+dependency_overrides:
+  nativeapi:
+    path: third_party/nativeapi
+  cnativeapi:
+    path: third_party/cnativeapi

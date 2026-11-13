@@ -2,7 +2,7 @@ import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 
 import 'dart:math' as math;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:frenos_cerna/features/dashboard/data/dashboard_repository.dart';
 import 'package:frenos_cerna/features/inventario/pagina_inventario.dart';
 import 'package:frenos_cerna/features/inventario/pagina_edicion_producto.dart';

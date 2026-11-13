@@ -2,7 +2,7 @@ import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/features/clientes/pagina_crear_cliente.dart'; // Permite crear un cliente y devolverlo a la reserva.
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart'; // Conserva el cliente y su contacto.
 import 'package:frenos_cerna/features/clientes/presentation/selector_cliente.dart'; // Reutiliza la búsqueda por nombre o RUT.
-import 'package:flutter/material.dart'; // Construye las reservas y su diálogo.
+import 'package:material_ui/material_ui.dart'; // Construye las reservas y su diálogo.
 import 'package:frenos_cerna/features/notificaciones/data/reservas_repository.dart'; // Guarda los estados en Supabase.
 import 'package:frenos_cerna/shared/widgets/estructura_pagina.dart'; // Conserva el marco compartido.
 import 'package:frenos_cerna/shared/widgets/tabla_datos.dart'; // Reutiliza la tabla y su búsqueda.
@@ -47,7 +47,7 @@ class _VistaReservasState extends State<VistaReservas> {
     Cliente? cliente; // Mantiene el cliente elegido sin perder el código.
     String? error; // Mantiene el motivo del error visible.
     try {
-      final creada = await showDialog<bool>(
+      final creada = await mostrarDialogoConTema<bool>(
         context: context,
         barrierDismissible: false,
         builder: (dialogo) => StatefulBuilder(
@@ -120,77 +120,83 @@ class _VistaReservasState extends State<VistaReservas> {
                           onPressed: guardando
                               ? null
                               : () async {
-                                  final existente = await showDialog<bool>(
-                                    context: dialogo,
-                                    builder: (opciones) => Dialog(
-                                      backgroundColor: PaletaTaller.de(context)
-                                          .fondo,
-                                      surfaceTintColor: Colors.transparent, // Conserva el fondo compartido.
-                                      insetPadding: EdgeInsets.fromLTRB(
-                                        24 +
-                                            (MediaQuery.sizeOf(opciones)
-                                                        .width >=
-                                                    700
-                                                ? MediaQuery.sizeOf(opciones)
-                                                          .width *
-                                                      0.12
-                                                : 0),
-                                        24,
-                                        24,
-                                        24,
-                                      ), // Centra sobre el mismo eje de la reserva.
-                                      child: SizedBox(
-                                        width: 440,
-                                        child: SingleChildScrollView(
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(24),
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Text(
-                                                  'VINCULAR CON CLIENTE',
-                                                  style: TextStyle(
-                                                    fontSize: 20,
-                                                    color: PaletaTaller.de(
-                                                      context,
-                                                    ).adaptar(Colors.black),
-                                                  ),
-                                                ), // Identifica el paso de vinculación.
-                                                const SizedBox(height: 20),
-                                                CartaNavegacion.accion(
-                                                  onPressed: () =>
-                                                      Navigator.pop(
-                                                        opciones,
-                                                        true,
+                                  final existente =
+                                      await mostrarDialogoConTema<bool>(
+                                        context: dialogo,
+                                        builder: (opciones) => Dialog(
+                                          backgroundColor: PaletaTaller.de(
+                                            context,
+                                          ).fondo,
+                                          surfaceTintColor: Colors.transparent, // Conserva el fondo compartido.
+                                          insetPadding: EdgeInsets.fromLTRB(
+                                            24 +
+                                                (MediaQuery.sizeOf(opciones)
+                                                            .width >=
+                                                        700
+                                                    ? MediaQuery.sizeOf(
+                                                            opciones,
+                                                          ).width *
+                                                          0.12
+                                                    : 0),
+                                            24,
+                                            24,
+                                            24,
+                                          ), // Centra sobre el mismo eje de la reserva.
+                                          child: SizedBox(
+                                            width: 440,
+                                            child: SingleChildScrollView(
+                                              child: Padding(
+                                                padding: const EdgeInsets.all(
+                                                  24,
+                                                ),
+                                                child: Column(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Text(
+                                                      'VINCULAR CON CLIENTE',
+                                                      style: TextStyle(
+                                                        fontSize: 20,
+                                                        color: PaletaTaller.de(
+                                                          context,
+                                                        ).adaptar(Colors.black),
                                                       ),
-                                                  icon: const Icon(
-                                                    Icons.person_search,
-                                                  ),
-                                                  label: const Text(
-                                                    'CLIENTE EXISTENTE',
-                                                  ),
-                                                ), // Reutiliza la búsqueda por nombre o RUT.
-                                                const SizedBox(height: 12),
-                                                CartaNavegacion.accion(
-                                                  onPressed: () =>
-                                                      Navigator.pop(
-                                                        opciones,
-                                                        false,
+                                                    ), // Identifica el paso de vinculación.
+                                                    const SizedBox(height: 20),
+                                                    CartaNavegacion.accion(
+                                                      onPressed: () =>
+                                                          Navigator.pop(
+                                                            opciones,
+                                                            true,
+                                                          ),
+                                                      icon: const Icon(
+                                                        Icons.person_search,
                                                       ),
-                                                  icon: const Icon(
-                                                    Icons.person_add_alt_1,
-                                                  ),
-                                                  label: const Text(
-                                                    'NUEVO CLIENTE',
-                                                  ),
-                                                ), // Abre la creación sin perder el código de la reserva.
-                                              ],
+                                                      label: const Text(
+                                                        'CLIENTE EXISTENTE',
+                                                      ),
+                                                    ), // Reutiliza la búsqueda por nombre o RUT.
+                                                    const SizedBox(height: 12),
+                                                    CartaNavegacion.accion(
+                                                      onPressed: () =>
+                                                          Navigator.pop(
+                                                            opciones,
+                                                            false,
+                                                          ),
+                                                      icon: const Icon(
+                                                        Icons.person_add_alt_1,
+                                                      ),
+                                                      label: const Text(
+                                                        'NUEVO CLIENTE',
+                                                      ),
+                                                    ), // Abre la creación sin perder el código de la reserva.
+                                                  ],
+                                                ),
+                                              ),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                    ),
-                                  );
+                                      );
                                   if (existente == null || !dialogo.mounted) {
                                     return; // Mantiene el cliente anterior al cancelar.
                                   }
@@ -307,9 +313,11 @@ class _VistaReservasState extends State<VistaReservas> {
   }
 
   Future<void> _lista(Map<String, dynamic> fila) async {
-    final confirmar = await showDialog<bool>(
+    final confirmar = await mostrarDialogoConTema<bool>(
       context: context,
       builder: (dialogo) => AlertDialog(
+        actionsOverflowButtonSpacing: 12,
+        buttonPadding: const EdgeInsets.symmetric(horizontal: 6),
         backgroundColor: PaletaTaller.de(context).fondo,
         surfaceTintColor: Colors.transparent,
         title: const Text('RESERVA LISTA'),

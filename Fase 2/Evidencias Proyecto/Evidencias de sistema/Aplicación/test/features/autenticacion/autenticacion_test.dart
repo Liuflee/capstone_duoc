@@ -37,7 +37,7 @@ import 'package:frenos_cerna/features/ventas/presentation/pagina_detalle_venta.d
 import 'package:frenos_cerna/features/notificaciones/pagina_notificaciones.dart';
 // Importa las cartas para comprobar el estado de las acciones.
 import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frenos_cerna/features/autenticacion/data/autenticacion_repository.dart';
 import 'package:frenos_cerna/features/autenticacion/presentation/pagina_autenticacion.dart';

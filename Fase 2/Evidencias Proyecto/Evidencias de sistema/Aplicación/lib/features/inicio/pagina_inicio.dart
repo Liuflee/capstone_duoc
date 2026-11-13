@@ -3,7 +3,8 @@ import 'package:frenos_cerna/features/ventas/presentation/pagina_crear_ventas.da
 import 'package:frenos_cerna/features/ventas/presentation/pagina_ventas_historial.dart'; // Abre el historial completo.
 import 'package:frenos_cerna/core/data/perfil_sesion.dart'; // Conserva el perfil autenticado para toda la navegación.
 // Importaciones
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:frenos_cerna/core/data/supabase_database.dart';
@@ -34,6 +35,7 @@ class PaginaInicio extends StatelessWidget {
   Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
   Widget _pagina(BuildContext context) {
     final plataforma = Theme.of(context).platform; // Identifica el dispositivo sin depender del tamaño de la ventana.
+    final esAndroid = !kIsWeb && plataforma == TargetPlatform.android;
     final esMovil =
         plataforma == TargetPlatform.android ||
         plataforma == TargetPlatform.iOS; // Reserva el escaneo para celulares.
@@ -125,10 +127,11 @@ class PaginaInicio extends StatelessWidget {
 
                             // Calcula el ancho proporcional
                             // con un mínimo de 170 y máximo de 260
-                            final double anchoImportante =
-                                (anchoContenido * 0.17)
-                                    .clamp(170.0, 260.0)
-                                    .toDouble();
+                            final double anchoImportante = esAndroid
+                                ? (anchoContenido - separacion) / 2
+                                : (anchoContenido * 0.17)
+                                      .clamp(170.0, 260.0)
+                                      .toDouble();
 
                             // Calcula el alto proporcional
                             // con un mínimo de 170 y máximo de 240
@@ -141,16 +144,19 @@ class PaginaInicio extends StatelessWidget {
                             // Se calcula el ancho necesario para
                             // distribuir tres tarjetas en una fila
                             // descontando las dos separaciones
-                            final double anchoTrabajo =
-                                ((anchoContenido - separacion * 2) / 3)
-                                    .clamp(160.0, 360.0)
-                                    .toDouble();
+                            final double anchoTrabajo = esAndroid
+                                ? anchoContenido
+                                : ((anchoContenido - separacion * 2) / 3)
+                                      .clamp(160.0, 360.0)
+                                      .toDouble();
 
                             // Calcula el alto proporcional
                             // con un mínimo de 110 y máximo de 160
-                            final double altoTrabajo = (altoContenido * 0.17)
-                                .clamp(110.0, 160.0)
-                                .toDouble();
+                            final double altoTrabajo = esAndroid
+                                ? 90.0
+                                : (altoContenido * 0.17)
+                                      .clamp(110.0, 160.0)
+                                      .toDouble();
 
                             // Función que permite navegar a otra página
                             void abrirPagina(Widget pagina) {
@@ -220,21 +226,24 @@ class PaginaInicio extends StatelessWidget {
                                         },
                                       ),
 
-                                      // Tarjeta para reservar productos.
-                                      CartaNavegacion(
-                                        ancho: anchoImportante,
-                                        alto: altoImportante,
-                                        icono: Icons.add,
+                                      // Android ofrece las consultas del taller desde Inicio.
+                                      if (!esAndroid)
+                                        CartaNavegacion(
+                                          ancho: anchoImportante,
+                                          alto: altoImportante,
+                                          icono: Icons.add,
 
-                                        texto: 'NUEVA VENTA',
+                                          texto: 'NUEVA VENTA',
 
-                                        color: PaletaTaller.de(context)
-                                            .adaptar(Color(0xFFD96363)), // Usa el rojo compartido por las acciones de registro.
-                                        // Abre directamente el registro de una nueva venta
-                                        alPresionar: () {
-                                          abrirPagina(const PaginaCrearVenta());
-                                        },
-                                      ),
+                                          color: PaletaTaller.de(context)
+                                              .adaptar(Color(0xFFD96363)), // Usa el rojo compartido por las acciones de registro.
+                                          // Abre directamente el registro de una nueva venta
+                                          alPresionar: () {
+                                            abrirPagina(
+                                              const PaginaCrearVenta(),
+                                            );
+                                          },
+                                        ),
 
                                       // Tarjeta de escaneo en móvil y acceso a datos en escritorio.
                                       CartaNavegacion(
@@ -337,41 +346,42 @@ class PaginaInicio extends StatelessWidget {
                                   // Separación entre las filas de trabajo
                                   const SizedBox(height: 20),
 
-                                  // SEGUNDA FILA DE TRABAJO
-                                  // Contiene dos tarjetas
-                                  Wrap(
-                                    spacing: separacion,
-                                    runSpacing: separacion,
-                                    alignment: WrapAlignment.center,
+                                  // Accesos adicionales de escritorio.
+                                  if (!esAndroid)
+                                    Wrap(
+                                      spacing: separacion,
+                                      runSpacing: separacion,
+                                      alignment: WrapAlignment.center,
 
-                                    children: [
-                                      // Tarjeta ventas
-                                      CartaNavegacion(
-                                        ancho: anchoTrabajo,
-                                        alto: altoTrabajo,
-                                        icono: Icons.attach_money,
-                                        texto: 'VENTAS',
+                                      children: [
+                                        // Tarjeta ventas
+                                        CartaNavegacion(
+                                          ancho: anchoTrabajo,
+                                          alto: altoTrabajo,
+                                          icono: Icons.attach_money,
+                                          texto: 'VENTAS',
 
-                                        // Navega a ventas
-                                        alPresionar: () {
-                                          abrirPagina(const PaginaVentas());
-                                        },
-                                      ),
-
-                                      // Abre el resumen del negocio.
-                                      CartaNavegacion(
-                                        ancho: anchoTrabajo,
-                                        alto: altoTrabajo,
-                                        icono: Icons.dashboard_outlined,
-                                        texto: 'DASHBOARD',
-
-                                        alPresionar: () => Navigator.pushNamed(
-                                          context,
-                                          '/dashboard',
+                                          // Navega a ventas
+                                          alPresionar: () {
+                                            abrirPagina(const PaginaVentas());
+                                          },
                                         ),
-                                      ),
-                                    ],
-                                  ),
+
+                                        // Abre el resumen del negocio.
+                                        CartaNavegacion(
+                                          ancho: anchoTrabajo,
+                                          alto: altoTrabajo,
+                                          icono: Icons.dashboard_outlined,
+                                          texto: 'DASHBOARD',
+
+                                          alPresionar: () =>
+                                              Navigator.pushNamed(
+                                                context,
+                                                '/dashboard',
+                                              ),
+                                        ),
+                                      ],
+                                    ),
                                 ],
                               ),
                             );

@@ -1,0 +1,240 @@
+// AUTO-GENERATED. DO NOT EDIT.
+// Any manual changes WILL BE LOST when this file is regenerated.
+
+// ignore_for_file: unused_import, unnecessary_import
+
+import 'dart:async';
+import 'dart:ffi' as ffi;
+
+import 'package:cnativeapi/cnativeapi.dart' as c;
+import 'package:ffi/ffi.dart' as pkg_ffi;
+
+import 'foundation/event_request.dart';
+import 'menu.dart';
+import 'window.dart';
+
+import 'support.dart';
+
+import 'callbacks.dart';
+
+enum Brightness {
+  system(0),
+  light(1),
+  dark(2);
+
+  const Brightness(this.value);
+  final int value;
+
+  static Brightness fromValue(int value) => switch (value) {
+    0 => Brightness.system,
+    1 => Brightness.light,
+    2 => Brightness.dark,
+    _ => Brightness.system,
+  };
+
+  c.native_brightness_t get raw => c.native_brightness_t.fromValue(value);
+}
+
+/// One `ApplicationEvent`, in its concrete form.
+sealed class ApplicationEvent {
+  const ApplicationEvent();
+
+  /// Reads the event out of its C form. Returns null for a variant this
+  /// binding does not know about.
+  static ApplicationEvent? fromNative(c.native_application_event_t raw) {
+    if (raw.typeAsInt ==
+        c
+            .native_application_event_type_t
+            .NATIVE_APPLICATION_EVENT_TYPE_STARTED
+            .value) {
+      return ApplicationStartedEvent();
+    }
+    if (raw.typeAsInt ==
+        c
+            .native_application_event_type_t
+            .NATIVE_APPLICATION_EVENT_TYPE_EXITING
+            .value) {
+      return ApplicationExitingEvent(exitCode: raw.data.exiting.exit_code);
+    }
+    if (raw.typeAsInt ==
+        c
+            .native_application_event_type_t
+            .NATIVE_APPLICATION_EVENT_TYPE_ACTIVATED
+            .value) {
+      return ApplicationActivatedEvent();
+    }
+    if (raw.typeAsInt ==
+        c
+            .native_application_event_type_t
+            .NATIVE_APPLICATION_EVENT_TYPE_DEACTIVATED
+            .value) {
+      return ApplicationDeactivatedEvent();
+    }
+    if (raw.typeAsInt ==
+        c
+            .native_application_event_type_t
+            .NATIVE_APPLICATION_EVENT_TYPE_QUIT_REQUESTED
+            .value) {
+      return ApplicationQuitRequestedEvent(
+        request: EventRequest.borrowed(raw.data.quit_requested.request),
+      );
+    }
+    return null;
+  }
+}
+
+final class ApplicationStartedEvent extends ApplicationEvent {
+  const ApplicationStartedEvent();
+}
+
+final class ApplicationExitingEvent extends ApplicationEvent {
+  const ApplicationExitingEvent({required this.exitCode});
+
+  final int exitCode;
+}
+
+final class ApplicationActivatedEvent extends ApplicationEvent {
+  const ApplicationActivatedEvent();
+}
+
+final class ApplicationDeactivatedEvent extends ApplicationEvent {
+  const ApplicationDeactivatedEvent();
+}
+
+final class ApplicationQuitRequestedEvent extends ApplicationEvent {
+  const ApplicationQuitRequestedEvent({required this.request});
+
+  final EventRequest request;
+}
+
+class Application {
+  const Application._();
+
+  /// The shared instance backed by the native singleton.
+  static const Application instance = Application._();
+
+  int run() {
+    return c.native_application_run();
+  }
+
+  int runWithWindow(Window? window) {
+    return c.native_application_run_with_window(window?.nativeHandle ?? 0);
+  }
+
+  void quit(int exitCode) {
+    c.native_application_quit(exitCode);
+  }
+
+  bool isRunning() {
+    return c.native_application_is_running();
+  }
+
+  bool isSingleInstance() {
+    return c.native_application_is_single_instance();
+  }
+
+  bool show() {
+    return c.native_application_show();
+  }
+
+  bool hide() {
+    return c.native_application_hide();
+  }
+
+  bool isVisible() {
+    return c.native_application_is_visible();
+  }
+
+  bool setIcon(String iconPath) {
+    final iconPathNative = iconPath.toNativeUtf8().cast<ffi.Char>();
+    final result = c.native_application_set_icon(iconPathNative);
+    pkg_ffi.calloc.free(iconPathNative);
+    return result;
+  }
+
+  bool setDockIconVisible(bool visible) {
+    return c.native_application_set_dock_icon_visible(visible);
+  }
+
+  bool setProgressBar(double progress) {
+    return c.native_application_set_progress_bar(progress);
+  }
+
+  bool setBadgeLabel(String label) {
+    final labelNative = label.toNativeUtf8().cast<ffi.Char>();
+    final result = c.native_application_set_badge_label(labelNative);
+    pkg_ffi.calloc.free(labelNative);
+    return result;
+  }
+
+  bool setBrightness(Brightness brightness) {
+    return c.native_application_set_brightness(brightness.raw);
+  }
+
+  bool setMenuBar(Menu? menu) {
+    return c.native_application_set_menu_bar(menu?.nativeHandle ?? 0);
+  }
+
+  Window? getPrimaryWindow() {
+    final handle = c.native_application_get_primary_window();
+    if (handle == 0) return null;
+    return Window.fromHandle(handle);
+  }
+
+  void setPrimaryWindow(Window? window) {
+    c.native_application_set_primary_window(window?.nativeHandle ?? 0);
+  }
+
+  List<Window> getAllWindows() {
+    final list = c.native_application_get_all_windows();
+    final items = <Window>[];
+    for (var i = 0; i < list.count; i++) {
+      items.add(Window.fromHandle(list.windows[i]));
+    }
+    final listPointer = pkg_ffi.calloc<c.native_window_list_t>();
+    listPointer.ref = list;
+    // The handles now belong to `items`; free just the array.
+    c.native_window_list_release(listPointer);
+    pkg_ffi.calloc.free(listPointer);
+    return items;
+  }
+
+  /// Registers [callback] for every `ApplicationEvent` this `Application` emits.
+  ///
+  /// Delivered on the registering isolate, including events from native UI threads.
+  /// The callback may return a Future; borrowed handles stay valid until it completes.
+  /// Events queued before removal are skipped if their callback has not started.
+  ListenerId addListener(FutureOr<void> Function(ApplicationEvent) callback) {
+    final callable =
+        ffi.NativeCallable<
+          ffi.Void Function(
+            ffi.Pointer<c.native_application_event_t>,
+            ffi.Uint64,
+            ffi.Pointer<ffi.Void>,
+          )
+        >.listener((
+          ffi.Pointer<c.native_application_event_t> event,
+          int delivery,
+          ffi.Pointer<ffi.Void> _,
+        ) {
+          unawaited(
+            NativeCallbacks.deliverEvent(
+              delivery,
+              () => event == ffi.nullptr
+                  ? null
+                  : ApplicationEvent.fromNative(event.ref),
+              callback,
+            ),
+          );
+        });
+    return c.native_application_add_listener_async(
+      callable.nativeFunction,
+      NativeCallbacks.userData(callable),
+      NativeCallbacks.release,
+    );
+  }
+
+  /// Unregisters a listener. Returns false if unknown.
+  bool removeListener(ListenerId listenerId) =>
+      c.native_application_remove_listener(listenerId);
+}

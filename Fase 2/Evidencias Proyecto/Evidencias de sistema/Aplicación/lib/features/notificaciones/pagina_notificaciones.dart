@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart'; // Conserva la entrada existente desde Inicio.
+import 'package:material_ui/material_ui.dart'; // Conserva la entrada existente desde Inicio.
 import 'package:frenos_cerna/features/notificaciones/presentation/vista_reservas.dart'; // Presenta las reservas persistentes.
 
 class PaginaNotificaciones extends StatelessWidget {

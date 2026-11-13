@@ -1,0 +1,226 @@
+// AUTO-GENERATED. DO NOT EDIT.
+// Any manual changes WILL BE LOST when this file is regenerated.
+
+// ignore_for_file: unused_import, unnecessary_import
+
+import 'dart:async';
+import 'dart:ffi' as ffi;
+
+import 'package:cnativeapi/cnativeapi.dart' as c;
+import 'package:ffi/ffi.dart' as pkg_ffi;
+
+import 'drag_source.dart';
+import 'foundation/geometry.dart';
+import 'window.dart';
+
+import 'support.dart';
+
+import 'callbacks.dart';
+
+/// One `DropTargetEvent`, in its concrete form.
+sealed class DropTargetEvent {
+  const DropTargetEvent();
+
+  WindowId get windowId;
+  Point get position;
+
+  /// Reads the event out of its C form. Returns null for a variant this
+  /// binding does not know about.
+  static DropTargetEvent? fromNative(c.native_drop_target_event_t raw) {
+    if (raw.typeAsInt ==
+        c
+            .native_drop_target_event_type_t
+            .NATIVE_DROP_TARGET_EVENT_TYPE_ENTERED
+            .value) {
+      return DropTargetEnteredEvent(
+        windowId: raw.window_id,
+        position: Point.fromNative(raw.position),
+      );
+    }
+    if (raw.typeAsInt ==
+        c
+            .native_drop_target_event_type_t
+            .NATIVE_DROP_TARGET_EVENT_TYPE_MOVED
+            .value) {
+      return DropTargetMovedEvent(
+        windowId: raw.window_id,
+        position: Point.fromNative(raw.position),
+      );
+    }
+    if (raw.typeAsInt ==
+        c
+            .native_drop_target_event_type_t
+            .NATIVE_DROP_TARGET_EVENT_TYPE_EXITED
+            .value) {
+      return DropTargetExitedEvent(
+        windowId: raw.window_id,
+        position: Point.fromNative(raw.position),
+      );
+    }
+    if (raw.typeAsInt ==
+        c
+            .native_drop_target_event_type_t
+            .NATIVE_DROP_TARGET_EVENT_TYPE_DROPPED
+            .value) {
+      return DropTargetDroppedEvent(
+        windowId: raw.window_id,
+        position: Point.fromNative(raw.position),
+        filePaths: [
+          for (var i = 0; i < raw.data.dropped.file_paths.count; i++)
+            if (raw.data.dropped.file_paths.items[i] != ffi.nullptr)
+              raw.data.dropped.file_paths.items[i]
+                  .cast<pkg_ffi.Utf8>()
+                  .toDartString(),
+        ],
+        text: raw.data.dropped.text == ffi.nullptr
+            ? null
+            : raw.data.dropped.text.cast<pkg_ffi.Utf8>().toDartString(),
+      );
+    }
+    return null;
+  }
+}
+
+final class DropTargetEnteredEvent extends DropTargetEvent {
+  const DropTargetEnteredEvent({
+    required this.windowId,
+    required this.position,
+  });
+
+  @override
+  final WindowId windowId;
+  @override
+  final Point position;
+}
+
+final class DropTargetMovedEvent extends DropTargetEvent {
+  const DropTargetMovedEvent({required this.windowId, required this.position});
+
+  @override
+  final WindowId windowId;
+  @override
+  final Point position;
+}
+
+final class DropTargetExitedEvent extends DropTargetEvent {
+  const DropTargetExitedEvent({required this.windowId, required this.position});
+
+  @override
+  final WindowId windowId;
+  @override
+  final Point position;
+}
+
+final class DropTargetDroppedEvent extends DropTargetEvent {
+  const DropTargetDroppedEvent({
+    required this.windowId,
+    required this.position,
+    required this.filePaths,
+    required this.text,
+  });
+
+  @override
+  final WindowId windowId;
+  @override
+  final Point position;
+  final List<String> filePaths;
+  final String? text;
+}
+
+class DropTarget implements ffi.Finalizable {
+  /// Adopts a handle returned by the C API and releases it when this
+  /// object becomes unreachable.
+  DropTarget.fromHandle(this.nativeHandle) {
+    _finalizer.attach(
+      this,
+      ffi.Pointer<ffi.Void>.fromAddress(nativeHandle),
+      detach: this,
+    );
+  }
+
+  /// Wraps a handle owned elsewhere; releasing it stays the owner's job.
+  DropTarget.borrowed(this.nativeHandle);
+
+  /// The underlying handle-table entry.
+  final int nativeHandle;
+
+  static final _finalizer = ffi.NativeFinalizer(
+    ffi.Native.addressOf<
+      ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>
+    >(c.native_handle_finalize),
+  );
+
+  /// Releases the handle now instead of at collection.
+  void dispose() {
+    _finalizer.detach(this);
+    c.native_drop_target_free(nativeHandle);
+  }
+
+  /// Creates a new `DropTarget`; returns null if the native side failed.
+  static DropTarget? create(Window? window) {
+    final handle = c.native_drop_target_create(window?.nativeHandle ?? 0);
+    if (handle == 0) return null;
+    return DropTarget.fromHandle(handle);
+  }
+
+  static bool isSupported() {
+    return c.native_drop_target_is_supported();
+  }
+
+  WindowId get windowId {
+    return c.native_drop_target_get_window_id(nativeHandle);
+  }
+
+  set dropOperation(DragOperation value) {
+    c.native_drop_target_set_drop_operation(nativeHandle, value.raw);
+  }
+
+  DragOperation get dropOperation {
+    final raw = c.native_drop_target_get_drop_operation(nativeHandle);
+    return DragOperation.fromValue(raw.value);
+  }
+
+  bool get isActive {
+    return c.native_drop_target_is_active(nativeHandle);
+  }
+
+  /// Registers [callback] for every `DropTargetEvent` this `DropTarget` emits.
+  ///
+  /// Delivered on the registering isolate, including events from native UI threads.
+  /// The callback may return a Future; borrowed handles stay valid until it completes.
+  /// Events queued before removal are skipped if their callback has not started.
+  ListenerId addListener(FutureOr<void> Function(DropTargetEvent) callback) {
+    final callable =
+        ffi.NativeCallable<
+          ffi.Void Function(
+            ffi.Pointer<c.native_drop_target_event_t>,
+            ffi.Uint64,
+            ffi.Pointer<ffi.Void>,
+          )
+        >.listener((
+          ffi.Pointer<c.native_drop_target_event_t> event,
+          int delivery,
+          ffi.Pointer<ffi.Void> _,
+        ) {
+          unawaited(
+            NativeCallbacks.deliverEvent(
+              delivery,
+              () => event == ffi.nullptr
+                  ? null
+                  : DropTargetEvent.fromNative(event.ref),
+              callback,
+            ),
+          );
+        });
+    return c.native_drop_target_add_listener_async(
+      nativeHandle,
+      callable.nativeFunction,
+      NativeCallbacks.userData(callable),
+      NativeCallbacks.release,
+    );
+  }
+
+  /// Unregisters a listener. Returns false if unknown.
+  bool removeListener(ListenerId listenerId) =>
+      c.native_drop_target_remove_listener(nativeHandle, listenerId);
+}

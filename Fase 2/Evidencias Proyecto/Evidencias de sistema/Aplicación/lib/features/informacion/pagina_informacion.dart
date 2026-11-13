@@ -3,7 +3,7 @@ import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 // Importa Flutter y los widgets compartidos de la aplicación.
 import 'dart:math' as math; // Limita el ancho del buscador en pantallas anchas.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:frenos_cerna/shared/widgets/estructura_pagina.dart';
 import 'package:frenos_cerna/shared/widgets/panel_filtros.dart';
 

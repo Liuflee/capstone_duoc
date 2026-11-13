@@ -1,5 +1,5 @@
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
-import 'package:flutter/material.dart'; // Construye las vistas de perfiles.
+import 'package:material_ui/material_ui.dart'; // Construye las vistas de perfiles.
 import 'package:frenos_cerna/features/perfil/data/perfiles_repository.dart'; // Conserva las operaciones reales de consulta y gestión.
 import 'package:frenos_cerna/shared/widgets/estructura_pagina.dart'; // Reutiliza las barras y el menú.
 import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart'; // Conserva las dimensiones de las acciones.
@@ -277,9 +277,11 @@ class _PaginaGestionPerfilState extends State<PaginaGestionPerfil> {
     if (_guardando || _perfil == null || _actual?.tipo != TipoPerfil.dueno) {
       return; // Exige la sección y los permisos correctos.
     }
-    final confirmar = await showDialog<bool>(
+    final confirmar = await mostrarDialogoConTema<bool>(
       context: context,
       builder: (dialogo) => AlertDialog(
+        actionsOverflowButtonSpacing: 12,
+        buttonPadding: const EdgeInsets.symmetric(horizontal: 6),
         title: const Text('ELIMINAR PERFIL'),
         content: Text(
           '¿Eliminar el perfil de ${_perfil!.nombre}? Esta acción retira su acceso a la aplicación.',

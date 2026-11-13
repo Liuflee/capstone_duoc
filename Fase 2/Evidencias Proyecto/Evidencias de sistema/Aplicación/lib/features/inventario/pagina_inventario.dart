@@ -7,7 +7,7 @@ import 'package:frenos_cerna/shared/widgets/barra_superior.dart';
 
 // Importa las cartas que conservan las acciones de la página.
 import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:frenos_cerna/core/data/supabase_database.dart';
 import 'package:frenos_cerna/features/inventario/pagina_edicion_producto.dart';
 import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
@@ -337,7 +337,7 @@ class _PaginaInventarioState extends State<PaginaInventario> {
                                 },
                               )
                               .toList();
-                          return TablaDatos(
+                          final tabla = TablaDatos(
                             mostrarControles: false, // El panel ya muestra el buscador y las categorías.
                             // Encabezados visibles de la tabla.
                             nombresColumnas: const [
@@ -418,6 +418,30 @@ class _PaginaInventarioState extends State<PaginaInventario> {
                               },
                             },
                           ); // Finaliza la tabla construida con los productos filtrados.
+                          final plataforma = Theme.of(context).platform;
+                          final esCelular =
+                              plataforma == TargetPlatform.android ||
+                              plataforma == TargetPlatform.iOS;
+                          if (!esCelular) return tabla;
+                          return TablaDatos(
+                            mostrarControles: false,
+                            nombresColumnas: const [
+                              'PRODUCTO',
+                              'CANTIDAD',
+                              'VER',
+                            ],
+                            camposColumnas: const ['nombre', 'cantidad', ''],
+                            anchosColumnas: const [240, 100, 88],
+                            filas: filasProductos,
+                            coloresEncabezados: [
+                              for (final indice in [0, 3, 4])
+                                tabla.coloresEncabezados![indice],
+                            ],
+                            celdasPersonalizadas: {
+                              0: tabla.celdasPersonalizadas[0]!,
+                              2: tabla.celdasPersonalizadas[4]!,
+                            },
+                          );
                         }, // Finaliza la construcción del contenido.
                       ), // Finaliza el panel de filtros reutilizable.
                     ), // Finaliza el espacio restante de la página.

@@ -3,7 +3,7 @@ import 'package:frenos_cerna/features/clientes/pagina_ver_cliente.dart'; // Abre
 // Importa los campos de formulario reutilizables.
 
 // Importaciones necesarias para construir la interfaz y consultar los clientes.
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:frenos_cerna/core/data/supabase_database.dart';
 
@@ -278,7 +278,7 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                           },
                                         )
                                         .toList();
-                                    return TablaDatos(
+                                    final tabla = TablaDatos(
                                       mostrarControles: false, // El panel ya muestra el buscador y las categorías.
                                       // Encabezados visibles de la tabla.
                                       nombresColumnas: const [
@@ -324,7 +324,7 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                           Color.fromARGB(255, 253, 116, 116),
                                         ),
                                         PaletaTaller.de(context).adaptar(
-                                          Color.fromARGB(255, 253, 116, 116),
+                                          Color.fromARGB(255, 207, 81, 81),
                                         ),
                                         PaletaTaller.de(context).adaptar(
                                           Color.fromARGB(255, 253, 116, 116),
@@ -456,6 +456,33 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                             ), // Consulta el perfil sin habilitar edición.
                                       },
                                     ); // Finaliza la tabla construida con los clientes filtrados.
+                                    final plataforma = Theme.of(context)
+                                        .platform;
+                                    final esCelular =
+                                        plataforma == TargetPlatform.android ||
+                                        plataforma == TargetPlatform.iOS;
+                                    if (!esCelular) return tabla;
+                                    // Reutiliza las acciones existentes y muestra solo las columnas móviles.
+                                    return TablaDatos(
+                                      mostrarControles: false,
+                                      nombresColumnas: const [
+                                        'NOMBRE',
+                                        'EDITAR',
+                                        'VER',
+                                      ],
+                                      camposColumnas: const ['nombre', '', ''],
+                                      anchosColumnas: const [240, 80, 80],
+                                      filas: filasClientes,
+                                      coloresEncabezados: [
+                                        for (final indice in [0, 4, 5])
+                                          tabla.coloresEncabezados![indice],
+                                      ],
+                                      celdasPersonalizadas: {
+                                        0: tabla.celdasPersonalizadas[0]!,
+                                        1: tabla.celdasPersonalizadas[4]!,
+                                        2: tabla.celdasPersonalizadas[5]!,
+                                      },
+                                    );
                                   }, // Finaliza la construcción del contenido.
                                 ), // Finaliza el panel de filtros reutilizable.
                               ), // Finaliza el espacio restante de la página.

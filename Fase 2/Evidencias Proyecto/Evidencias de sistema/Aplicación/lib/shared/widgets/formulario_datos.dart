@@ -1,6 +1,6 @@
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 // Importa los controles y herramientas de distribución de Flutter.
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 // Conserva la visibilidad de contraseña y el diseño del acceso existente.
 import 'package:frenos_cerna/shared/widgets/campo_formulario.dart';
 

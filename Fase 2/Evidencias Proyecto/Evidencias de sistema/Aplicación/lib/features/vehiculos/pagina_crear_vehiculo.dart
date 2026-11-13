@@ -1,6 +1,6 @@
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 // Importa Flutter y las páginas necesarias para vincular clientes.
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:frenos_cerna/core/data/supabase_database.dart';
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart';
 import 'package:frenos_cerna/features/clientes/pagina_crear_cliente.dart';
@@ -62,7 +62,7 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
     } // Permite reintentar sin perder lo ingresado.
   } // Finaliza la carga.
 
-  Widget _selectorCatalogo({required bool esModelo}) {
+  Widget _selectorCatalogo(BuildContext context, {required bool esModelo}) {
     // Construye un selector controlado por el estado de la página.
     final registros = esModelo
         ? _modelos.where((fila) => fila['id_marca'] == _marca).toList()
@@ -79,6 +79,13 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
       child: DropdownButtonHideUnderline(
         // Evita dibujar una segunda línea inferior.
         child: DropdownButton<int>(
+          dropdownColor: PaletaTaller.de(context).oscura
+              ? PaletaTaller.de(context).tarjeta
+              : null,
+          style: Theme.of(context).textTheme.titleMedium
+              ?.copyWith(color: PaletaTaller.de(context).texto),
+          iconEnabledColor: PaletaTaller.de(context).texto,
+          iconDisabledColor: PaletaTaller.de(context).texto,
           // Usa un valor controlado para no seleccionar la opción de añadir.
           value: esModelo
               ? _modelo
@@ -86,6 +93,7 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
           isExpanded: true, // Ajusta el menú al ancho del campo.
           menuMaxHeight: 300, // Permite desplazar los catálogos largos.
           hint: Text(
+            style: TextStyle(color: PaletaTaller.de(context).texto),
             esModelo && _marca == null
                 ? 'SELECCIONA PRIMERO UNA MARCA'
                 : 'SELECCIONAR',
@@ -148,7 +156,7 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
         : _marcas;
     if (_editandoCatalogo || registros.isEmpty) return;
     final columna = esModelo ? 'modelo' : 'marca';
-    final registro = await showDialog<Map<String, dynamic>>(
+    final registro = await mostrarDialogoConTema<Map<String, dynamic>>(
       context: context,
       builder: (dialogo) => SimpleDialog(
         title: Text('SELECCIONA ${esModelo ? 'MODELO' : 'MARCA'}'),
@@ -167,9 +175,11 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
       text: registro[columna].toString(),
     );
     try {
-      final nombre = await showDialog<String>(
+      final nombre = await mostrarDialogoConTema<String>(
         context: context,
         builder: (dialogo) => AlertDialog(
+          actionsOverflowButtonSpacing: 12,
+          buttonPadding: const EdgeInsets.symmetric(horizontal: 6),
           title: Text('EDITAR ${esModelo ? 'MODELO' : 'MARCA'}'),
           content: TextField(controller: controlador, autofocus: true),
           actions: [
@@ -210,7 +220,7 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Nombre actualizado.')));
     } catch (error) {
-      if (mounted){
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('No se pudo actualizar el nombre: $error')),
         );
@@ -238,15 +248,18 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
         _marca; // Conserva la relación del modelo con la marca elegida.
     try {
       // Mantiene el formulario ante cancelaciones y errores.
-      final nombre = await showDialog<String>(
+      final nombre = await mostrarDialogoConTema<String>(
         // Solicita el nombre sin navegar a otra página.
         context: context, // Presenta el diálogo sobre el vehículo.
         builder: (dialogo) => AlertDialog(
+          actionsOverflowButtonSpacing: 12,
+          buttonPadding: const EdgeInsets.symmetric(horizontal: 6),
           // Contiene únicamente los datos del nuevo registro.
           title: Text('AÑADIR $tipo'), // Identifica el catálogo.
           content: SizedBox(
             width: 360,
             child: FormularioDatos(
+              ajustarAlAnchoDisponible: true,
               campos: [
                 CampoFormularioDatos(
                   controlador: controlador,
@@ -276,10 +289,12 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
       if (nombre == null || !mounted) {
         return; // Conserva todos los datos si se cancela.
       }
-      final confirmado = await showDialog<bool>(
+      final confirmado = await mostrarDialogoConTema<bool>(
         // Pide confirmación antes de escribir en la base.
         context: context, // Mantiene el vehículo debajo del diálogo.
         builder: (dialogo) => AlertDialog(
+          actionsOverflowButtonSpacing: 12,
+          buttonPadding: const EdgeInsets.symmetric(horizontal: 6),
           // Presenta el nombre que se guardará.
           title: Text('CONFIRMAR $tipo'), // Identifica la operación.
           content: Text(
@@ -386,7 +401,7 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
   }
 
   Future<void> _vincularCliente() async {
-    final existente = await showDialog<bool>(
+    final existente = await mostrarDialogoConTema<bool>(
       context: context,
       builder: (menu) => Dialog(
         insetPadding: EdgeInsets.fromLTRB(
@@ -571,10 +586,12 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
               ), // Finaliza los campos de texto.
               const SizedBox(height: 16), // Separa los catálogos de los campos.
               _selectorCatalogo(
+                context,
                 esModelo: false,
               ), // Selecciona o añade la marca.
               const SizedBox(height: 20), // Separa ambos catálogos.
               _selectorCatalogo(
+                context,
                 esModelo: true,
               ), // Exige una marca antes de elegir modelo.
               if (_errorCatalogos != null) ...[
