@@ -1,0 +1,73 @@
+{
+  "sin_stock": [
+    "Dime productos sin stock",
+    "Qué productos no tienen stock",
+    "Cuáles son los repuestos agotados",
+    "Muéstrame los productos con cero unidades",
+    "Qué artículos no tienen existencias",
+    "Lista los productos que se acabaron",
+    "Qué repuestos están sin existencias",
+    "Qué productos tienen cero existencias",
+    "Qué productos tienen el inventario en cero",
+    "Cuáles productos tienen stock cero",
+    "Lista los repuestos que tienen cero unidades disponibles",
+    "Qué productos tienen cero de stock"
+  ],
+  "stock_bajo": [
+    "Qué productos tienen poco stock",
+    "Cuáles son los repuestos con stock bajo",
+    "Qué artículos están por acabarse",
+    "Muéstrame los productos con cinco unidades o menos",
+    "Qué repuestos están escasos",
+    "Cuáles son los productos con stock crítico"
+  ],
+  "no_admitida": [
+    "Elimina un producto del inventario",
+    "Agrega unidades al stock",
+    "Cambia el precio de un repuesto",
+    "Cuánto cuesta un repuesto",
+    "Qué productos hay en stock",
+    "Quiero comprar un repuesto",
+    "Dime el clima de hoy",
+    "Muéstrame todos los productos del inventario",
+    "Dime productos con menos de diez unidades",
+    "Dime cuáles productos sin stock son de una marca específica",
+    "Quiero hacer una consulta",
+    "Quiero el precio del producto con código ABC-123",
+    "Qué producto fue el más vendido este mes",
+    "Quién compró hoy"
+  ],
+  "stock_por_codigo": [
+    "Cuánto stock queda del producto con código ABC-123",
+    "Dime el stock del código SP0-01223",
+    "Cuántas unidades quedan del producto ABC123",
+    "Hay stock del código 00123",
+    "Dime cuántos quedan del repuesto 00123",
+    "Consulta stock por código",
+    "Qué stock tiene el producto AB-12",
+    "Stock del ABC-123",
+    "Cuál es el stock del producto ABC-123",
+    "Dime el stock del código",
+    "Cuántas unidades quedan del producto por código",
+    "Hay stock de un producto específico",
+    "Stock del código cero cero uno dos tres",
+    "Dime el stock del código ABC guion uno dos tres",
+    "Stock del código uno dos tres cuatro cinco",
+    "Qué stock tiene el código cero cuatro cero"
+  ],
+  "ventas": [
+    "Cuánto vendimos hoy",
+    "Ventas del día",
+    "Dime el total de ventas de hoy",
+    "Cuántas ventas hicimos hoy",
+    "Cuánto dinero se vendió hoy",
+    "Cuánto hemos vendido este mes",
+    "Ventas del mes",
+    "Total de ventas del mes actual",
+    "Cuántas ventas llevamos este mes",
+    "Dime el total vendido este mes",
+    "Ventas de hoy",
+    "Dime cuánto se ha vendido",
+    "Cuánto vendimos ayer"
+  ]
+}

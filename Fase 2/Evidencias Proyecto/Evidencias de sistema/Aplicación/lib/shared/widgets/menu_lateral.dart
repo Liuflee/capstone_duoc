@@ -1,4 +1,6 @@
+import 'package:frenos_cerna/core/data/supabase_database.dart';
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
+import 'package:frenos_cerna/features/asistente/pagina_asistente.dart';
 import 'package:frenos_cerna/features/vehiculos/pagina_vehiculos.dart'; // Recupera el listado e historial de los vehículos.
 
 import 'dart:io' show exit; // Permite cerrar el proceso de escritorio.
@@ -146,6 +148,27 @@ class MenuLateral extends StatelessWidget {
         activo: activo == 'Página Principal',
       ),
     ),
+
+    if (asistenteVozDisponible &&
+        SupabaseDatabase.isConfigured &&
+        SupabaseDatabase.client.auth.currentUser != null)
+      InkWell(
+        onTap: () {
+          final navegador = Navigator.of(context);
+          if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
+            navegador.pop();
+          }
+          if (activo == 'Asistente Cerna') return;
+          navegador.push(
+            MaterialPageRoute<void>(builder: (_) => const PaginaAsistente()),
+          );
+        },
+        child: _MenuItem(
+          icono: Icons.mic_none,
+          texto: 'Asistente Cerna',
+          activo: activo == 'Asistente Cerna',
+        ),
+      ),
 
     // BOTÓN CLIENTES
     InkWell(
