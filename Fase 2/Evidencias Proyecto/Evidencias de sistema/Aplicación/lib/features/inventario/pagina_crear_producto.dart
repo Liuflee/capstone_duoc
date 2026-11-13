@@ -11,7 +11,9 @@ class PaginaCrearProducto extends StatefulWidget {
   final Map<String, dynamic>? productoInicial; // Activa la edición con los datos existentes sin duplicar el formulario.
   final Future<Map<String, List<Map<String, dynamic>>>> Function()?
   cargarCatalogos; // Permite verificar la relación con datos controlados.
+  final String? codigoBarraInicial;
   const PaginaCrearProducto({
+    this.codigoBarraInicial,
     super.key,
     this.cargarCatalogos,
     this.productoInicial, // Sin datos iniciales conserva el registro de un producto nuevo.
@@ -43,6 +45,7 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
   @override // Carga las categorías al abrir el formulario.
   void initState() {
     super.initState();
+    _nombre.text = widget.codigoBarraInicial ?? "";
     final producto =
         widget.productoInicial; // Conserva el registro que se va a editar.
     if (producto != null) {

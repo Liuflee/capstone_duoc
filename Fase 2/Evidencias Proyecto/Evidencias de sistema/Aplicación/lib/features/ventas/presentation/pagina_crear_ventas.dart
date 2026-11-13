@@ -65,7 +65,11 @@ class PaginaCrearVenta extends StatefulWidget {
   final VentaPendiente? pendiente; // Permite editar una venta local existente.
   final VentasPendientesRepository?
   repositorioPendientes; // Permite verificar el flujo sin escrituras remotas.
+  final ProductoVenta? productoEscaneado;
+  final int cantidadEscaneada;
   const PaginaCrearVenta({
+    this.productoEscaneado,
+    this.cantidadEscaneada = 1,
     super.key,
     this.cargarProductos,
     this.cargarClientes,
@@ -103,6 +107,13 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
   @override
   void initState() {
     super.initState();
+    final productoEscaneado = widget.productoEscaneado;
+    if (widget.pendiente == null &&
+        productoEscaneado != null &&
+        widget.cantidadEscaneada > 0 &&
+        widget.cantidadEscaneada <= productoEscaneado.stock) {
+      _carrito.addAll(List.filled(widget.cantidadEscaneada, productoEscaneado));
+    }
 
     final pendiente = widget.pendiente; // Recupera los datos al editar.
     if (pendiente != null) {

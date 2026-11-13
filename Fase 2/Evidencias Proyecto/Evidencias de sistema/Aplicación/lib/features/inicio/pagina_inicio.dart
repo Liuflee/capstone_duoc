@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/features/escaner/pagina_escaner_producto.dart';
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/features/ventas/presentation/pagina_crear_ventas.dart'; // Abre directamente el registro de una venta.
 import 'package:frenos_cerna/features/ventas/presentation/pagina_ventas_historial.dart'; // Abre el historial completo.
@@ -261,7 +262,7 @@ class PaginaInicio extends StatelessWidget {
 
                                         // Mantiene el escaneo pendiente y conserva la ruta de datos en escritorio.
                                         alPresionar: esMovil
-                                            ? null
+                                            ? () => escanearProducto(context)
                                             : () => Navigator.pushNamed(
                                                 context,
                                                 '/data',
