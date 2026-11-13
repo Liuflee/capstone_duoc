@@ -20,6 +20,7 @@ import 'package:frenos_cerna/features/perfil/pagina_perfil.dart';
 import 'package:material_ui/material_ui.dart';
 // Para que funcione centrarse en la pantalla al abrir app
 import 'package:window_manager/window_manager.dart';
+import 'package:flutter/foundation.dart';
 
 import 'package:frenos_cerna/core/navigation/nav_rutas.dart';
 
@@ -33,19 +34,25 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Inicializa y configura la ventana de escritorio
-  final window = WindowManager.instance.getCurrent()!;
-
-  window.title = 'Frenos Cerna';
-  window.setSize(const Size(1200, 800).toNative(), false);
-  window.center();
+  final escritorio =
+      !kIsWeb &&
+      {
+        TargetPlatform.windows,
+        TargetPlatform.macOS,
+        TargetPlatform.linux,
+      }.contains(defaultTargetPlatform);
+  final window = escritorio ? WindowManager.instance.getCurrent() : null;
+  window?.title = 'Frenos Cerna';
+  window?.setSize(const Size(1200, 800).toNative(), false);
+  window?.center();
 
   // Inicializa la conexión con Supabase
   await SupabaseDatabase.initialize();
   await PaletaTaller.cargar();
 
   // Ejecuta la aplicación
-  window.show();
-  window.focus();
+  window?.show();
+  window?.focus();
   runApp(const MiAplicacion());
 }
 
