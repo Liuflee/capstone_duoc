@@ -184,21 +184,26 @@ class _ContenidoBarraSuperior extends StatelessWidget {
             ),
           ],
         ), // Utiliza una superficie clara y un acento del rojo existente.
-        child: Text(
-          tituloPagina,
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: PaletaTaller.de(context)
-                .adaptar(Color(0xFF721919), tinta: true),
-            fontSize: compacto ? 18 : 22,
-            fontWeight: FontWeight.w700,
-          ),
-        ), // Mejora la jerarquía del nombre sin cambiar el contenido de las páginas.
+        child: _textoTitulo(context, compacto), // Mejora la jerarquía del nombre sin cambiar el contenido de las páginas.
       ),
     ),
   ); // Finaliza el título destacado.
+
+  Widget _textoTitulo(BuildContext context, bool compacto) {
+    final movil = MediaQuery.sizeOf(context).width < 700;
+    final texto = Text(
+      tituloPagina,
+      textAlign: TextAlign.center,
+      maxLines: movil ? 1 : 2,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        color: PaletaTaller.de(context).adaptar(Color(0xFF721919), tinta: true),
+        fontSize: compacto ? 18 : 22,
+        fontWeight: FontWeight.w700,
+      ),
+    );
+    return movil ? FittedBox(fit: BoxFit.scaleDown, child: texto) : texto;
+  }
 
   Widget _usuario(BuildContext context, {required bool mostrarDatos}) => Row(
     mainAxisAlignment: MainAxisAlignment.end,

@@ -259,7 +259,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                                 },
                               )
                               .toList();
-                          return TablaDatos(
+                          final tabla = TablaDatos(
                             mostrarControles: false, // El panel ya muestra el buscador y las categorías.
                             // Encabezados visibles de la tabla.
                             nombresColumnas: const [
@@ -357,6 +357,28 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                               },
                             },
                           ); // Finaliza la tabla construida con los vehículos filtrados.
+                          if (MediaQuery.sizeOf(context).width >= 700) {
+                            return tabla;
+                          }
+                          return TablaDatos(
+                            mostrarControles: false,
+                            nombresColumnas: const [
+                              'CLIENTE',
+                              'PATENTE',
+                              'REVISAR',
+                            ],
+                            camposColumnas: const ['cliente', 'patente', ''],
+                            anchosColumnas: const [220, 140, 88],
+                            filas: filasVehiculos,
+                            coloresEncabezados: [
+                              for (final indice in [0, 3, 4])
+                                tabla.coloresEncabezados![indice],
+                            ],
+                            celdasPersonalizadas: {
+                              0: tabla.celdasPersonalizadas[0]!,
+                              2: tabla.celdasPersonalizadas[4]!,
+                            },
+                          );
                         }, // Finaliza la construcción del contenido.
                       ), // Finaliza el panel de filtros reutilizable.
                     ), // Finaliza el espacio restante de la página.
