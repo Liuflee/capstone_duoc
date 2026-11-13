@@ -1,5 +1,12 @@
 # Frenos Cerna
 
+## Consultas por voz
+
+La opción **Consultas por voz** utiliza Whisper Tiny y MiniLM dentro del dispositivo
+para reconocer y clasificar preguntas de inventario y ventas. Los modelos se
+descargan una vez desde la aplicación; no requiere un servidor de voz. Las
+instrucciones para Android y las consultas admitidas están en [voz_local/README.md](voz_local/README.md).
+
 ## Configuración de Supabase
 
 1. Crea un proyecto en Supabase y abre su SQL Editor.

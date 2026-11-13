@@ -1,0 +1,14 @@
+{
+  "stock_bajo": [
+    "Qué productos tienen poco stock", "Qué productos están por acabarse", "Muéstrame los productos con existencias bajas", "Necesito saber qué artículos debo reponer", "Cuáles productos quedan en pocas unidades", "Qué repuestos están agotados o casi agotados", "Lista el inventario con stock crítico", "Revisa los productos que están escasos", "Qué artículos necesitan reposición", "Muéstrame el stock bajo del taller", "Qué repuestos se nos están terminando", "Consulta los productos con cinco unidades o menos"
+  ],
+  "stock_producto": [
+    "Cuántas unidades quedan del producto ABC-123", "Quiero saber el stock del código 00123", "Busca las existencias del repuesto ABC-123", "Cuántos tenemos del artículo XYZ", "Consulta la disponibilidad del producto ABC-123", "Dime cuánto queda del código 00123", "Revisa el inventario del producto ABC-123", "Muéstrame las unidades disponibles del repuesto XYZ", "Tenemos unidades del producto ABC-123", "Hay stock para el código 00123", "Cuánto stock tiene este producto", "Necesito consultar un producto por su código"
+  ],
+  "ventas": [
+    "Cuánto vendimos hoy", "Muéstrame las ventas de ayer", "Necesito el total vendido este mes", "Cuánto dinero ingresó por ventas esta semana", "Dime cuánto hemos vendido durante el mes", "Consulta la suma de las ventas de hoy", "Cómo van las ventas de esta semana", "Quiero ver lo vendido ayer", "Cuántas ventas hicimos hoy", "Revisa las ventas del mes actual", "Cuál fue la recaudación de ayer", "Quiero consultar los ingresos por ventas"
+  ],
+  "no_admitida": [
+    "Elimina un producto del inventario", "Modifica el stock del producto ABC-123", "Quiero crear una venta", "Agrega diez unidades al producto", "Registra un cliente nuevo", "Muéstrame los datos personales de un cliente", "Cuál es el clima de hoy", "Cuéntame un chiste", "Quiero comprar un repuesto", "Necesito reservar un producto", "Cuánto cuesta reparar mis frenos", "Cancela la venta de ayer", "Muéstrame los proveedores", "Cuál es el producto más vendido", "Quiero conocer las ganancias del taller", "Cuánto gastamos hoy", "Quiero ver las compras de este mes", "Quién compró ayer"
+  ]
+}

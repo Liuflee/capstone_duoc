@@ -1,5 +1,6 @@
 # Project-level configuration.
 cmake_minimum_required(VERSION 3.14)
+cmake_policy(SET CMP0091 NEW)
 project(frenos_cerna LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
@@ -56,6 +57,13 @@ add_subdirectory("runner")
 # Generated plugin build rules, which manage building the plugins and adding
 # them to the application.
 include(flutter/generated_plugins.cmake)
+
+# Whisper returns malloc-owned buffers which Dart frees through the release CRT.
+# Keep both sides on the same allocator, including Flutter Debug builds.
+if(MSVC AND TARGET whisper_ggml_plugin)
+  set_property(TARGET whisper_ggml_core whisper_ggml_plugin
+    PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
+endif()
 
 
 # === Installation ===
