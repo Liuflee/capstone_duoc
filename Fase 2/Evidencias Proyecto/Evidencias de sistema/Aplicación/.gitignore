@@ -36,13 +36,6 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
-/voz_local/.venv/
-/voz_local/modelos/
-**/__pycache__/
-/.modelos_ia/
-/.herramientas_android/
-/android/.kotlin/
-/android/build/
 
 # Symbolication related
 app.*.symbols

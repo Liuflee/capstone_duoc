@@ -5,8 +5,7 @@ import 'dart:io' show exit; // Permite cerrar el proceso de escritorio.
 
 import 'package:flutter/foundation.dart'; // Identifica la plataforma actual.
 import 'package:flutter/services.dart'; // Solicita el cierre de la actividad Android.
-import 'package:flutter/material.dart';
-import 'package:frenos_cerna/features/asistente/pagina_asistente.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:frenos_cerna/core/navigation/nav_rutas.dart';
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart';
 import 'package:frenos_cerna/features/inventario/pagina_inventario.dart';
@@ -129,14 +128,6 @@ class MenuLateral extends StatelessWidget {
     ),
   ); // Finaliza la superficie elevada.
   List<Widget> _opciones(BuildContext context) => [
-    InkWell(
-      onTap: () {
-        if (activo != 'Asistente') {
-          Navigator.pushReplacement(context, NavegacionRutas.sinAnimacion(const PaginaAsistente()));
-        }
-      },
-      child: _MenuItem(icono: Icons.mic_outlined, texto: 'Consultas\npor voz', activo: activo == 'Asistente'),
-    ),
     // Conserva el orden de navegación.
 
     // BOTÓN PÁGINA PRINCIPAL

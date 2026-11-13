@@ -7,13 +7,6 @@ environment:
   sdk: ^3.13.3
 
 dependencies:
-  crypto: ^3.0.7
-  dart_sentencepiece_tokenizer: ^1.4.1
-  flutter_onnxruntime: ^1.9.0
-  path_provider: ^2.1.5
-  whisper_ggml: ^2.9.0
-  http: ^1.6.0
-  record: ^7.1.2
   flutter:
     sdk: flutter
   supabase_flutter: ^2.17.2
@@ -22,8 +15,6 @@ dependencies:
   material_ui: ^1.11.0
 
 dev_dependencies:
-  integration_test:
-    sdk: flutter
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
@@ -32,7 +23,6 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
-    - assets/ia/
 
 dependency_overrides:
   nativeapi:
