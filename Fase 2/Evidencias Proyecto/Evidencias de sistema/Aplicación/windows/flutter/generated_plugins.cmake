@@ -4,15 +4,15 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   app_links
-  flutter_onnxruntime
-  flutter_tts
+  permission_handler_windows
   record_windows
   url_launcher_windows
+  vosk_flutter_fixed
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
+  flutter_soloud
   jni
-  whisper_ggml
 )
 
 set(PLUGIN_BUNDLED_LIBRARIES)

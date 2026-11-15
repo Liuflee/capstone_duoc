@@ -130,12 +130,19 @@ class VentaRegistro {
     return VentaRegistro.fromJson(Map<String, dynamic>.from(data));
   }
 
-  static Future<List<VentaRegistro>> obtenerPorPatente(String patente) async {
-    final data = await SupabaseDatabase.client
+  static Future<List<VentaRegistro>> obtenerPorPatente(
+    String patente, {
+    int? limite,
+    int desde = 0,
+  }) async {
+    final consulta = SupabaseDatabase.client
         .from(SupabaseTables.ventas)
         .select(_select)
         .eq('patente_vehiculo', patente)
         .order('id', ascending: false);
+    final data = await (limite == null
+        ? consulta
+        : consulta.range(desde, desde + limite - 1));
     return (data as List<dynamic>)
         .map(
           (item) =>

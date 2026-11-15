@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert'; // Codifica los borradores locales sin cambiar tablas.
 import 'dart:math'; // Genera identificadores locales independientes.
 
@@ -121,6 +122,9 @@ class VentasPendientesRepository {
   final Future<SharedPreferences> Function() preferencias; // Permite verificar la persistencia con almacenamiento controlado.
   final Future<String> Function(VentaPendiente)
   registrar; // Envía la venta solamente al confirmar el pago.
+  final _cambios = StreamController<void>.broadcast();
+  Stream<void> get cambios => _cambios.stream;
+
   Future<void>? _cola; // Crea la cola cuando comienza una operación local.
   final Map<String, Future<String>> _confirmaciones =
       {}; // Comparte una única confirmación por venta.
@@ -240,6 +244,7 @@ class VentasPendientesRepository {
       filas[indice] = registro;
     } // Conserva la misma clave al editar.
     await _escribir(filas); // No ejecuta consultas ni escrituras en Supabase.
+    _cambios.add(null);
   }); // Finaliza el guardado local.
   Future<bool> requiereRevision(String id) => _exclusivo(
     () async => (await _leer()).any(
