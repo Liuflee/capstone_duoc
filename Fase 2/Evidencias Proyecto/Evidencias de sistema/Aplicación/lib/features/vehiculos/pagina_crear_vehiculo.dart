@@ -414,7 +414,7 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
           24, // Conserva los márgenes seguros en móvil y ventanas pequeñas.
         ),
         alignment: Alignment.center, // Presenta la selección en el centro horizontal del área de contenido.
-        backgroundColor: PaletaTaller.de(context)
+        backgroundColor: PaletaTaller.de(menu)
             .fondo, // Usa el fondo blanco de las páginas.
         surfaceTintColor:
             Colors.transparent, // Evita el tinte rosado del tema Material.

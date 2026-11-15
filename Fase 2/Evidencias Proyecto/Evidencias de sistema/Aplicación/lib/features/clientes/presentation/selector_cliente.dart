@@ -27,7 +27,7 @@ Future<Cliente?> seleccionarClienteExistente(
   return mostrarDialogoConTema<Cliente>(
     context: context,
     builder: (dialogo) => Dialog(
-      backgroundColor: PaletaTaller.de(context)
+      backgroundColor: PaletaTaller.de(dialogo)
           .fondo, // Comparte el fondo de las páginas de la aplicación.
       surfaceTintColor:
           Colors.transparent, // Evita el tinte rosado del tema Material.
@@ -76,13 +76,9 @@ Future<Cliente?> seleccionarClienteExistente(
                       ); // Conserva el estado de carga.
                     }
                     return TablaDatos(
-                      nombresColumnas: const ['NOMBRE', 'RUT', 'SELECCIONAR'],
-                      camposColumnas: const ['nombre', 'rut', ''],
-                      anchosColumnas: const [
-                        4,
-                        2,
-                        2,
-                      ], // Permite buscar por nombre o RUT.
+                      nombresColumnas: const ['NOMBRE', 'RUT'],
+                      camposColumnas: const ['nombre', 'rut'],
+                      anchosColumnas: const [3, 2],
                       filas: estado.data!
                           .map(
                             (cliente) => <String, dynamic>{
@@ -93,16 +89,56 @@ Future<Cliente?> seleccionarClienteExistente(
                           )
                           .toList(), // Conserva el cliente original al filtrar.
                       celdasPersonalizadas: {
-                        2: (context, fila) => CartaNavegacion.accion(
-                          tipoBoton: 'icon',
-                          tooltip: 'Vincular este cliente',
-                          child: const Icon(Icons.check_circle_outline),
-                          onPressed: () => Navigator.pop(
-                            dialogo,
-                            fila['cliente'] as Cliente,
+                        for (final campo in ['nombre', 'rut'])
+                          (campo == 'nombre'
+                              ? 0
+                              : 1): (context, fila) => SizedBox.expand(
+                            child: InkWell(
+                              onTap: () async {
+                                final cliente = fila['cliente'] as Cliente;
+                                final aceptar = await mostrarDialogoConTema<bool>(
+                                  context: dialogo,
+                                  builder: (confirmacion) => AlertDialog(
+                                    backgroundColor: PaletaTaller.de(
+                                      confirmacion,
+                                    ).fondo,
+                                    surfaceTintColor: Colors.transparent,
+                                    title: const Text(
+                                      '¿Seleccionar este cliente?',
+                                    ),
+                                    content: Text(
+                                      '${cliente.nombre}\nRUT: ${cliente.id}',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(confirmacion, false),
+                                        child: const Text('CANCELAR'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(confirmacion, true),
+                                        child: const Text('ACEPTAR'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (aceptar == true && dialogo.mounted) {
+                                  Navigator.pop(dialogo, cliente);
+                                }
+                              },
+                              child: Center(
+                                child: Text(
+                                  fila[campo].toString(),
+                                  textAlign: TextAlign.center,
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                      }, // Devuelve el cliente seleccionado sin crear duplicados.
+                      },
                     ); // Finaliza la tabla del buscador.
                   },
                 ),

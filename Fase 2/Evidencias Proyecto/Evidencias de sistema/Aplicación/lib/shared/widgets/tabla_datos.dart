@@ -16,6 +16,7 @@ typedef ConstructorCeldaTabla = Widget Function(
 class TablaDatos extends StatefulWidget {
   // Adapta las tablas de detalle conservando cada celda y sus acciones originales.
   static Widget desdeCeldas({
+    bool ajustarAlAnchoDisponible = false,
     required List<DataColumn>
     columns, // Recibe los encabezados de la tabla anterior.
     required List<DataRow>
@@ -103,6 +104,7 @@ class TablaDatos extends StatefulWidget {
                   .clamp(260.0, 520.0)
                   .toDouble(), // Conserva el ancho del padre y permite desplazar las filas.
         child: TablaDatos(
+          ajustarAlAnchoDisponible: ajustarAlAnchoDisponible,
           nombresColumnas: [
             for (int indice = 0; indice < columns.length; indice++)
               textoCelda(columns[indice].label).isEmpty
@@ -189,6 +191,8 @@ class TablaDatos extends StatefulWidget {
   final List<Color?>? coloresTextoEncabezados;
 
   // Propiedades visuales opcionales.
+  final bool ajustarAlAnchoDisponible;
+  final bool paginar;
   final double altoEncabezado;
   final double altoFila;
   final Color colorEncabezado;
@@ -206,6 +210,8 @@ class TablaDatos extends StatefulWidget {
     this.celdasPersonalizadas = const {},
     this.coloresEncabezados,
     this.coloresTextoEncabezados,
+    this.ajustarAlAnchoDisponible = false,
+    this.paginar = false,
     this.altoEncabezado = 56,
     this.altoFila = 70,
     this.colorEncabezado = const Color(0xFFEF6767),
@@ -228,6 +234,7 @@ class TablaDatos extends StatefulWidget {
 }
 
 class _TablaDatosState extends State<TablaDatos> {
+  int _pagina = 0;
   // Conserva el texto de búsqueda de esta tabla independientemente de otras tablas.
   final TextEditingController _buscador = TextEditingController();
 
@@ -285,7 +292,8 @@ class _TablaDatosState extends State<TablaDatos> {
         final anchosAdaptados = List.generate(anchosMinimos.length, (i) {
           final proporcional =
               anchoDisponible * widget.anchosColumnas[i] / totalAnchos;
-          return anchoDisponible < anchoMinimo
+          return !widget.ajustarAlAnchoDisponible &&
+                  anchoDisponible < anchoMinimo
               ? anchosMinimos[i]
               : proporcional;
         });
@@ -362,6 +370,12 @@ class _TablaDatosState extends State<TablaDatos> {
                         Expanded(
                           child: filasVisibles.isEmpty
                               ? Center(child: Text(widget.mensajeSinDatos))
+                              : widget.paginar
+                              ? _filasPaginadas(
+                                  filasVisibles,
+                                  anchosCalculados,
+                                  espacioScroll,
+                                )
                               : Scrollbar(
                                   controller: _controladorScroll,
                                   thumbVisibility: true,
@@ -440,6 +454,64 @@ class _TablaDatosState extends State<TablaDatos> {
   }
 
   // Construye cada fila con valores de datos o celdas personalizadas.
+  Widget _filasPaginadas(
+    List<Map<String, dynamic>> filas,
+    List<double> anchos,
+    double margen,
+  ) {
+    return LayoutBuilder(
+      builder: (context, limites) {
+        final capacidad = ((limites.maxHeight - 48) / widget.altoFila)
+            .floor()
+            .clamp(1, filas.length);
+        final paginas = (filas.length / capacidad).ceil();
+        final pagina = _pagina.clamp(0, paginas - 1);
+        final inicio = pagina * capacidad;
+        final fin = (inicio + capacidad).clamp(0, filas.length);
+        return Column(
+          children: [
+            Expanded(
+              child: ClipRect(
+                child: Column(
+                  children: [
+                    for (var i = inicio; i < fin; i++)
+                      Padding(
+                        padding: EdgeInsets.only(right: margen),
+                        child: _construirFila(context, filas[i], i, anchos),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(
+              height: 48,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    tooltip: 'Página anterior',
+                    onPressed: pagina == 0
+                        ? null
+                        : () => setState(() => _pagina = pagina - 1),
+                    icon: const Icon(Icons.chevron_left),
+                  ),
+                  Text('${pagina + 1} / $paginas'),
+                  IconButton(
+                    tooltip: 'Página siguiente',
+                    onPressed: pagina == paginas - 1
+                        ? null
+                        : () => setState(() => _pagina = pagina + 1),
+                    icon: const Icon(Icons.chevron_right),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _construirFila(
     BuildContext context,
     Map<String, dynamic> fila,

@@ -231,6 +231,7 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
           SizedBox(
             width: double.infinity,
             child: TablaDatos.desdeCeldas(
+              ajustarAlAnchoDisponible: MediaQuery.sizeOf(context).width < 700,
               headingRowColor: WidgetStateProperty.all(
                 PaletaTaller.de(context).adaptar(Colors.red[400]!),
               ),
@@ -243,7 +244,9 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
               columns: [
                 DataColumn(
                   label: Text(
-                    'PRODUCTOS / SERVICIOS',
+                    MediaQuery.sizeOf(context).width >= 700
+                        ? 'PRODUCTOS / SERVICIOS'
+                        : 'COMPRA',
                     style: TextStyle(
                       color: PaletaTaller.de(context)
                           .adaptar(Colors.black, tinta: true),

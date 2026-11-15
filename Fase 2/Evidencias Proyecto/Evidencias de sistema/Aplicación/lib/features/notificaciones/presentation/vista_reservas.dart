@@ -312,6 +312,62 @@ class _VistaReservasState extends State<VistaReservas> {
     }
   }
 
+  Future<void> _verReserva(
+    BuildContext context,
+    Map<String, dynamic> fila,
+  ) async {
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PaginaTematica(
+          builder: (context) => EstructuraPagina(
+            titulo: 'Detalle de reserva',
+            activo: 'Notificaciones',
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  CartaNavegacion.accion(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.arrow_back),
+                    label: const Text('VOLVER A RESERVAS'),
+                  ),
+                  const SizedBox(height: 24),
+                  for (final dato in <String, Object?>{
+                    'PRODUCTO': fila['codigo_producto'],
+                    'ESTADO': fila['estado_visible'],
+                    'CLIENTE': fila['cliente_visible'],
+                    'RUT': fila['rut_cliente'],
+                    'TELÉFONO': fila['contacto'],
+                    'FECHA DE REGISTRO': fila['fecha_registro'],
+                  }.entries)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: Text(
+                        '${dato.key}: ${dato.value ?? "Sin información"}',
+                        style: const TextStyle(fontSize: 18),
+                      ),
+                    ),
+                  if (fila['estado'] != 'lista')
+                    CartaNavegacion.accion(
+                      icon: const Icon(Icons.check_circle_outline),
+                      label: const Text('MARCAR LISTA'),
+                      onPressed: _ocupado
+                          ? null
+                          : () async {
+                              await _lista(fila);
+                              if (context.mounted) Navigator.pop(context);
+                            },
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _lista(Map<String, dynamic> fila) async {
     final confirmar = await mostrarDialogoConTema<bool>(
       context: context,
@@ -435,27 +491,43 @@ class _VistaReservasState extends State<VistaReservas> {
                   )
                   .toList(); // Presenta los estados en mayúsculas.
               return TablaDatos(
-                nombresColumnas: [
-                  'PRODUCTO',
-                  'CLIENTE',
-                  'TELÉFONO',
-                  'ESTADO',
-                  if (!widget.reservados) 'MARCAR LISTA',
-                ],
-                camposColumnas: [
-                  'codigo_producto',
-                  'cliente_visible',
-                  'contacto',
-                  'estado_visible',
-                  if (!widget.reservados) '',
-                ],
-                anchosColumnas: [3, 3, 2, 2, if (!widget.reservados) 1],
+                ajustarAlAnchoDisponible:
+                    MediaQuery.sizeOf(context).width < 700,
+                nombresColumnas: MediaQuery.sizeOf(context).width < 700
+                    ? const ['PRODUCTO', 'ESTADO', 'VER']
+                    : [
+                        'PRODUCTO',
+                        'CLIENTE',
+                        'TELÉFONO',
+                        'ESTADO',
+                        if (!widget.reservados) 'MARCAR LISTA',
+                      ],
+                camposColumnas: MediaQuery.sizeOf(context).width < 700
+                    ? const ['codigo_producto', 'estado_visible', '']
+                    : [
+                        'codigo_producto',
+                        'cliente_visible',
+                        'contacto',
+                        'estado_visible',
+                        if (!widget.reservados) '',
+                      ],
+                anchosColumnas: MediaQuery.sizeOf(context).width < 700
+                    ? const [3, 2, 1]
+                    : [3, 3, 2, 2, if (!widget.reservados) 1],
                 filas: filas,
                 mensajeSinDatos: widget.reservados
                     ? 'No hay reservas listas.'
                     : 'No hay productos reservados.',
                 celdasPersonalizadas: {
-                  if (!widget.reservados)
+                  if (MediaQuery.sizeOf(context).width < 700)
+                    2: (context, fila) => CartaNavegacion.accion(
+                      tipoBoton: 'icon',
+                      tooltip: 'Ver reserva',
+                      onPressed: () => _verReserva(context, fila),
+                      child: const Icon(Icons.search),
+                    ),
+                  if (MediaQuery.sizeOf(context).width >= 700 &&
+                      !widget.reservados)
                     4: (context, fila) => CartaNavegacion.accion(
                       tipoBoton: 'icon',
                       tooltip: 'Marcar reserva lista',

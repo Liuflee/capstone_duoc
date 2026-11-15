@@ -449,11 +449,15 @@ class _PaginaVentasState extends State<PaginaVentas> {
                               ),
                           ],
                           child: (filtrados) => TablaDatos(
+                            ajustarAlAnchoDisponible: !esPantallaGrande,
+                            paginar: !esPantallaGrande,
                             mostrarControles: false, // El panel ya aplica estado, periodo y búsqueda.
                             // Encabezados visibles de la tabla.
                             // La vista por cliente omite la columna de cliente
                             // porque todas sus filas muestran el mismo nombre.
-                            nombresColumnas: ventasDelDia
+                            nombresColumnas:
+                                ventasDelDia ||
+                                    (!esPantallaGrande && !soloCliente)
                                 ? const ["CLIENTE", "VEHÍCULO", "VER"]
                                 : soloCliente
                                 ? const ['VEHÍCULO', 'PRODUCTOS', 'VER']
@@ -465,7 +469,9 @@ class _PaginaVentasState extends State<PaginaVentas> {
                                   ],
 
                             // Campos de cada columna (vacío si la celda es personalizada).
-                            camposColumnas: ventasDelDia
+                            camposColumnas:
+                                ventasDelDia ||
+                                    (!esPantallaGrande && !soloCliente)
                                 ? const ["cliente", "vehiculo", ""]
                                 : soloCliente
                                 ? const ['vehiculo', 'productos', '']
@@ -477,14 +483,18 @@ class _PaginaVentasState extends State<PaginaVentas> {
                                   ],
 
                             // Ancho proporcional de cada columna.
-                            anchosColumnas: ventasDelDia
+                            anchosColumnas:
+                                ventasDelDia ||
+                                    (!esPantallaGrande && !soloCliente)
                                 ? const [220, 180, 88]
                                 : soloCliente
                                 ? const [250, 450, 100]
                                 : const [200, 200, 400, 100],
 
                             // Colores de cabecera alternando entre los dos rojos.
-                            coloresEncabezados: ventasDelDia
+                            coloresEncabezados:
+                                ventasDelDia ||
+                                    (!esPantallaGrande && !soloCliente)
                                 ? const [_rojoClaro, _rojoOscuro, _rojoClaro]
                                 : soloCliente
                                 ? const [_rojoClaro, _rojoOscuro, _rojoClaro]
@@ -500,7 +510,9 @@ class _PaginaVentasState extends State<PaginaVentas> {
 
                             filas: filtrados, // Muestra las ventas que pasan los filtros.
 
-                            celdasPersonalizadas: ventasDelDia
+                            celdasPersonalizadas:
+                                ventasDelDia ||
+                                    (!esPantallaGrande && !soloCliente)
                                 ? {
                                     0: _celdaCliente,
                                     1: _celdaVehiculo,

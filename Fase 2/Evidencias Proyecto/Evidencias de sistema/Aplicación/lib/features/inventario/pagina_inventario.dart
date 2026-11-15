@@ -21,6 +21,7 @@ import 'package:frenos_cerna/shared/widgets/panel_filtros.dart';
 
 class Producto {
   final String id;
+  final String sku;
   final String nombre;
   final String codigoBarra;
   final String categoria;
@@ -32,6 +33,7 @@ class Producto {
 
   Producto({
     required this.id,
+    this.sku = '',
     required this.nombre,
     required this.codigoBarra,
     required this.categoria,
@@ -50,6 +52,7 @@ class Producto {
 
     return Producto(
       id: codigo,
+      sku: json['sku']?.toString() ?? '',
 
       nombre: codigoBarra.isEmpty ? codigo : codigoBarra,
 
@@ -113,7 +116,7 @@ class _PaginaInventarioState extends State<PaginaInventario> {
       final response = await SupabaseDatabase.client
           .from(SupabaseTables.productos)
           .select(
-            'codigo_producto, cod_barra, stock, tipo, calidad, precio, tipo_producto(nombre_tipo)',
+            'codigo_producto, sku, cod_barra, stock, tipo, calidad, precio, tipo_producto(nombre_tipo)',
           )
           .order('codigo_producto');
 

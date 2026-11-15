@@ -90,9 +90,11 @@ void main() {
         await tester.pumpAndSettle(); // Abre el selector sin perder el código.
         await tester.tap(find.text('CLIENTE EXISTENTE'));
         await tester.pumpAndSettle(); // Selecciona el flujo de búsqueda.
-        await tester.ensureVisible(find.byTooltip('Vincular este cliente'));
+        await tester.ensureVisible(find.text('Cliente reserva'));
         await tester.pumpAndSettle();
-        await tester.tap(find.byTooltip('Vincular este cliente'));
+        await tester.tap(find.text('Cliente reserva'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('ACEPTAR'));
         await tester.pumpAndSettle(); // Vincula el destinatario de la reserva.
         await tester.tap(find.text('RESERVAR'));
         await tester.pumpAndSettle(); // Guarda y refresca la tabla.
@@ -104,9 +106,16 @@ void main() {
               .single['codigo_producto'],
           'SP0-01223',
         ); // Muestra la reserva recién guardada.
-        await tester.ensureVisible(find.byTooltip('Marcar reserva lista'));
-        await tester.pumpAndSettle();
-        await tester.tap(find.byTooltip('Marcar reserva lista'));
+        if (ancho < 700) {
+          await tester.tap(find.byTooltip('Ver reserva'));
+          await tester.pumpAndSettle();
+          await tester.ensureVisible(find.text('MARCAR LISTA'));
+          await tester.tap(find.text('MARCAR LISTA'));
+        } else {
+          await tester.ensureVisible(find.byTooltip('Marcar reserva lista'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byTooltip('Marcar reserva lista'));
+        }
         await tester.pumpAndSettle();
         await tester.tap(find.text('CONFIRMAR'));
         await tester.pumpAndSettle(); // Confirma el cambio de estado.
@@ -142,6 +151,7 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
       final producto = Producto(
         id: 'SP0-01223',
+        sku: 'SKU-PRUEBA',
         nombre: 'SP0-01223',
         codigoBarra: '789030',
         categoria: 'Pastillas',
@@ -175,13 +185,14 @@ void main() {
           .widgetList<TextFormField>(find.byType(TextFormField))
           .toList();
       expect(campos.map((campo) => campo.controller!.text), [
+        'SKU-PRUEBA',
         'SP0-01223',
         '14000',
         '7',
         '789030',
       ]); // Comprueba los datos y el orden de Añadir producto.
       expect(
-        campos.first.enabled,
+        campos[1].enabled,
         isFalse,
       ); // Protege la clave referenciada por ventas.
       expect(
