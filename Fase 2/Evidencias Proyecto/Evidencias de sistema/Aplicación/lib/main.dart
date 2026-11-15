@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/features/dashboard/pagina_dashboard.dart';
 import 'package:frenos_cerna/features/ventas/presentation/pagina_ventas_historial.dart'; // Registra el acceso independiente al historial completo.
@@ -34,14 +36,15 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Inicializa y configura la ventana de escritorio
-  final escritorio =
+  final esEscritorio =
       !kIsWeb &&
-      {
+      const [
         TargetPlatform.windows,
-        TargetPlatform.macOS,
         TargetPlatform.linux,
-      }.contains(defaultTargetPlatform);
-  final window = escritorio ? WindowManager.instance.getCurrent() : null;
+        TargetPlatform.macOS,
+      ].contains(defaultTargetPlatform);
+  final window = esEscritorio ? WindowManager.instance.getCurrent() : null;
+
   window?.title = 'Frenos Cerna';
   window?.setSize(const Size(1200, 800).toNative(), false);
   window?.center();
@@ -108,10 +111,7 @@ class MiAplicacion extends StatelessWidget {
                   color: paleta.fondo,
                   child: SafeArea(
                     bottom: false,
-                    child: ColoredBox(
-                      color: paleta.fondo,
-                      child: child!,
-                    ),
+                    child: ColoredBox(color: paleta.fondo, child: child!),
                   ),
                 ),
               ),

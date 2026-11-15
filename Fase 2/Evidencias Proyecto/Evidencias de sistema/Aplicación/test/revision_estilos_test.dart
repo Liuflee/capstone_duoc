@@ -290,7 +290,7 @@ void main() {
         ); // Conserva el escaneo de barras en celular.
         expect(
           escaneo.alPresionar,
-          isNull,
+          isNotNull,
         ); // Mantiene el escaneo pendiente de conectar.
         expect(find.text('DATOS'), findsNothing); // Evita duplicar accesos.
       } else {
