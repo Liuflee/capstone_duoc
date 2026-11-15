@@ -34,12 +34,22 @@ El cliente y los nombres de las tablas están centralizados en `lib/core/data/su
 
 El esquema no almacena nombre para los productos (se muestra el código de barra o el código), cantidad por línea de venta, fecha ni estado de venta. El importe de cada línea se guarda en `detalle_venta_producto.total`; el IVA se registra como porcentaje (19). Tampoco conserva el dígito verificador `K` del RUT ni ceros iniciales del teléfono porque `rut` y `fono` son enteros; para esos formatos, migra ambas columnas a texto antes de cargar datos reales.
 
-## Asistente de voz en Android e iOS
+## Asistente Cerna con Gemini Live
 
-En el menú lateral, abre **Asistente Cerna** con una sesión activa. Usa **Hablar ahora** para dictar una consulta o **Escuchar «Oye Cerna»** y di «Hey Cerna» u «Oye Cerna». Puedes decir la pregunta a continuación en la misma frase o tras una pausa. El micrófono se usa mientras esta pantalla está abierta y en primer plano.
+En el proyecto de Supabase, configura `GEMINI_API_KEY` en **Edge Functions → Secrets** y despliega la función desde la carpeta de la aplicación con la CLI autenticada:
 
-Prueba «Dime los productos sin stock» para consultar los productos con cero unidades, o «¿Qué productos tienen stock bajo?» para consultar los que tienen de una a cinco. La app muestra los resultados y lee los códigos y los tipos de producto con una voz local en español.
+```powershell
+supabase functions deploy cerna-live-token --project-ref TU_PROJECT_REF --no-verify-jwt
+```
 
-Para consultar un repuesto, di «Stock del código ABC guion uno dos tres». Para ventas, prueba «¿Cuánto vendimos hoy?» o «Total de ventas de este mes». El asistente indica la cantidad de ventas y el total de productos y servicios en pesos chilenos. Usa el día del dispositivo y requiere que Supabase tenga aplicada la migración `supabase/fecha_registro_ventas.sql`. Las ventas históricas sin fecha quedan fuera del período.
+La función valida la sesión con Supabase Auth y comprueba el rol mediante `rol_actual()`. La clave permanente de Gemini queda en Supabase. Flutter solo recibe un token de un uso para `gemini-3.8-live`. Aplica también `supabase/fecha_registro_ventas.sql` para las consultas por fecha.
 
-La primera activación descarga unos 205 MB de modelos y verifica su integridad. Whisper Tiny multilingüe y paraphrase-multilingual-MiniLM-L12-v2 se ejecutan en el teléfono. Las consultas de inventario y ventas necesitan conexión a Supabase y usa los permisos de la cuenta activa.
+El asistente escucha «Oye Cerna» y «Hey Cerna» con sesión iniciada en Android, iOS y Windows, mientras la aplicación está visible. En el primer inicio descarga el detector español de Vosk (39 MB). El audio queda en el dispositivo hasta la activación. Al activarse, envía a Gemini una ventana de hasta dos segundos para conservar las preguntas que comienzan inmediatamente después de la frase. El botón de micrófono abre la conversación manualmente y el botón de pausa suspende la escucha. Al minimizar la aplicación o cerrar sesión se libera el micrófono.
+
+Android incluye las bibliotecas de Vosk. Para Windows e iOS, ejecuta antes de compilar `dart run vosk_flutter_fixed install -t windows` o `dart run vosk_flutter_fixed install -t ios`, respectivamente.
+
+- «Oye Cerna, ¿cuánto stock queda del AB guion ciento veintitrés?»
+- «Hey Cerna, ¿cuánto vendimos hoy?»
+- «Oye Cerna, ¿qué kilometraje tiene la patente ABCD12?»
+- «Oye Cerna, dime las últimas compras del auto ABCD12».
+- «Hey Cerna, prepara una venta pendiente con dos AB-123 para el RUT 12345678, sin patente». Revisa los datos del aviso y pulsa **Guardar pendiente**. Se conserva como borrador local para la cuenta y el dispositivo, con el flujo habitual de confirmación del pago.

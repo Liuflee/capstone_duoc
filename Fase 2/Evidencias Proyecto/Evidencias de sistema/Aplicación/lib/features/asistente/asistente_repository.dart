@@ -26,7 +26,7 @@ class AsistenteRepository {
     _comprobarSesion(cliente, usuarioId);
     if (fila != null) return _producto(fila);
 
-    // Whisper puede cambiar las mayúsculas del identificador.
+    // El dictado puede cambiar las mayúsculas del identificador.
     final variantes = {codigo.toUpperCase(), codigo.toLowerCase()}
       ..remove(codigo);
     if (variantes.isEmpty) return null;

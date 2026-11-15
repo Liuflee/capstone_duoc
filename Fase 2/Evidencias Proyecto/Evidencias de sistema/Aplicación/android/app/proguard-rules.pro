@@ -1,2 +1,1 @@
--keep class ai.onnxruntime.** { *; }
-
+-keep class com.sun.jna.** { *; }

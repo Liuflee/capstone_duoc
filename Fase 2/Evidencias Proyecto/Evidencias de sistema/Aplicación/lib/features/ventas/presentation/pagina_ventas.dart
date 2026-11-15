@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/features/ventas/data/ventas_pendientes_repository.dart'; // Integra las ventas todavía locales.
 import 'package:frenos_cerna/features/ventas/presentation/pagina_detalle_venta_pendiente.dart'; // Abre el historial de una venta sin pago.
@@ -51,6 +53,8 @@ class _PaginaVentasState extends State<PaginaVentas> {
       VentasPendientesRepository
           .instancia; // Usa el mismo catálogo al crear y editar.
 
+  StreamSubscription<void>? _cambiosPendientes;
+  int _versionPendientes = 0;
   bool _cargando = true;
   String? _error;
 
@@ -61,10 +65,36 @@ class _PaginaVentasState extends State<PaginaVentas> {
   @override
   void initState() {
     super.initState();
+    _cambiosPendientes = _repositorio.cambios.listen(
+      (_) => _actualizarPendientes(),
+    );
     _cargarVentas();
   }
 
+  @override
+  void dispose() {
+    unawaited(_cambiosPendientes?.cancel());
+    super.dispose();
+  }
+
+  Future<void> _actualizarPendientes() async {
+    final version = ++_versionPendientes;
+    try {
+      final pendientes = await _repositorio.obtenerTodas();
+      if (mounted && version == _versionPendientes) {
+        setState(() => _pendientes = pendientes);
+      }
+    } catch (error) {
+      if (mounted && version == _versionPendientes) {
+        setState(
+          () => _error = 'No se pudieron cargar las pendientes locales: $error',
+        );
+      }
+    }
+  }
+
   Future<void> _cargarVentas() async {
+    final versionPendientes = ++_versionPendientes;
     // Combina las ventas locales con las ya pagadas.
     List<VentaPendiente> pendientes =
         _pendientes; // Conserva datos visibles ante un fallo de lectura.
@@ -85,7 +115,7 @@ class _PaginaVentasState extends State<PaginaVentas> {
     } // Consulta solamente ventas concretadas.
     if (!mounted) return; // Evita actualizar una página cerrada.
     setState(() {
-      _pendientes = pendientes;
+      if (_versionPendientes == versionPendientes) _pendientes = pendientes;
       ventasActivas = cerradas;
       _error = errores.isEmpty ? null : errores.join('\n');
       _cargando = false;
