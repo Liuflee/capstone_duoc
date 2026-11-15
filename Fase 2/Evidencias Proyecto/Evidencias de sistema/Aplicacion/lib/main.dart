@@ -114,7 +114,9 @@ class MiAplicacion extends StatelessWidget {
                     bottom: false,
                     child: ColoredBox(
                       color: paleta.fondo,
-                      child: AsistenteGlobal(paleta: paleta, child: child!),
+                      child: AsistenteGlobal.disponible
+                          ? AsistenteGlobal(paleta: paleta, child: child!)
+                          : child!,
                     ),
                   ),
                 ),

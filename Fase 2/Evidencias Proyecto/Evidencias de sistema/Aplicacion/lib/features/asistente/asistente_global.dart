@@ -18,6 +18,11 @@ import 'sesion_gemini_live.dart';
 class AsistenteGlobal extends StatefulWidget {
   const AsistenteGlobal({super.key, required this.paleta, required this.child});
 
+  static bool get disponible =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
+
   final PaletaTaller paleta;
   final Widget child;
 
@@ -59,20 +64,13 @@ class _AsistenteGlobalState extends State<AsistenteGlobal>
   int _bytesPrevios = 0;
   int _bytesConexion = 0;
 
-  bool get _disponible =>
-      !kIsWeb &&
-      const [
-        TargetPlatform.android,
-        TargetPlatform.iOS,
-        TargetPlatform.windows,
-      ].contains(defaultTargetPlatform);
   bool get _escuchar =>
       !_terminando && _primerPlano && !_pausada && _usuario != null;
 
   @override
   void initState() {
     super.initState();
-    if (!_disponible || !SupabaseDatabase.isConfigured) return;
+    if (!AsistenteGlobal.disponible || !SupabaseDatabase.isConfigured) return;
     WidgetsBinding.instance.addObserver(this);
     final cliente = SupabaseDatabase.client;
     _usuario = cliente.auth.currentUser?.id;
@@ -360,7 +358,7 @@ class _AsistenteGlobalState extends State<AsistenteGlobal>
 
   @override
   Widget build(BuildContext context) {
-    if (!_disponible || _usuario == null) return widget.child;
+    if (!AsistenteGlobal.disponible || _usuario == null) return widget.child;
     final paleta = widget.paleta;
     final superficie = paleta.oscura ? paleta.tarjeta : paleta.fondo;
     final sobreAcento = paleta.acento.computeLuminance() > 0.179
