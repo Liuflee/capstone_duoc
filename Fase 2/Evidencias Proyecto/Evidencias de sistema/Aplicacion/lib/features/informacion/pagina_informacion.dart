@@ -16,7 +16,7 @@ class PaginaInformacion extends StatelessWidget {
     '¿Cómo registro una venta?': 'Abre Nueva venta desde Inicio, selecciona o crea un cliente y añade productos. Registrar venta conserva la venta pendiente en este dispositivo. Desde Ventas abre su detalle y confirma el pago para guardarla en el historial.',
   }; // Define información de las funciones reales del proyecto.
 
-  @override
+  @override // Construye las preguntas desplegables.
   Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
   Widget _pagina(BuildContext context) => EstructuraPagina(
     titulo: 'Información',
