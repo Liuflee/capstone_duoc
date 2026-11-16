@@ -15,6 +15,7 @@ class PaginaEdicionProducto extends StatelessWidget {
   Widget build(BuildContext context) => PaginaCrearProducto(
     cargarCatalogos: cargarCatalogos, // Conserva la carga habitual de categorías y calidades.
     productoInicial: {
+      'sku': producto.sku,
       'codigo_producto': producto
           .id, // Muestra el código sin modificar las referencias de ventas.
       'cod_barra':

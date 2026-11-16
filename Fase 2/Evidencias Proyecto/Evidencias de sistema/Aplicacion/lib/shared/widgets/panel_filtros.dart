@@ -91,6 +91,8 @@ class CategoriaFiltro<T> {
   final bool
   seleccionUnica; // Permite restringir una categoría a una sola opción.
   final bool seleccionUnicaSinDefecto; // Permite iniciar una selección única sin restringir resultados.
+  final bool
+  mostrarTodas; // Añade una opción explícita para ver todo en selección única.
   final List<String> opcionesFijas; // Mantiene opciones disponibles aunque todavía no tengan registros.
 
   // Define cada categoría desde la página que conoce sus datos.
@@ -102,6 +104,7 @@ class CategoriaFiltro<T> {
         false, // Conserva la selección múltiple en los demás filtros.
     this.seleccionUnicaSinDefecto =
         false, // Conserva el comportamiento habitual de selección única.
+    this.mostrarTodas = false,
     this.opcionesFijas = const [], // Por defecto conserva las opciones calculadas desde los datos.
     this.etiquetas, // Opcional: traduce valores técnicos a texto visible.
   }); // Finaliza el constructor de la categoría.
@@ -208,7 +211,11 @@ class _PanelFiltrosState<T> extends State<PanelFiltros<T>> {
           ? b.cantidad.compareTo(a.cantidad)
           : a.texto.toLowerCase().compareTo(b.texto.toLowerCase()),
     ); // Finaliza el orden de las opciones.
-    return opciones; // Entrega las opciones calculadas.
+    return [
+      if (categoria.seleccionUnica && categoria.mostrarTodas)
+        _OpcionFiltro(valor: '', texto: 'Todas', cantidad: widget.datos.length),
+      ...opciones,
+    ];
   } // Finaliza el cálculo de opciones.
 
   // Entrega solamente los valores elegidos que todavía existen en los datos.
@@ -224,13 +231,13 @@ class _PanelFiltrosState<T> extends State<PanelFiltros<T>> {
       if (validos.isNotEmpty) {
         return {validos.first.valor}; // Nunca combina ambos estados.
       }
-      if (categoria.seleccionUnicaSinDefecto) {
+      if (categoria.seleccionUnicaSinDefecto || categoria.mostrarTodas) {
         return <String>{}; // Sin una opción elegida, muestra todos los datos.
       }
       if (categoria.opcionesFijas.isNotEmpty) {
         return {
           normalizarFiltro(categoria.opcionesFijas.first),
-        }; // Usa ventas cerradas al iniciar o limpiar.
+        }; // Usa la primera opción fija al iniciar o limpiar.
       }
       return opciones.isEmpty
           ? <String>{}
@@ -482,7 +489,9 @@ class _ChipCategoriaState<T> extends State<_ChipCategoria<T>> {
             closeOnActivate: false, // No cierra el menú al marcar una casilla.
             onPressed: () {
               if (widget.categoria.seleccionUnica) {
-                widget.alCambiar({opcion.valor}); // Sustituye la selección anterior y no desmarca la única elegida.
+                widget.alCambiar(
+                  opcion.valor.isEmpty ? <String>{} : {opcion.valor},
+                );
                 return; // Evita aplicar la alternancia múltiple.
               }
               // Alterna el valor: lo agrega si falta y lo quita si existe.
@@ -495,7 +504,9 @@ class _ChipCategoriaState<T> extends State<_ChipCategoria<T>> {
             child: Row(
               children: [
                 Icon(
-                  widget.elegidos.contains(opcion.valor)
+                  (opcion.valor.isEmpty
+                          ? widget.elegidos.isEmpty
+                          : widget.elegidos.contains(opcion.valor))
                       ? (widget.categoria.seleccionUnica
                             ? Icons.radio_button_checked
                             : Icons.check_box)

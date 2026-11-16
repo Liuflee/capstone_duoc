@@ -4,7 +4,7 @@ import 'package:frenos_cerna/core/data/supabase_database.dart';
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/features/inventario/pagina_crear_producto.dart';
 import 'package:frenos_cerna/features/ventas/presentation/pagina_crear_ventas.dart';
-import 'package:frenos_cerna/shared/widgets/formulario_datos.dart';
+import 'package:frenos_cerna/features/ventas/presentation/widgets/dialogo_cantidad_venta.dart';
 
 // El reconocimiento conserva el código completo, incluidos sus ceros iniciales.
 Future<void> escanearProducto(BuildContext context) async {
@@ -39,7 +39,7 @@ Future<void> escanearProducto(BuildContext context) async {
     filas = await SupabaseDatabase.client
         .from(SupabaseTables.productos)
         .select(
-          'codigo_producto,cod_barra,stock,precio,tipo,tipo_producto(nombre_tipo)',
+          'codigo_producto,sku,cod_barra,stock,precio,tipo,tipo_producto(nombre_tipo)',
         )
         .eq('cod_barra', codigo)
         .limit(2);
@@ -87,9 +87,10 @@ Future<void> escanearProducto(BuildContext context) async {
     );
     return;
   }
-  final cantidad = await mostrarDialogoConTema<int>(
-    context: context,
-    builder: (_) => _CantidadEscaneada(producto: producto),
+  final cantidad = await pedirCantidadVenta(
+    context,
+    titulo: 'Vender ${producto.id}',
+    maximo: producto.stock,
   );
   if (cantidad == null || !context.mounted) return;
   await Navigator.push(
@@ -101,73 +102,6 @@ Future<void> escanearProducto(BuildContext context) async {
         cantidadEscaneada: cantidad,
       ),
     ),
-  );
-}
-
-class _CantidadEscaneada extends StatefulWidget {
-  final ProductoVenta producto;
-  const _CantidadEscaneada({required this.producto});
-  @override
-  State<_CantidadEscaneada> createState() => _CantidadEscaneadaState();
-}
-
-class _CantidadEscaneadaState extends State<_CantidadEscaneada> {
-  final controlador = TextEditingController(text: '1');
-  final formulario = GlobalKey<FormState>();
-  @override
-  void dispose() {
-    controlador.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-    scrollable: true,
-    title: Text('Vender ${widget.producto.id}'),
-    content: SizedBox(
-      width: 360,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text('Disponibles: ${widget.producto.stock} unidades'),
-          const SizedBox(height: 16),
-          FormularioDatos(
-            claveFormulario: formulario,
-            ajustarAlAnchoDisponible: true,
-            campos: [
-              CampoFormularioDatos(
-                controlador: controlador,
-                etiqueta: 'CANTIDAD A VENDER',
-                textoAyuda: 'Unidades',
-                tipoTeclado: TextInputType.number,
-                validador: (valor) {
-                  final unidades = int.tryParse(valor?.trim() ?? '');
-                  return unidades == null ||
-                          unidades < 1 ||
-                          unidades > widget.producto.stock
-                      ? 'Ingresa entre 1 y ${widget.producto.stock}'
-                      : null;
-                },
-              ),
-            ],
-          ),
-        ],
-      ),
-    ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: const Text('CANCELAR'),
-      ),
-      FilledButton(
-        onPressed: () {
-          if (formulario.currentState!.validate()) {
-            Navigator.pop(context, int.parse(controlador.text.trim()));
-          }
-        },
-        child: const Text('CONTINUAR'),
-      ),
-    ],
   );
 }
 

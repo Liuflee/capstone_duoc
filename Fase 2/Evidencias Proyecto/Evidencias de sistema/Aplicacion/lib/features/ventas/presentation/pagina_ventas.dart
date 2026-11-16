@@ -233,22 +233,14 @@ class _PaginaVentasState extends State<PaginaVentas> {
 
     final hoy = (widget.ahora?.call() ?? DateTime.now())
         .toLocal(); // Compara los días en la misma zona horaria.
-    // Comprueba si dos fechas pertenecen al mismo día.
-    bool mismoDia(DateTime a, DateTime b) =>
-        a.year == b.year && a.month == b.month && a.day == b.day;
-    bool esDeHoy(DateTime? fecha) =>
-        fecha != null &&
-        mismoDia(
-          fecha.toLocal(),
-          hoy,
-        ); // Excluye ventas sin fecha conocida de la vista diaria.
+    bool esDeHoy(DateTime? fecha) => DateUtils.isSameDay(fecha?.toLocal(), hoy);
     // Clasifica cada venta en un periodo sencillo para el filtro del historial.
     String periodoDe(DateTime? fecha) {
       final local = fecha?.toLocal();
       if (local == null) {
         return 'SIN FECHA'; // Conserva las ventas antiguas sin fecha.
       }
-      if (mismoDia(local, hoy)) return 'HOY';
+      if (esDeHoy(local)) return 'HOY';
       if (local.isAfter(hoy.subtract(const Duration(days: 7)))) {
         return 'ÚLTIMOS 7 DÍAS';
       }
@@ -455,8 +447,9 @@ class _PaginaVentasState extends State<PaginaVentas> {
                             CategoriaFiltro<Map<String, dynamic>>(
                               id: 'estado',
                               etiqueta: 'ESTADO',
-                              seleccionUnica: true, // Muestra ventas cerradas o pendientes, nunca ambas a la vez.
+                              seleccionUnica: true,
                               seleccionUnicaSinDefecto: !widget.mostrarHistorial, // La vista diaria comienza mostrando todos los estados.
+                              mostrarTodas: widget.mostrarHistorial,
                               opcionesFijas: const [
                                 'VENTAS CERRADAS',
                                 'VENTAS PENDIENTES',

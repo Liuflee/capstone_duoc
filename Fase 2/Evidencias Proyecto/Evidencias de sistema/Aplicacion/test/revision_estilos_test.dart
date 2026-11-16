@@ -140,16 +140,16 @@ void main() {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
-      final producto = Producto(
-        id: 'SP0-01223',
-        nombre: 'SP0-01223',
-        codigoBarra: '789030',
-        categoria: 'Pastillas',
-        precio: 14000,
-        cantidad: 7,
-        tipoId: 1,
-        calidadId: 10,
-      ); // Define un registro existente.
+      final producto = Producto.fromJson({
+        'codigo_producto': 'SP0-01223',
+        'sku': '000-PAST-123',
+        'cod_barra': '789030',
+        'precio': 14000,
+        'stock': 7,
+        'tipo': 1,
+        'calidad': 10,
+        'tipo_producto': {'nombre_tipo': 'Pastillas'},
+      });
       await tester.pumpWidget(
         MaterialApp(
           home: PaginaEdicionProducto(
@@ -176,6 +176,7 @@ void main() {
           .toList();
       expect(campos.map((campo) => campo.controller!.text), [
         'SP0-01223',
+        '000-PAST-123',
         '14000',
         '7',
         '789030',
@@ -184,6 +185,7 @@ void main() {
         campos.first.enabled,
         isFalse,
       ); // Protege la clave referenciada por ventas.
+      expect(campos[1].enabled, isTrue);
       expect(
         tester
             .widget<DropdownButton<Object>>(

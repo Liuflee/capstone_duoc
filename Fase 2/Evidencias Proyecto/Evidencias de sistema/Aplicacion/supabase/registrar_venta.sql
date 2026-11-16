@@ -11,6 +11,7 @@ AS $$
 DECLARE
   v_id_venta integer;
   v_codigo_producto text;
+  v_sku public.producto.sku%TYPE;
   v_cantidad integer;
   v_precio integer;
   v_stock integer;
@@ -33,14 +34,21 @@ BEGIN
       RAISE EXCEPTION 'La cantidad debe ser mayor que cero.';
     END IF;
 
-    SELECT precio, stock
-      INTO v_precio, v_stock
-      FROM public.producto
-      WHERE codigo_producto = v_codigo_producto
-      FOR UPDATE;
+    BEGIN
+      SELECT precio, stock, sku
+        INTO STRICT v_precio, v_stock, v_sku
+        FROM public.producto
+        WHERE codigo_producto = v_codigo_producto
+        FOR UPDATE;
+    EXCEPTION
+      WHEN no_data_found THEN
+        RAISE EXCEPTION 'No existe el producto %.', v_codigo_producto;
+      WHEN too_many_rows THEN
+        RAISE EXCEPTION 'El código de producto % identifica más de un SKU.', v_codigo_producto;
+    END;
 
-    IF NOT FOUND THEN
-      RAISE EXCEPTION 'No existe el producto %.', v_codigo_producto;
+    IF v_sku IS NULL THEN
+      RAISE EXCEPTION 'El producto % no tiene SKU.', v_codigo_producto;
     END IF;
     IF v_stock < v_cantidad THEN
       RAISE EXCEPTION 'Stock insuficiente para el producto %.', v_codigo_producto;
@@ -48,16 +56,18 @@ BEGIN
 
     UPDATE public.producto
       SET stock = stock - v_cantidad
-      WHERE codigo_producto = v_codigo_producto;
+      WHERE codigo_producto = v_codigo_producto AND sku = v_sku;
 
     INSERT INTO public.detalle_venta_producto (
       id_venta,
       codigo_producto,
+      sku,
       total
     )
     VALUES (
       v_id_venta,
       v_codigo_producto,
+      v_sku,
       v_precio * v_cantidad
     );
   END LOOP;
