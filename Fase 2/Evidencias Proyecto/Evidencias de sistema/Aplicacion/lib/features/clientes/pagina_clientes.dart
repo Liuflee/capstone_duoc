@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/shared/widgets/navegacion_inferior.dart';
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/features/clientes/pagina_ver_cliente.dart'; // Abre el perfil sin edición.
 // Importa los campos de formulario reutilizables.
@@ -148,8 +149,9 @@ class _PaginaClientesState extends State<PaginaClientes> {
   Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
   Widget _pagina(BuildContext context) {
     return Scaffold(
-      // Conserva la navegación lateral en pantallas pequeñas.
-      drawer: const Drawer(child: MenuLateral(activo: 'Clientes')),
+      // Accesos principales en pantallas pequeñas.
+      drawer: MenuLateral.desplegable(context, activo: 'Clientes'),
+      bottomNavigationBar: NavegacionInferior.para(context, activo: 'Clientes'),
       backgroundColor: PaletaTaller.de(context).fondo,
 
       // Obtiene el ancho y alto disponibles para reproducir la estructura de Inicio.
@@ -157,14 +159,12 @@ class _PaginaClientesState extends State<PaginaClientes> {
         builder: (context, constraints) {
           final double ancho = constraints.maxWidth;
 
-          final double alto = constraints.maxHeight;
-
           return Column(
             children: [
               // Barra superior reutilizable, con el título de esta página.
               SizedBox(
                 width: ancho,
-                height: alto * 0.10,
+                height: DimensionesNavegacion.altoBarra(ancho),
                 child: const BarraSuperior(tituloPagina: 'Clientes'),
               ),
 
@@ -174,9 +174,9 @@ class _PaginaClientesState extends State<PaginaClientes> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // Menú lateral reutilizable que marca Clientes como seleccionado.
-                    if (ancho >= 700) // Comparte el menú de escritorio y permite usar el desplegable en móvil.
+                    if (DimensionesNavegacion.anchoMenuEn(context) > 0)
                       SizedBox(
-                        width: ancho * 0.12,
+                        width: DimensionesNavegacion.anchoMenu(ancho),
                         child: const MenuLateral(activo: 'Clientes'),
                       ),
 
@@ -237,7 +237,7 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                 // Panel reutilizable que combina buscador, categoría y tabla.
                                 child: PanelFiltros<Cliente>(
                                   datos: clientes, // Filtra los clientes recuperados de Supabase.
-                                  textoAyuda: 'BUSCAR CLIENTE (NOMBRE, RUT, FONO O VEHÍCULO)', // Describe toda la búsqueda disponible.
+                                  textoAyuda: 'Buscar cliente', // Describe toda la búsqueda disponible.
                                   camposBusqueda: [
                                     (cliente) =>
                                         cliente.nombre, // Busca en el nombre.
@@ -278,7 +278,7 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                           },
                                         )
                                         .toList();
-                                    final tabla = TablaDatos(
+                                    return TablaDatos(
                                       mostrarControles: false, // El panel ya muestra el buscador y las categorías.
                                       // Encabezados visibles de la tabla.
                                       nombresColumnas: const [
@@ -286,7 +286,7 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                         'NÚMERO',
                                         'RUT',
                                         'VEHÍCULOS',
-                                        'CAMBIAR',
+                                        'EDITAR',
                                         'VER',
                                       ],
 
@@ -456,33 +456,6 @@ class _PaginaClientesState extends State<PaginaClientes> {
                                             ), // Consulta el perfil sin habilitar edición.
                                       },
                                     ); // Finaliza la tabla construida con los clientes filtrados.
-                                    final plataforma = Theme.of(context)
-                                        .platform;
-                                    final esCelular =
-                                        plataforma == TargetPlatform.android ||
-                                        plataforma == TargetPlatform.iOS;
-                                    if (!esCelular) return tabla;
-                                    // Reutiliza las acciones existentes y muestra solo las columnas móviles.
-                                    return TablaDatos(
-                                      mostrarControles: false,
-                                      nombresColumnas: const [
-                                        'NOMBRE',
-                                        'EDITAR',
-                                        'VER',
-                                      ],
-                                      camposColumnas: const ['nombre', '', ''],
-                                      anchosColumnas: const [240, 80, 80],
-                                      filas: filasClientes,
-                                      coloresEncabezados: [
-                                        for (final indice in [0, 4, 5])
-                                          tabla.coloresEncabezados![indice],
-                                      ],
-                                      celdasPersonalizadas: {
-                                        0: tabla.celdasPersonalizadas[0]!,
-                                        1: tabla.celdasPersonalizadas[4]!,
-                                        2: tabla.celdasPersonalizadas[5]!,
-                                      },
-                                    );
                                   }, // Finaliza la construcción del contenido.
                                 ), // Finaliza el panel de filtros reutilizable.
                               ), // Finaliza el espacio restante de la página.

@@ -54,83 +54,234 @@ class PreferenciasVisuales extends ChangeNotifier {
   } // Finaliza la transformación de color.
 } // Finaliza el estado compartido de preferencias.
 
-// Presenta los tres ajustes de Opciones con la alineación del prototipo.
 class PaginaOpciones extends StatelessWidget {
-  const PaginaOpciones({super.key}); // Crea la página de opciones.
-  @override // Construye los controles de preferencias.
+  const PaginaOpciones({super.key});
+
+  @override
   Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
+
   Widget _pagina(BuildContext context) {
-    final preferencias =
-        PreferenciasVisuales.instancia; // Obtiene los valores actuales.
+    final tema = Theme.of(context);
+    final paleta = PaletaTaller.de(context);
+    final preferencias = PreferenciasVisuales.instancia;
     return EstructuraPagina(
       titulo: 'Opciones',
       activo: 'Opciones',
-      child: AnimatedBuilder(
-        animation: preferencias, // Actualiza las posiciones de los controles al cambiar sus valores.
-        builder: (context, child) => SingleChildScrollView(
-          child: Align(
-            alignment:
-                Alignment.topCenter, // Alinea los ajustes en la parte superior.
+      mostrarVolver: true,
+      child: ListView(
+        padding: const EdgeInsets.only(bottom: 80),
+        children: [
+          Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1120),
+              constraints: const BoxConstraints(maxWidth: 820),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment
-                    .stretch, // Iguala el ancho de los ajustes.
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(
-                    height: 24,
-                  ), // Separa el contenido de la barra.
-                  const Text(
-                    'Brillo',
-                    style: TextStyle(fontSize: 24),
-                  ), // Conserva el primer ajuste de Figma.
-                  Slider(
-                    value: preferencias.brillo,
-                    min: 0.65,
-                    max: 1.15,
-                    activeColor: PaletaTaller.de(context)
-                        .adaptar(Color(0xFFBF2020)),
-                    onChanged: (valor) =>
-                        preferencias.actualizar(nuevoBrillo: valor),
-                  ), // Ajusta el brillo sin afectar al dispositivo.
-                  const SizedBox(
-                    height: 36,
-                  ), // Mantiene la separación entre ajustes.
-                  const Text(
-                    'Tamaño de texto',
-                    style: TextStyle(fontSize: 24),
-                  ), // Conserva el segundo ajuste.
-                  Slider(
-                    value: preferencias.texto,
-                    min: 0.8,
-                    max: 1.3,
-                    activeColor: PaletaTaller.de(context)
-                        .adaptar(Color(0xFFBF2020)),
-                    onChanged: (valor) =>
-                        preferencias.actualizar(nuevoTexto: valor),
-                  ), // Ajusta el texto de la aplicación.
-                  const SizedBox(
-                    height: 36,
-                  ), // Mantiene la separación entre ajustes.
-                  const Text(
-                    'Saturación de color',
-                    style: TextStyle(fontSize: 24),
-                  ), // Conserva el tercer ajuste.
-                  Slider(
-                    value: preferencias.saturacion,
-                    min: 0,
-                    max: 1.5,
-                    activeColor: PaletaTaller.de(context)
-                        .adaptar(Color(0xFFBF2020)),
-                    onChanged: (valor) =>
-                        preferencias.actualizar(nuevaSaturacion: valor),
-                  ), // Ajusta la intensidad de los colores.
-                ], // Finaliza los ajustes.
+                  Text('Apariencia', style: tema.textTheme.headlineSmall),
+                  const SizedBox(height: 16),
+                  Text('Tema de color', style: tema.textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  LayoutBuilder(
+                    builder: (context, espacio) {
+                      const separacion = 10.0;
+                      final columnas = espacio.maxWidth >= 650
+                          ? 3
+                          : espacio.maxWidth >= 400
+                          ? 2
+                          : 1;
+                      final ancho =
+                          (espacio.maxWidth - (columnas - 1) * separacion) /
+                          columnas;
+                      return Wrap(
+                        spacing: separacion,
+                        runSpacing: separacion,
+                        children: [
+                          for (final opcion in PaletaTaller.values)
+                            SizedBox(
+                              width: ancho,
+                              child: _OpcionPaleta(
+                                paleta: opcion,
+                                seleccionada: opcion == paleta,
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Ajustes de pantalla',
+                    style: tema.textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Card(
+                    margin: EdgeInsets.zero,
+                    color: paleta.oscura ? paleta.tarjeta : paleta.barra,
+                    elevation: 0,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+                      child: AnimatedBuilder(
+                        animation: preferencias,
+                        builder: (context, _) => Column(
+                          children: [
+                            _AjusteVisual(
+                              titulo: 'Brillo',
+                              valor: preferencias.brillo,
+                              min: .65,
+                              max: 1.15,
+                              alCambiar: (valor) =>
+                                  preferencias.actualizar(nuevoBrillo: valor),
+                            ),
+                            _AjusteVisual(
+                              titulo: 'Tamaño de texto',
+                              valor: preferencias.texto,
+                              min: .8,
+                              max: 1.3,
+                              alCambiar: (valor) =>
+                                  preferencias.actualizar(nuevoTexto: valor),
+                            ),
+                            _AjusteVisual(
+                              titulo: 'Saturación de color',
+                              valor: preferencias.saturacion,
+                              min: 0,
+                              max: 1.5,
+                              alCambiar: (valor) => preferencias.actualizar(
+                                nuevaSaturacion: valor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ), // Limita el ancho al diseño de escritorio.
+            ),
           ),
-        ), // Permite desplazar los ajustes en Android.
+        ],
       ),
-    ); // Finaliza la página.
-  } // Finaliza la construcción.
-} // Finaliza la página de opciones.
+    );
+  }
+}
+
+class _OpcionPaleta extends StatelessWidget {
+  final PaletaTaller paleta;
+  final bool seleccionada;
+
+  const _OpcionPaleta({required this.paleta, required this.seleccionada});
+
+  @override
+  Widget build(BuildContext context) {
+    final actual = PaletaTaller.de(context);
+    final borde = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+      side: BorderSide(
+        color: seleccionada
+            ? actual.acento
+            : actual.borde.withValues(alpha: .26),
+        width: seleccionada ? 2 : 1,
+      ),
+    );
+    return Semantics(
+      selected: seleccionada,
+      button: true,
+      child: Material(
+        shape: borde,
+        color: actual.fondo,
+        child: InkWell(
+          customBorder: borde,
+          onTap: seleccionada
+              ? null
+              : () async {
+                  try {
+                    await paleta.activar();
+                  } catch (_) {
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('No se pudo guardar el tema.'),
+                      ),
+                    );
+                  }
+                },
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final color in [
+                        paleta.menu,
+                        paleta.tarjeta,
+                        paleta.acento,
+                      ])
+                        ColoredBox(
+                          color: color,
+                          child: const SizedBox(width: 9, height: 20),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(child: Text(paleta.nombre)),
+                if (seleccionada)
+                  const Icon(Icons.check_circle_outline, size: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AjusteVisual extends StatelessWidget {
+  final String titulo;
+  final double valor;
+  final double min;
+  final double max;
+  final ValueChanged<double> alCambiar;
+
+  const _AjusteVisual({
+    required this.titulo,
+    required this.valor,
+    required this.min,
+    required this.max,
+    required this.alCambiar,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final porcentaje = '${(valor * 100).round()} %';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(child: Text(titulo)),
+              const SizedBox(width: 8),
+              Text(porcentaje),
+            ],
+          ),
+          Semantics(
+            label: titulo,
+            child: Slider(
+              value: valor,
+              min: min,
+              max: max,
+              activeColor: PaletaTaller.de(context).acento,
+              semanticFormatterCallback: (valor) =>
+                  '${(valor * 100).round()} %',
+              onChanged: alCambiar,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

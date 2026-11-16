@@ -1,208 +1,98 @@
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
-import 'package:material_ui/material_ui.dart';
-// Reutiliza el buscador del panel de filtros reutilizable.
 import 'package:frenos_cerna/shared/widgets/panel_filtros.dart';
+import 'package:material_ui/material_ui.dart';
 
-// Define cómo construir una celda especial a partir de los datos de una fila.
-// Permite mostrar iconos, botones, imágenes o cualquier otro widget.
 typedef ConstructorCeldaTabla = Widget Function(
   BuildContext context,
   Map<String, dynamic> fila,
 );
 
-// Tabla reutilizable y ajustable: número de columnas, ancho y color de cada
-// cabecera se configuran desde el constructor.
-// Los datos, las cabeceras y las acciones se configuran desde el constructor.
 class TablaDatos extends StatefulWidget {
-  // Adapta las tablas de detalle conservando cada celda y sus acciones originales.
   static Widget desdeCeldas({
-    required List<DataColumn>
-    columns, // Recibe los encabezados de la tabla anterior.
-    required List<DataRow>
-    rows, // Recibe las celdas y callbacks de los registros originales.
-    WidgetStateProperty<Color?>?
-    headingRowColor, // Conserva el color de encabezado configurado.
-    TableBorder?
-    border, // Acepta el borde de la tabla anterior para conservar su color.
-    double? dataRowMaxHeight, // Conserva la altura de las filas del detalle.
+    required List<DataColumn> columns,
+    required List<DataRow> rows,
+    WidgetStateProperty<Color?>? headingRowColor,
+    TableBorder? border,
+    double? dataRowMaxHeight,
   }) {
-    // Genera claves independientes para cada columna de datos.
-    final claves = List.generate(columns.length, (indice) => 'columna_$indice');
-    // Extrae texto visible de celdas simples para buscar y filtrar el detalle.
-    String textoCelda(Widget contenido) => contenido is Text
-        ? contenido.data ?? contenido.textSpan?.toPlainText() ?? ''
+    String texto(Widget widget) => widget is Text
+        ? widget.data ?? widget.textSpan?.toPlainText() ?? ''
         : '';
-    // Calcula el ancho natural que ocupaba cada columna de la tabla anterior.
-    double anchoColumna(BuildContext context, int indice) {
-      final tema = Theme.of(
-        context,
-      ); // Recupera la tipografía usada por la tabla original.
-      double medir(Widget contenido, TextStyle estilo) {
-        if (contenido is! Text) {
-          return 48; // Conserva el espacio de las acciones de las celdas.
-        } // Finaliza la comprobación del tipo de contenido.
-        final medida = TextPainter(
-          text: TextSpan(
-            text: textoCelda(contenido),
-            style: estilo.merge(contenido.style),
-          ), // Respeta la fuente específica de cada texto.
-          textDirection: Directionality.of(
-            context,
-          ), // Respeta la dirección de escritura.
-          textScaler: MediaQuery.textScalerOf(
-            context,
-          ), // Respeta la escala del dispositivo.
-        ); // Finaliza la configuración de medición.
-        medida.layout(); // Obtiene el ancho de la línea más larga.
-        final resultado = medida
-            .width; // Conserva el ancho calculado antes de liberar recursos.
-        medida.dispose(); // Libera los recursos de la medición.
-        return resultado; // Entrega el ancho natural del contenido.
-      } // Finaliza la medición de una celda.
+    final indices = Iterable<int>.generate(columns.length);
+    final titulos = columns.map((columna) => texto(columna.label)).toList();
+    final encabezadosAccion = RegExp(
+      r'^(VER|REVISAR|EXPANDIR|BORRAR|CAMBIAR|REMOVER|AÑADIR)$',
+      caseSensitive: false,
+    );
+    final campos = [
+      for (final i in indices)
+        encabezadosAccion.hasMatch(titulos[i]) ? '' : 'columna_$i',
+    ];
 
-      double mayor = medir(
-        columns[indice].label,
-        tema.dataTableTheme.headingTextStyle ?? tema.textTheme.titleSmall!,
-      ); // Parte del encabezado original.
-      for (final fila in rows) {
-        final ancho = medir(
-          fila.cells[indice].child,
-          tema.dataTableTheme.dataTextStyle ?? tema.textTheme.bodyMedium!,
-        ); // Compara el contenido de cada fila.
-        if (ancho > mayor) mayor = ancho; // Conserva el contenido más ancho.
-      } // Finaliza la comparación de celdas.
-      return mayor +
-          (indice == 0 ? 24 : 28) +
-          (indice == columns.length - 1 ? 24 : 28); // Conserva los márgenes y la separación de columnas originales.
-    } // Finaliza el cálculo del ancho anterior.
-
-    // Adapta los registros sin perder los widgets originales.
-    final registros = [
-      for (final fila in rows) // Recorre las filas del detalle.
-        <String, dynamic>{
-          for (int indice = 0; indice < fila.cells.length; indice++)
-            claves[indice]: textoCelda(
-              fila.cells[indice].child,
-            ), // Asocia cada texto a su filtro.
-          '_celdas':
-              fila.cells, // Conserva botones, iconos y acciones de cada celda.
-        }, // Finaliza el registro adaptado.
-    ]; // Finaliza los datos de la tabla reutilizable.
-    // Limita la altura cuando la tabla se encuentra dentro de una página desplazable.
     return LayoutBuilder(
-      builder: (context, restricciones) => SizedBox(
-        width: restricciones.hasBoundedWidth
+      builder: (context, espacio) => SizedBox(
+        width: espacio.hasBoundedWidth
             ? null
-            : List.generate(
-                columns.length,
-                (indice) => anchoColumna(context, indice),
-              ).reduce((anterior, siguiente) => anterior + siguiente), // Conserva el ancho natural de las tablas con desplazamiento horizontal.
-        height: restricciones.hasBoundedHeight
-            ? restricciones.maxHeight
-            : (124 + rows.length * (dataRowMaxHeight ?? 70))
-                  .clamp(260.0, 520.0)
-                  .toDouble(), // Conserva el ancho del padre y permite desplazar las filas.
+            : MediaQuery.sizeOf(context).width,
+        height: espacio.hasBoundedHeight
+            ? espacio.maxHeight
+            : (170 + rows.length * (dataRowMaxHeight ?? 70))
+                  .clamp(280.0, 560.0)
+                  .toDouble(),
         child: TablaDatos(
           nombresColumnas: [
-            for (int indice = 0; indice < columns.length; indice++)
-              textoCelda(columns[indice].label).isEmpty
-                  ? 'COLUMNA ${indice + 1}'
-                  : textoCelda(columns[indice].label),
-          ], // Reutiliza los encabezados visibles.
-          camposColumnas: [
-            for (int indice = 0; indice < columns.length; indice++)
-              RegExp(r'^(VER|REVISAR|EXPANDIR|BORRAR|CAMBIAR|REMOVER|AÑADIR)$')
-                      .hasMatch(textoCelda(columns[indice].label).toUpperCase())
-                  ? ''
-                  : claves[indice],
-          ], // Excluye las acciones de los filtros de datos.
-          anchosColumnas: List.generate(
-            columns.length,
-            (indice) => anchoColumna(context, indice),
-          ), // Conserva las proporciones naturales dentro del ancho original.
-          filas: registros, // Presenta los registros adaptados.
-          altoFila:
-              dataRowMaxHeight ??
-              70, // Conserva el alto configurado en el detalle.
+            for (final i in indices)
+              titulos[i].isEmpty ? 'Columna ${i + 1}' : titulos[i],
+          ],
+          camposColumnas: campos,
+          anchosColumnas: [for (final campo in campos) campo.isEmpty ? 1 : 3],
+          filas: [
+            for (final fila in rows)
+              {
+                for (final i in indices)
+                  if (campos[i].isNotEmpty)
+                    campos[i]: texto(fila.cells[i].child),
+                '_celdas': fila.cells,
+              },
+          ],
+          altoFila: dataRowMaxHeight ?? 70,
           colorEncabezado:
-              headingRowColor?.resolve({}) ??
-              PaletaTaller.de(context).adaptar(
-                Color(0xFFEF6767),
-              ), // Conserva el color de la tabla anterior.
-          colorBorde:
-              border?.top.color ??
-              PaletaTaller.de(
-                context,
-              ).adaptar(Colors.black), // Conserva el color del borde original.
+              headingRowColor?.resolve({}) ?? const Color(0xFFEF6767),
+          colorBorde: border?.top.color ?? Colors.black,
           celdasPersonalizadas: {
-            for (
-              int indice = 0;
-              indice < columns.length;
-              indice++
-            ) // Recupera el contenido original de cada columna.
-              indice: (context, registro) {
-                final celda =
-                    (registro['_celdas']
-                        as List<
-                          DataCell
-                        >)[indice]; // Conserva la celda del registro filtrado.
-                return celda.onTap == null
-                    ? celda.child
-                    : InkWell(
-                        onTap: celda.onTap,
-                        child: celda.child,
-                      ); // Conserva las acciones originales de la celda.
-              }, // Finaliza la recuperación de una celda.
-          }, // Finaliza las celdas personalizadas.
-        ), // Finaliza la tabla compartida.
-      ), // Finaliza la altura delimitada.
-    ); // Finaliza la adaptación al contenedor original.
-  } // Finaliza la adaptación de tablas de detalle.
+            for (final i in indices)
+              i: (context, registro) {
+                final celda = (registro['_celdas'] as List<DataCell>)[i];
+                if (celda.onTap == null) return celda.child;
+                return InkWell(onTap: celda.onTap, child: celda.child);
+              },
+          },
+        ),
+      ),
+    );
+  }
 
-  // Permite que la página conserve controles externos si ya los administra.
   final bool mostrarControles;
-
-  // Títulos visibles en el encabezado, en el orden de las columnas.
   final List<String> nombresColumnas;
-
-  // Campos del registro que se mostrarán en cada columna.
-  // Por ejemplo: ['nombre', 'fono', 'rut', '', ''].
-  // Un campo vacío es válido cuando la celda se construye manualmente.
   final List<String> camposColumnas;
-
-  // Anchos deseados de las columnas. Se interpretan como proporciones.
-  // Por ejemplo: [300, 150, 150, 100, 100].
   final List<double> anchosColumnas;
-
-  // Registros recibidos desde la página que consulta la base de datos.
   final List<Map<String, dynamic>> filas;
-
-  // Permite reemplazar una celda por un widget personalizado.
-  // Las claves del mapa son los índices de las columnas, comenzando en cero.
   final Map<int, ConstructorCeldaTabla> celdasPersonalizadas;
-
-  // Color individual de cada cabecera. Si es null, o si una posición
-  // es null, se usa colorEncabezado. Debe tener un elemento por columna.
   final List<Color?>? coloresEncabezados;
-
-  // Color del texto de cada cabecera (mismo criterio que coloresEncabezados).
   final List<Color?>? coloresTextoEncabezados;
-
-  // Propiedades visuales opcionales.
   final double altoEncabezado;
   final double altoFila;
   final Color colorEncabezado;
   final Color colorBorde;
   final String mensajeSinDatos;
 
-  // Se crea el constructor de la tabla.
   const TablaDatos({
     super.key,
     required this.nombresColumnas,
     required this.camposColumnas,
     required this.anchosColumnas,
     required this.filas,
-    this.mostrarControles = true, // Integra el buscador encima de la cabecera.
+    this.mostrarControles = true,
     this.celdasPersonalizadas = const {},
     this.coloresEncabezados,
     this.coloresTextoEncabezados,
@@ -228,169 +118,107 @@ class TablaDatos extends StatefulWidget {
 }
 
 class _TablaDatosState extends State<TablaDatos> {
-  // Conserva el texto de búsqueda de esta tabla independientemente de otras tablas.
-  final TextEditingController _buscador = TextEditingController();
+  final _buscador = TextEditingController();
+  final _scroll = ScrollController();
 
-  // Controla el desplazamiento vertical de las filas.
-  final ScrollController _controladorScroll = ScrollController();
-  final ScrollController _controladorHorizontal = ScrollController();
+  Iterable<int> get _columnas =>
+      Iterable<int>.generate(widget.nombresColumnas.length);
+
+  bool _esAccion(int columna) => widget.camposColumnas[columna].isEmpty;
 
   @override
   void dispose() {
-    _buscador.dispose(); // Libera el controlador de búsqueda de la tabla.
-    // Libera el controlador cuando se elimina la tabla de la pantalla.
-    _controladorScroll.dispose();
-    _controladorHorizontal.dispose();
+    _buscador.dispose();
+    _scroll.dispose();
     super.dispose();
+  }
+
+  List<Map<String, dynamic>> _filasVisibles(String consulta) {
+    if (consulta.isEmpty) return widget.filas;
+    final campos = widget.camposColumnas.where((campo) => campo.isNotEmpty);
+    return widget.filas.where((fila) {
+      return campos.any(
+        (campo) =>
+            normalizarFiltro(fila[campo]?.toString() ?? '').contains(consulta),
+      );
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
+    final consulta = widget.mostrarControles
+        ? normalizarFiltro(_buscador.text.trim())
+        : '';
+    final filas = _filasVisibles(consulta);
     return LayoutBuilder(
-      builder: (context, restricciones) {
-        // La tabla necesita una altura limitada por su contenedor padre.
-        // En las páginas se recomienda colocarla dentro de Expanded.
-        if (!restricciones.hasBoundedHeight || !restricciones.hasBoundedWidth) {
+      builder: (context, espacio) {
+        if (!espacio.hasBoundedWidth || !espacio.hasBoundedHeight) {
           return const Center(
             child: Text('La tabla necesita un ancho y alto definidos.'),
           );
         }
-
-        // Verifica que todos los anchos indicados sean válidos.
         if (widget.anchosColumnas.any((ancho) => ancho <= 0)) {
           return const Center(
             child: Text('Los anchos de las columnas deben ser positivos.'),
           );
         }
 
-        // Se reserva un espacio a la derecha para la barra de scroll.
-        // Así el desplazamiento no tapa el contenido de la última columna.
-        const double espacioScroll = margenDesplazamientoTabla; // Comparte el margen con los filtros externos.
-        final double anchoDisponible = (restricciones.maxWidth - espacioScroll)
+        final escala = MediaQuery.textScalerOf(context).scale(14) / 14;
+        final minimos = [
+          for (final i in _columnas) (_esAccion(i) ? 76.0 : 128.0) * escala,
+        ];
+        final anchoMinimo = minimos.reduce((a, b) => a + b);
+        final anchoTabla = (espacio.maxWidth - margenDesplazamientoTabla)
             .clamp(0.0, double.infinity)
             .toDouble();
+        final esMovil = MediaQuery.sizeOf(context).width < 600;
+        final usarTarjetas = esMovil || anchoTabla < anchoMinimo;
+        final pesos = widget.anchosColumnas;
+        final pesoTotal = pesos.reduce((a, b) => a + b);
+        final anchos = [
+          for (final i in _columnas)
+            minimos[i] + (anchoTabla - anchoMinimo) * pesos[i] / pesoTotal,
+        ];
 
-        // Suma los anchos solicitados para convertirlos en proporciones.
-        final double totalAnchos = widget.anchosColumnas.reduce(
-          (anterior, siguiente) => anterior + siguiente,
-        );
-
-        // Conserva un ancho legible y espacio táctil cuando las columnas no caben.
-        final escalaTexto = MediaQuery.textScalerOf(context).scale(14) / 14;
-        final anchosMinimos = List.generate(widget.anchosColumnas.length, (i) {
-          final esAccion = widget.camposColumnas[i].isEmpty;
-          return (esAccion ? 88.0 : 140.0) * escalaTexto;
-        });
-        final anchoMinimo = anchosMinimos.reduce((a, b) => a + b);
-        final anchosAdaptados = List.generate(anchosMinimos.length, (i) {
-          final proporcional =
-              anchoDisponible * widget.anchosColumnas[i] / totalAnchos;
-          return anchoDisponible < anchoMinimo
-              ? anchosMinimos[i]
-              : proporcional;
-        });
-        final anchoTabla = anchosAdaptados.reduce((a, b) => a + b);
-        final desplazarHorizontalmente = anchoTabla > anchoDisponible;
-
-        // Mantiene las proporciones originales en el espacio calculado.
-        final anchosCalculados = anchosAdaptados;
-
-        // Normaliza el texto de búsqueda sin distinguir tildes ni mayúsculas.
-        final consulta = normalizarFiltro(_buscador.text.trim());
-        // Busca en todos los campos visibles de cada fila a la vez.
-        final camposBusqueda = widget.camposColumnas.where(
-          (campo) => campo.isNotEmpty,
-        );
-        final filasVisibles = !widget.mostrarControles || consulta.isEmpty
-            ? widget.filas
-            : widget.filas
-                  .where(
-                    (fila) => camposBusqueda.any(
-                      (campo) =>
-                          normalizarFiltro(fila[campo]?.toString() ?? '')
-                              .contains(consulta),
-                    ),
-                  )
-                  .toList(); // Filtra los datos mostrados sin modificar los originales.
-
-        // El encabezado queda fuera del ListView para permanecer fijo.
         return Column(
           children: [
-            if (widget.mostrarControles) // Mantiene el buscador fuera del espacio de la cabecera y las filas.
+            if (widget.mostrarControles)
               Padding(
                 padding: const EdgeInsets.only(
-                  right: espacioScroll,
-                  bottom: 20,
-                ), // Alinea el buscador con el ancho visible de la tabla.
+                  right: margenDesplazamientoTabla,
+                  bottom: 12,
+                ),
                 child: CampoBusqueda(
                   controlador: _buscador,
-                  textoAyuda:
-                      'BUSCAR EN LA TABLA', // Describe la búsqueda general.
-                  alCambiar: (_) => setState(
-                    () {},
-                  ), // Actualiza las filas mientras se escribe.
-                ), // Finaliza el buscador reutilizable.
-              ), // Finaliza la zona independiente de controles.
-            if (desplazarHorizontalmente &&
-                Theme.of(context).platform != TargetPlatform.android &&
-                Theme.of(context).platform != TargetPlatform.iOS)
-              const Padding(
-                padding: EdgeInsets.only(bottom: 8),
-                child: Text('Desliza hacia los lados para ver más columnas'),
-              ),
-            Expanded(
-              child: Scrollbar(
-                controller: _controladorHorizontal,
-                thumbVisibility: desplazarHorizontalmente,
-                notificationPredicate: (notification) =>
-                    notification.metrics.axis == Axis.horizontal,
-                child: SingleChildScrollView(
-                  controller: _controladorHorizontal,
-                  scrollDirection: Axis.horizontal,
-                  child: SizedBox(
-                    width: anchoTabla + espacioScroll,
-                    height: double.infinity,
-                    child: Column(
-                      children: [
-                        // El encabezado y las filas comparten el desplazamiento horizontal.
-                        Padding(
-                          padding: const EdgeInsets.only(right: espacioScroll),
-                          child: _construirEncabezado(anchosCalculados),
-                        ),
-
-                        // Las filas utilizan solamente la altura restante.
-                        Expanded(
-                          child: filasVisibles.isEmpty
-                              ? Center(child: Text(widget.mensajeSinDatos))
-                              : Scrollbar(
-                                  controller: _controladorScroll,
-                                  thumbVisibility: true,
-                                  interactive: true,
-                                  child: ListView.builder(
-                                    controller: _controladorScroll,
-                                    itemCount: filasVisibles.length, // Cuenta únicamente los registros que cumplen la búsqueda.
-                                    itemBuilder: (context, indiceFila) {
-                                      // Genera solamente las filas que se necesitan mostrar.
-                                      return Padding(
-                                        padding: const EdgeInsets.only(
-                                          right: espacioScroll,
-                                        ),
-                                        child: _construirFila(
-                                          context,
-                                          filasVisibles[indiceFila], // Conserva las acciones del registro original filtrado.
-                                          indiceFila,
-                                          anchosCalculados,
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  textoAyuda: 'Buscar en la tabla',
+                  alCambiar: (_) => setState(() {}),
                 ),
               ),
+            if (!usarTarjetas) _encabezado(context, anchos),
+            Expanded(
+              child: filas.isEmpty
+                  ? Center(
+                      child: Text(
+                        consulta.isEmpty
+                            ? widget.mensajeSinDatos
+                            : 'No se encontraron coincidencias.',
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  : Scrollbar(
+                      controller: _scroll,
+                      child: ListView.builder(
+                        controller: _scroll,
+                        padding: EdgeInsets.only(
+                          right: margenDesplazamientoTabla,
+                          bottom: esMovil ? 66 : 16,
+                        ),
+                        itemCount: filas.length,
+                        itemBuilder: (context, i) => usarTarjetas
+                            ? _tarjeta(context, filas[i])
+                            : _fila(context, filas[i], i, anchos),
+                      ),
+                    ),
             ),
           ],
         );
@@ -398,115 +226,184 @@ class _TablaDatosState extends State<TablaDatos> {
     );
   }
 
-  // Construye la fila fija que contiene los nombres de las columnas.
-  Widget _construirEncabezado(List<double> anchos) {
-    return Row(
-      children: List.generate(widget.nombresColumnas.length, (indice) {
-        return Container(
-          width: anchos[indice],
-          height: widget.altoEncabezado,
-          alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
-          decoration: BoxDecoration(
-            // Color propio de la columna o, si no hay, el color general.
-            color: PaletaTaller.de(context).oscura
-                ? PaletaTaller.de(context).tabla
-                : widget.coloresEncabezados?[indice] ?? widget.colorEncabezado,
-            border: _bordeCelda(indice, esEncabezado: true),
-          ),
+  Widget _celda(BuildContext context, Map<String, dynamic> fila, int columna) {
+    final personalizada = widget.celdasPersonalizadas[columna];
+    if (personalizada != null) return personalizada(context, fila);
+    final valor = fila[widget.camposColumnas[columna]]?.toString() ?? '';
+    return Text(valor.isEmpty ? '—' : valor);
+  }
 
-          // ScaleDown muestra el nombre COMPLETO, reduciendo su fuente
-          // solo si no alcanza el espacio horizontal de la columna.
-          // Nunca se utiliza ellipsis en los encabezados.
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              widget.nombresColumnas[indice],
-              maxLines: 1,
-              softWrap: false,
-              style: TextStyle(
-                color: PaletaTaller.de(context).oscura
-                    ? PaletaTaller.de(context).texto
-                    : widget.coloresTextoEncabezados?[indice] ??
-                          PaletaTaller.de(context).adaptar(Colors.black),
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        );
-      }),
+  Widget _tarjeta(BuildContext context, Map<String, dynamic> fila) {
+    final paleta = PaletaTaller.de(context);
+    final tema = Theme.of(context);
+    final datos = _columnas.where((i) => !_esAccion(i)).toList();
+    final acciones = _columnas.where((i) => _esAccion(i)).toList();
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      elevation: 0,
+      color: Color.alphaBlend(
+        paleta.acento.withValues(alpha: .035),
+        paleta.oscura ? paleta.tarjeta : paleta.fondo,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(
+          color: paleta.borde.withValues(alpha: paleta.oscura ? .75 : .14),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+        child: LayoutBuilder(
+          builder: (context, espacio) {
+            final escala = MediaQuery.textScalerOf(context).scale(14) / 14;
+            final anchoCampo = espacio.maxWidth >= 268 * escala
+                ? (espacio.maxWidth - 12) / 2
+                : espacio.maxWidth;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (datos.isNotEmpty)
+                  DefaultTextStyle.merge(
+                    style: tema.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                    child: _celda(context, fila, datos.first),
+                  ),
+                if (datos.length > 1) ...[
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    children: [
+                      for (final i in datos.skip(1))
+                        SizedBox(
+                          width: anchoCampo,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.nombresColumnas[i],
+                                style: tema.textTheme.labelSmall?.copyWith(
+                                  color: paleta.texto.withValues(alpha: .72),
+                                ),
+                              ),
+                              _celda(context, fila, i),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+                if (acciones.isNotEmpty) ...[
+                  if (datos.isNotEmpty)
+                    Divider(
+                      color: paleta.borde.withValues(alpha: .25),
+                      height: 16,
+                    ),
+                  Wrap(
+                    alignment: WrapAlignment.end,
+                    spacing: 12,
+                    runSpacing: 6,
+                    children: [
+                      for (final i in acciones)
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _celda(context, fila, i),
+                            Text(
+                              widget.nombresColumnas[i],
+                              style: tema.textTheme.labelSmall,
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ],
+              ],
+            );
+          },
+        ),
+      ),
     );
   }
 
-  // Construye cada fila con valores de datos o celdas personalizadas.
-  Widget _construirFila(
+  Widget _encabezado(BuildContext context, List<double> anchos) {
+    final paleta = PaletaTaller.de(context);
+    return Padding(
+      padding: const EdgeInsets.only(right: margenDesplazamientoTabla),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final i in _columnas)
+                Container(
+                  width: anchos[i],
+                  constraints: BoxConstraints(minHeight: widget.altoEncabezado),
+                  color: paleta.oscura
+                      ? paleta.tabla
+                      : widget.coloresEncabezados?[i] ?? widget.colorEncabezado,
+                  alignment: i == 0 ? Alignment.centerLeft : Alignment.center,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  child: Semantics(
+                    header: true,
+                    child: Text(
+                      widget.nombresColumnas[i],
+                      textAlign: i == 0 ? TextAlign.start : TextAlign.center,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: paleta.oscura
+                            ? paleta.texto
+                            : widget.coloresTextoEncabezados?[i] ??
+                                  paleta.texto,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _fila(
     BuildContext context,
     Map<String, dynamic> fila,
-    int indiceFila,
+    int indice,
     List<double> anchos,
   ) {
-    // Alterna el color gris para diferenciar visualmente las filas.
-    final Color colorFila = indiceFila.isEven
-        ? (PaletaTaller.de(context).oscura
-              ? PaletaTaller.de(context).fondo
-              : Colors.grey[200]!)
-        : PaletaTaller.de(context).adaptar(Colors.grey[300]!);
-
-    return Row(
-      children: List.generate(widget.nombresColumnas.length, (indice) {
-        // Revisa si esta columna tiene un constructor especial.
-        final ConstructorCeldaTabla? construirCelda =
-            widget.celdasPersonalizadas[indice];
-
-        // Obtiene el valor de la base de datos mediante el nombre del campo.
-        final String campo = widget.camposColumnas[indice];
-        final String valor = campo.isEmpty
-            ? ''
-            : (fila[campo]?.toString() ?? '');
-
-        return Container(
-          width: anchos[indice],
-          height: widget.altoFila,
-          alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
-          decoration: BoxDecoration(
-            color: colorFila,
-            border: _bordeCelda(indice),
-          ),
-
-          // La celda personalizada tiene prioridad sobre el valor normal.
-          // Puede contener IconButton, Text, un avatar u otro widget.
-          child: construirCelda != null
-              ? construirCelda(context, fila)
-              : Text(
-                  valor,
-                  textAlign: TextAlign.center,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 13),
-                ),
-        );
-      }),
-    );
-  }
-
-  // Mantiene las líneas negras entre columnas y filas.
-  Border _bordeCelda(int indice, {bool esEncabezado = false}) {
-    final BorderSide linea = BorderSide(
-      color: PaletaTaller.de(context).oscura
-          ? PaletaTaller.de(context).borde
-          : widget.colorBorde,
-      width: 1,
-    );
-
-    return Border(
-      left: linea,
-      right: indice == widget.nombresColumnas.length - 1
-          ? linea
-          : BorderSide.none,
-      top: esEncabezado ? linea : BorderSide.none,
-      bottom: linea,
+    final paleta = PaletaTaller.de(context);
+    final linea = paleta.oscura ? paleta.borde : widget.colorBorde;
+    return Container(
+      constraints: BoxConstraints(minHeight: widget.altoFila),
+      decoration: BoxDecoration(
+        color: indice.isEven
+            ? paleta.fondo
+            : Color.alphaBlend(
+                paleta.acento.withValues(alpha: .055),
+                paleta.fondo,
+              ),
+        border: Border(bottom: BorderSide(color: linea.withValues(alpha: .22))),
+      ),
+      child: Row(
+        children: [
+          for (final i in _columnas)
+            Container(
+              width: anchos[i],
+              alignment: i == 0 ? Alignment.centerLeft : Alignment.center,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              child: DefaultTextStyle.merge(
+                textAlign: i == 0 ? TextAlign.start : TextAlign.center,
+                child: _celda(context, fila, i),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

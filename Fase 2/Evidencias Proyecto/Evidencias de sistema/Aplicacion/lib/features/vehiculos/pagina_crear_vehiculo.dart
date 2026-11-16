@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/shared/widgets/barra_superior.dart';
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 // Importa Flutter y las páginas necesarias para vincular clientes.
 import 'package:material_ui/material_ui.dart';
@@ -405,10 +406,7 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
       context: context,
       builder: (menu) => Dialog(
         insetPadding: EdgeInsets.fromLTRB(
-          24 +
-              (MediaQuery.sizeOf(menu).width >= 700
-                  ? MediaQuery.sizeOf(menu).width * 0.12
-                  : 0), // Excluye el menú lateral para coincidir con el eje del contenido.
+          24 + DimensionesNavegacion.anchoMenuEn(menu), // Excluye el menú lateral para coincidir con el eje del contenido.
           24,
           24,
           24, // Conserva los márgenes seguros en móvil y ventanas pequeñas.
@@ -526,6 +524,7 @@ class _PaginaCrearVehiculoState extends State<PaginaCrearVehiculo> {
   Widget _pagina(BuildContext context) => EstructuraPagina(
     titulo: 'Registro de vehículo',
     activo: 'Vehiculos',
+    mostrarNavegacionMovil: false,
     child: SingleChildScrollView(
       child: Center(
         child: ConstrainedBox(

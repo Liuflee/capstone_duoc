@@ -69,23 +69,33 @@ void main() {
     }); // Finaliza la consulta de una pantalla.
   } // Finaliza las dos plataformas.
 
-  testWidgets('Clientes móvil muestra nombre, editar y ver', (tester) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: ThemeData(platform: TargetPlatform.android),
-        home: const PaginaClientes(),
-      ),
-    );
-    await tester.pumpAndSettle();
-    final tabla = tester.widget<TablaDatos>(find.byType(TablaDatos));
-    expect(tabla.nombresColumnas, ['NOMBRE', 'EDITAR', 'VER']);
-    expect(tabla.celdasPersonalizadas.keys, containsAll([0, 1, 2]));
-    expect(tester.takeException(), isNull);
-  });
+  testWidgets(
+    'Clientes en móvil conserva los datos y acciones del listado completo',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(platform: TargetPlatform.android),
+          home: const PaginaClientes(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final tabla = tester.widget<TablaDatos>(find.byType(TablaDatos));
+      expect(tabla.nombresColumnas, [
+        'NOMBRE',
+        'NÚMERO',
+        'RUT',
+        'VEHÍCULOS',
+        'EDITAR',
+        'VER',
+      ]);
+      expect(tabla.celdasPersonalizadas.keys, containsAll([0, 4, 5]));
+      expect(tester.takeException(), isNull);
+    },
+  );
   testWidgets('Clientes conserva el lápiz y añade la consulta al final', (
     tester,
   ) async {

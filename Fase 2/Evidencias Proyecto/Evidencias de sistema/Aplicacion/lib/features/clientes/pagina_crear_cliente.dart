@@ -125,6 +125,7 @@ class _PaginaCrearClienteState extends State<PaginaCrearCliente> {
   Widget _pagina(BuildContext context) => EstructuraPagina(
     titulo: 'Creación de cliente',
     activo: 'Clientes', // Conserva el encabezado del prototipo.
+    mostrarNavegacionMovil: false,
     child: SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

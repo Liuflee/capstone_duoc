@@ -719,6 +719,7 @@ class _PaginaCrearVentaState extends State<PaginaCrearVenta> {
         ? 'Registro de venta nueva'
         : 'Edición de venta pendiente',
     activo: 'Ventas', // Conserva el encabezado de Figma.
+    mostrarNavegacionMovil: false,
     padding: const EdgeInsets.fromLTRB(
       30,
       16,

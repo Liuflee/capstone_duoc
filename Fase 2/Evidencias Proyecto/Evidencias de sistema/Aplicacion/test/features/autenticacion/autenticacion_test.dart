@@ -238,12 +238,12 @@ void main() {
             .pumpAndSettle(); // Espera los cambios de carga y las animaciones.
         expect(
           tester.getSize(find.byType(BarraSuperior)).height,
-          closeTo(tamano.height * 0.10, 0.01),
+          closeTo(DimensionesNavegacion.altoBarra(tamano.width), 0.01),
         ); // Comprueba la altura común de la barra.
         if (tamano.width >= 700) {
           expect(
             tester.getSize(find.byType(MenuLateral)).width,
-            closeTo(tamano.width * 0.12, 0.01),
+            closeTo(DimensionesNavegacion.anchoMenu(tamano.width), 0.01),
           );
         } // Comprueba el ancho común del menú.
         expect(

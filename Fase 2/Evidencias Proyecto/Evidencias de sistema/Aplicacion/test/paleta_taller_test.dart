@@ -8,6 +8,50 @@ import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/features/perfil/pagina_perfil.dart';
 
 void main() {
+  testWidgets('Más abre Opciones y permite guardar un tema en móvil', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(() => PaletaTaller.seleccion.value = PaletaTaller.original);
+    SharedPreferences.setMockInitialValues({});
+    await PaletaTaller.cargar();
+    await tester.pumpWidget(const MiAplicacion());
+    await tester.pumpAndSettle();
+    final entrar = find.text('Entrar en modo de prueba');
+    await tester.ensureVisible(entrar);
+    await tester.tap(entrar);
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('Cambiar paleta'), findsNothing);
+    expect(find.byTooltip('Abrir menú'), findsNothing);
+    expect(find.byType(NavigationDestination), findsNWidgets(5));
+    await tester.tap(find.byType(NavigationDestination).at(1));
+    await tester.pumpAndSettle();
+    expect(find.text('Ventas del día'), findsOneWidget);
+    await tester.tap(find.byType(NavigationDestination).last);
+    await tester.pumpAndSettle();
+    expect(find.text('Vehículos'), findsOneWidget);
+    expect(find.text('Historial de ventas'), findsOneWidget);
+    await tester.tap(find.text('Opciones'));
+    await tester.pumpAndSettle();
+    expect(find.text('Tema de color'), findsOneWidget);
+
+    final azul = find.text(PaletaTaller.azul.nombre);
+    await tester.ensureVisible(azul);
+    await tester.tap(azul);
+    await tester.pumpAndSettle();
+    expect(PaletaTaller.seleccion.value, PaletaTaller.azul);
+    final preferencias = await SharedPreferences.getInstance();
+    expect(preferencias.getInt('paleta_taller'), PaletaTaller.azul.index);
+    await tester.tap(find.byType(NavigationDestination).first);
+    await tester.pumpAndSettle();
+    expect(find.text('Página Principal'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'El resumen del cliente usa la superficie oscura de cada paleta',
     (tester) async {

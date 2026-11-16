@@ -1,3 +1,5 @@
+import 'package:frenos_cerna/shared/widgets/navegacion_inferior.dart';
+
 import 'dart:async';
 
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
@@ -224,9 +226,7 @@ class _PaginaVentasState extends State<PaginaVentas> {
   @override
   Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
   Widget _pagina(BuildContext context) {
-    final esPantallaGrande =
-        MediaQuery.of(context).size.width >=
-        700; // Comparte el punto de adaptación del menú principal.
+    final esPantallaGrande = DimensionesNavegacion.anchoMenuEn(context) > 0;
 
     // Convierte las ventas a registros que entiende TablaDatos.
     // El objeto original se conserva para usarlo al ver el detalle.
@@ -311,12 +311,12 @@ class _PaginaVentasState extends State<PaginaVentas> {
       appBar: PreferredSize(
         // Comparte el diez por ciento de altura con la página principal.
         preferredSize: Size.fromHeight(
-          MediaQuery.sizeOf(context).height * 0.10,
+          DimensionesNavegacion.altoBarra(MediaQuery.sizeOf(context).width),
         ),
         child: SizedBox(
-          height:
-              MediaQuery.sizeOf(context).height *
-              0.10, // Mantiene la altura común de las barras.
+          height: DimensionesNavegacion.altoBarra(
+            MediaQuery.sizeOf(context).width,
+          ),
           child: BarraSuperior(
             tituloPagina: widget.mostrarHistorial
                 ? 'Historial de ventas'
@@ -326,11 +326,14 @@ class _PaginaVentasState extends State<PaginaVentas> {
       ),
 
       // ============================================================
-      // MENÚ LATERAL MÓVIL
+      // NAVEGACIÓN INFERIOR
       // ============================================================
-      drawer: esPantallaGrande
-          ? null
-          : const Drawer(child: MenuLateral(activo: 'Ventas')),
+      drawer: MenuLateral.desplegable(context, activo: 'Ventas'),
+      bottomNavigationBar: NavegacionInferior.para(
+        context,
+        activo: 'Ventas',
+        esRaizSeccion: !widget.mostrarHistorial && !soloCliente,
+      ),
 
       // ============================================================
       // CUERPO
@@ -345,7 +348,9 @@ class _PaginaVentasState extends State<PaginaVentas> {
 
           if (esPantallaGrande)
             SizedBox(
-              width: MediaQuery.sizeOf(context).width * 0.12,
+              width: DimensionesNavegacion.anchoMenu(
+                MediaQuery.sizeOf(context).width,
+              ),
               child: const MenuLateral(activo: 'Ventas'),
             ),
 
@@ -434,7 +439,7 @@ class _PaginaVentasState extends State<PaginaVentas> {
                         padding: const EdgeInsets.only(left: 14),
                         child: PanelFiltros<Map<String, dynamic>>(
                           datos: filasVisibles, // Conserva solo las ventas que corresponden a la página.
-                          textoAyuda: 'BUSCAR CLIENTE, VEHÍCULO O PRODUCTO', // Describe la búsqueda disponible.
+                          textoAyuda: 'Buscar venta', // Describe la búsqueda disponible.
                           camposBusqueda: [
                             // La vista de un cliente ya conoce su nombre.
                             if (!soloCliente)

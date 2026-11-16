@@ -167,6 +167,7 @@ class _PaginaEditarClienteState extends State<PaginaEditarCliente> {
   Widget _pagina(BuildContext context) => EstructuraPagina(
     titulo: 'Cliente “${widget.cliente.nombre}”',
     activo: 'Clientes', // Conserva el título dinámico.
+    mostrarNavegacionMovil: false,
     child: SingleChildScrollView(
       child: LayoutBuilder(
         builder: (context, espacio) {

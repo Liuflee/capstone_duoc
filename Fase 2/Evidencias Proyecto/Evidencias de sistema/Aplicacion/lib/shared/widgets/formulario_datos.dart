@@ -200,127 +200,78 @@ class FormularioDatos extends StatelessWidget {
         medida.dispose(); // Libera los recursos utilizados para medir.
       } // Finaliza la comparación de textos del campo.
     } // Finaliza el cálculo del ancho compartido.
-    // Calcula cuántas filas hacen falta para no ocultar ningún campo.
-    final filasNecesarias = (campos.length / columnas).ceil();
-    // Respeta las filas solicitadas y agrega más cuando llegan campos adicionales.
-    final cantidadFilas = filas != null && filas! > filasNecesarias
-        ? filas!
-        : filasNecesarias;
-    // Limita el exterior sin forzar a que las columnas se compriman en pantallas pequeñas.
     return SizedBox(
-      width: ancho, // Aplica el ancho exterior personalizado si existe.
-      height: alto, // Aplica el alto exterior personalizado si existe.
+      width: ancho,
+      height: alto,
       child: LayoutBuilder(
-        builder: (context, restricciones) {
-          // Calcula el ancho natural de la cuadrícula completa.
+        builder: (context, espacio) {
           final anchoNatural =
               anchoComun * columnas + separacionColumnas * (columnas - 1);
-          // Ocupa el ancho explícito cuando es mayor que el mínimo necesario.
-          final anchoSolicitado = ancho != null && restricciones.hasBoundedWidth
-              ? restricciones.maxWidth
+          final anchoDisponible = espacio.hasBoundedWidth
+              ? espacio.maxWidth
               : anchoNatural;
-          // Mantiene las columnas legibles si el ancho solicitado es demasiado pequeño.
-          final anchoCuadricula =
-              ajustarAlAnchoDisponible &&
-                  columnas == 1 &&
-                  restricciones.hasBoundedWidth
-              ? restricciones
-                    .maxWidth // Evita que las ayudas largas desplacen el formulario de perfil.
-              : anchoSolicitado > anchoNatural
-              ? anchoSolicitado
-              : anchoNatural;
-          // Reparte el ancho de la cuadrícula en campos exactamente iguales.
-          final anchoCelda =
-              (anchoCuadricula - separacionColumnas * (columnas - 1)) /
-              columnas;
-          // Parte de una altura mínima para las etiquetas de todos los campos.
+          final anchoFormulario = ajustarAlAnchoDisponible || ancho != null
+              ? anchoDisponible
+              : anchoNatural.clamp(0.0, anchoDisponible).toDouble();
+          final columnasVisibles =
+              ((anchoFormulario + separacionColumnas) /
+                      (anchoComun + separacionColumnas))
+                  .floor()
+                  .clamp(1, columnas)
+                  .toInt();
+          final anchoCampo =
+              (anchoFormulario - separacionColumnas * (columnasVisibles - 1)) /
+              columnasVisibles;
           double altoEtiqueta = 24;
-          // Mide las etiquetas con el ancho definitivo para igualar su altura.
           for (final campo in campos) {
-            // Permite que los títulos largos ocupen varias líneas.
             final medida = TextPainter(
               text: TextSpan(text: campo.etiqueta, style: estiloEtiqueta),
               textDirection: direccionTexto,
               textScaler: escalaTexto,
-            );
-            medida.layout(
-              maxWidth: anchoCelda,
-            ); // Calcula los saltos de línea necesarios.
-            if (medida.height > altoEtiqueta) {
-              altoEtiqueta = medida.height; // Conserva la etiqueta más alta.
-            } // Finaliza la comparación de alturas.
-            medida.dispose(); // Libera los recursos de la medición.
-          } // Finaliza el cálculo de la altura compartida.
-          // Agrupa todos los campos para permitir validarlos desde la página.
-          final contenido = Form(
-            key: claveFormulario, // Expone validación y reinicio al botón externo.
-            child: Column(
-              mainAxisSize: MainAxisSize
-                  .min, // Utiliza únicamente la altura de las filas.
-              children: [
-                // Construye las filas configuradas.
-                for (
-                  int fila = 0;
-                  fila < cantidadFilas;
-                  fila++
-                ) // Recorre las filas de la cuadrícula.
-                  Padding(
-                    padding: EdgeInsets.only(
-                      bottom: fila < cantidadFilas - 1 ? separacionFilas : 0,
-                    ), // Separa las filas sin margen inferior adicional.
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start, // Alinea todas las celdas desde su borde superior.
-                      children: [
-                        // Construye las columnas de la fila actual.
-                        for (
-                          int columna = 0;
-                          columna < columnas;
-                          columna++
-                        ) // Recorre las columnas solicitadas.
-                          Padding(
-                            padding: EdgeInsets.only(
-                              right: columna < columnas - 1
-                                  ? separacionColumnas
-                                  : 0,
-                            ), // Separa las columnas sin margen derecho adicional.
-                            child: SizedBox(
-                              width: anchoCelda, // Asigna el mismo ancho a todas las celdas.
-                              child: fila * columnas + columna < campos.length
-                                  ? _construirCampo(
-                                      context,
-                                      campos[fila * columnas + columna],
-                                      altoEtiqueta,
-                                      estiloEtiqueta,
-                                      estiloCampo,
-                                    ) // Construye el campo que corresponde a la celda.
-                                  : SizedBox(
-                                      height:
-                                          altoEtiqueta + 10 + altoCampo + 56,
-                                    ), // Conserva el espacio de las celdas vacías.
-                            ), // Finaliza el tamaño de la celda.
-                          ), // Finaliza la separación de la columna.
-                      ], // Finaliza las columnas de la fila.
-                    ), // Finaliza la fila del formulario.
-                  ), // Finaliza la separación entre filas.
-              ], // Finaliza las filas del formulario.
-            ), // Finaliza la distribución vertical.
-          ); // Finaliza el formulario sin botones.
-          // Desplaza horizontalmente la cuadrícula cuando no cabe en el exterior.
-          final desplazamientoHorizontal = SingleChildScrollView(
-            scrollDirection: Axis.horizontal, // Conserva las columnas solicitadas también en Android.
+            )..layout(maxWidth: anchoCampo);
+            if (medida.height > altoEtiqueta) altoEtiqueta = medida.height;
+            medida.dispose();
+          }
+
+          final camposDisponibles =
+              columnasVisibles == columnas && filas != null
+              ? (filas! * columnas).clamp(campos.length, 1 << 30).toInt()
+              : campos.length;
+          final contenido = Align(
+            alignment: Alignment.topLeft,
             child: SizedBox(
-              width: anchoCuadricula,
-              child: contenido,
-            ), // Mantiene el ancho uniforme de la cuadrícula.
-          ); // Finaliza el desplazamiento horizontal.
-          // Habilita desplazamiento vertical únicamente si se limitó el alto.
+              width: anchoFormulario,
+              child: Form(
+                key: claveFormulario,
+                child: Wrap(
+                  spacing: separacionColumnas,
+                  runSpacing: separacionFilas,
+                  children: [
+                    for (int i = 0; i < camposDisponibles; i++)
+                      SizedBox(
+                        width: anchoCampo,
+                        child: i < campos.length
+                            ? _construirCampo(
+                                context,
+                                campos[i],
+                                altoEtiqueta,
+                                estiloEtiqueta,
+                                estiloCampo,
+                              )
+                            : SizedBox(height: altoEtiqueta + 10 + altoCampo),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          );
           return alto == null
-              ? desplazamientoHorizontal
-              : SingleChildScrollView(child: desplazamientoHorizontal);
-        }, // Finaliza la adaptación al espacio disponible.
-      ), // Finaliza el cálculo de las dimensiones del formulario.
-    ); // Finaliza el tamaño exterior.
-  } // Finaliza la construcción del formulario.
+              ? contenido
+              : SingleChildScrollView(child: contenido);
+        },
+      ),
+    );
+  }
 
   // Construye una celda con etiqueta externa y área de escritura uniforme.
   Widget _construirCampo(

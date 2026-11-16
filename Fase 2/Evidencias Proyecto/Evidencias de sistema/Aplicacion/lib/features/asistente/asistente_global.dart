@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:frenos_cerna/core/navigation/dimensiones_navegacion.dart';
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:frenos_cerna/core/data/supabase_database.dart';
@@ -390,12 +391,17 @@ class _AsistenteGlobalState extends State<AsistenteGlobal>
         : _detector == null
         ? 'Hablar con Cerna'
         : 'Hablar con Cerna · Oye Cerna / Hey Cerna';
+    final margenInferior =
+        MediaQuery.paddingOf(context).bottom +
+        (DimensionesNavegacion.usaBarraInferior(context)
+            ? DimensionesNavegacion.altoBarraInferior
+            : 0);
     return Stack(
       children: [
         widget.child,
         Positioned(
           right: 12,
-          bottom: MediaQuery.paddingOf(context).bottom + 12,
+          bottom: margenInferior + 12,
           child: Material(
             color: superficie,
             surfaceTintColor: Colors.transparent,
@@ -450,7 +456,7 @@ class _AsistenteGlobalState extends State<AsistenteGlobal>
         ),
         if (mensaje != null || venta != null)
           Positioned(
-            bottom: MediaQuery.paddingOf(context).bottom + 68,
+            bottom: margenInferior + 68,
             right: 12,
             width: (MediaQuery.sizeOf(context).width - 24)
                 .clamp(0.0, 360.0)

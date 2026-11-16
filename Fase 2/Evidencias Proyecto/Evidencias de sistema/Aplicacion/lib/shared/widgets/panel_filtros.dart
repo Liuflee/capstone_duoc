@@ -34,68 +34,48 @@ class CampoBusqueda extends StatelessWidget {
     super.key, // Conserva la identidad del widget dentro de Flutter.
     required this.controlador, // Controlador del texto de búsqueda.
     required this.alCambiar, // Acción ejecutada al escribir.
-    this.textoAyuda = 'BUSCAR', // Texto predeterminado del buscador.
+    this.textoAyuda = 'Buscar', // Texto predeterminado del buscador.
   });
 
-  @override // Implementa la construcción visual del widget.
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 48, // Comparte la altura con los filtros del panel.
-      decoration: BoxDecoration(
-        color: PaletaTaller.de(context).adaptar(Colors.grey[300]!),
-        border: PaletaTaller.de(context).oscura
-            ? Border.all(color: PaletaTaller.de(context).borde)
-            : null,
-        borderRadius: BorderRadius.circular(4),
+    final paleta = PaletaTaller.de(context);
+    final borde = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: BorderSide(color: paleta.borde.withValues(alpha: .32)),
+    );
+    return ListenableBuilder(
+      listenable: controlador,
+      builder: (context, _) => TextField(
+        controller: controlador,
+        onChanged: alCambiar,
+        textInputAction: TextInputAction.search,
+        decoration: InputDecoration(
+          hintText: textoAyuda,
+          filled: true,
+          fillColor: paleta.oscura ? paleta.tarjeta : paleta.fondo,
+          prefixIcon: const Icon(Icons.search),
+          suffixIcon: controlador.text.isEmpty
+              ? null
+              : IconButton(
+                  tooltip: 'Limpiar búsqueda',
+                  icon: const Icon(Icons.close),
+                  onPressed: () {
+                    controlador.clear();
+                    alCambiar('');
+                  },
+                ),
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+          border: borde,
+          enabledBorder: borde,
+          focusedBorder: borde.copyWith(
+            borderSide: BorderSide(color: paleta.acento, width: 2),
+          ),
+        ),
       ),
-      clipBehavior: Clip.antiAlias, // Reproduce el fondo gris de la aplicación.
-      padding: const EdgeInsets.only(
-        left: 10,
-      ), // Separa el texto del borde izquierdo.
-      child: Row(
-        children: [
-          // Distribuye el campo, la lupa y la limpieza horizontalmente.
-          Expanded(
-            child: TextField(
-              controller:
-                  controlador, // Muestra el texto administrado por la página.
-              onChanged: alCambiar, // Permite filtrar mientras se escribe.
-              decoration: InputDecoration(
-                filled: false,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                hintText: textoAyuda, // Describe qué datos se pueden buscar.
-                border: InputBorder.none, // Conserva el diseño sin borde.
-              ), // Finaliza la decoración del campo.
-            ), // Finaliza el campo editable.
-          ), // Asigna al texto el espacio restante.
-          Icon(
-            Icons.search,
-            color: PaletaTaller.de(context).adaptar(Colors.black, tinta: true),
-          ), // Conserva la lupa negra.
-          // Muestra la limpieza solamente cuando existe un texto escrito.
-          ListenableBuilder(
-            listenable: controlador, // Se reconstruye al cambiar el texto.
-            builder: (context, _) => controlador.text.isEmpty
-                ? const SizedBox.shrink() // No ocupa espacio sin texto.
-                : IconButton(
-                    tooltip: 'Limpiar búsqueda', // Describe la acción.
-                    onPressed: () {
-                      controlador.clear(); // Borra el texto visible.
-                      alCambiar(''); // Notifica que la búsqueda quedó vacía.
-                    }, // Ejecuta la limpieza de un solo toque.
-                    icon: Icon(
-                      Icons.close,
-                      color: PaletaTaller.de(context)
-                          .adaptar(Colors.black, tinta: true),
-                    ), // Muestra la cruz de limpieza.
-                  ), // Finaliza el botón de limpieza.
-          ), // Finaliza la zona que reacciona al texto.
-        ], // Finaliza los elementos horizontales.
-      ), // Finaliza la fila del buscador.
-    ); // Finaliza el fondo del buscador.
-  } // Finaliza la construcción visual.
-} // Finaliza el widget reutilizable.
+    );
+  }
+}
 
 // Describe una categoría de filtrado y cómo obtener su valor en cada dato.
 // La página define la categoría una sola vez y el panel calcula sus opciones.
@@ -167,7 +147,7 @@ class PanelFiltros<T> extends StatefulWidget {
     required this.camposBusqueda, // Campos que revisa el buscador.
     this.categorias =
         const [], // Las páginas sin categorías usan solo búsqueda.
-    this.textoAyuda = 'BUSCAR', // Indicación predeterminada del buscador.
+    this.textoAyuda = 'Buscar', // Indicación predeterminada del buscador.
     required this.child, // Contenido que recibe los datos filtrados.
   });
 
@@ -369,7 +349,6 @@ class _PanelFiltrosState<T> extends State<PanelFiltros<T>> {
                   Text(
                     '${filtrados.length} DE ${widget.datos.length}',
                     style: TextStyle(
-                      fontFamily: 'Courier',
                       fontSize: 13,
                       color: PaletaTaller.de(context)
                           .adaptar(Colors.grey[700]!, tinta: true),
@@ -389,7 +368,6 @@ class _PanelFiltrosState<T> extends State<PanelFiltros<T>> {
                       label: Text(
                         'LIMPIAR',
                         style: TextStyle(
-                          fontFamily: 'Courier',
                           fontSize: 13,
                           color: PaletaTaller.de(context).adaptar(Colors.black),
                         ),
@@ -532,13 +510,12 @@ class _ChipCategoriaState<T> extends State<_ChipCategoria<T>> {
                   child: Text(
                     opcion.texto
                         .toUpperCase(), // Muestra la opción en mayúsculas.
-                    style: const TextStyle(fontFamily: 'Courier', fontSize: 14),
+                    style: const TextStyle(fontSize: 14),
                   ), // Finaliza el texto de la opción.
                 ), // Ajusta textos largos al ancho del menú.
                 Text(
                   '${opcion.cantidad}', // Indica cuántos datos tiene esta opción.
                   style: TextStyle(
-                    fontFamily: 'Courier',
                     fontSize: 13,
                     color: PaletaTaller.de(context)
                         .adaptar(Colors.grey[700]!, tinta: true),
@@ -564,7 +541,7 @@ class _ChipCategoriaState<T> extends State<_ChipCategoria<T>> {
                 const Expanded(
                   child: Text(
                     'TODAS',
-                    style: TextStyle(fontFamily: 'Courier', fontSize: 14),
+                    style: TextStyle(fontSize: 14),
                   ), // Describe el reinicio completo.
                 ), // Ajusta el texto al ancho del menú.
               ], // Finaliza los elementos del reinicio.
@@ -585,9 +562,10 @@ class _ChipCategoriaState<T> extends State<_ChipCategoria<T>> {
           message:
               widget.categoria.etiqueta, // Describe el chip al pasar el cursor.
           child: Container(
-            height: 40, // Comparte la altura con el buscador del panel.
+            constraints: const BoxConstraints(minHeight: 44),
             padding: const EdgeInsets.symmetric(
               horizontal: 12,
+              vertical: 8,
             ), // Separa el texto de los bordes.
             decoration: BoxDecoration(
               color: PaletaTaller.de(context).adaptar(
@@ -600,17 +578,18 @@ class _ChipCategoriaState<T> extends State<_ChipCategoria<T>> {
             child: Row(
               mainAxisSize: MainAxisSize.min, // El chip ocupa solo su texto.
               children: [
-                Text(
-                  activo
-                      ? '${widget.categoria.etiqueta.toUpperCase()} (${widget.elegidos.length})' // Muestra cuántos valores están elegidos.
-                      : widget.categoria.etiqueta
-                            .toUpperCase(), // Muestra la categoría completa.
-                  style: TextStyle(
-                    fontFamily: 'Courier',
-                    fontSize: 13,
-                    color: colorTexto,
-                  ), // Mantiene la fuente de la aplicación.
-                ), // Finaliza el texto visible del chip.
+                Flexible(
+                  child: Text(
+                    activo
+                        ? '${widget.categoria.etiqueta.toUpperCase()} (${widget.elegidos.length})' // Muestra cuántos valores están elegidos.
+                        : widget.categoria.etiqueta
+                              .toUpperCase(), // Muestra la categoría completa.
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: colorTexto,
+                    ), // Mantiene la fuente de la aplicación.
+                  ),
+                ),
                 Icon(
                   controlador.isOpen
                       ? Icons.arrow_drop_up

@@ -127,9 +127,6 @@ class MiAplicacion extends StatelessWidget {
 
         // Configuración visual general
         theme: ThemeData(
-          // Fuente predeterminada
-          fontFamily: 'Courier',
-
           // Configuración de las transiciones entre páginas
           pageTransitionsTheme: const PageTransitionsTheme(
             builders: {

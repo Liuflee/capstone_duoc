@@ -334,6 +334,7 @@ class _PaginaGestionPerfilState extends State<PaginaGestionPerfil> {
     return EstructuraPagina(
       titulo: titulo,
       activo: 'Perfil',
+      mostrarNavegacionMovil: false,
       child: SingleChildScrollView(
         child: Center(
           child: ConstrainedBox(

@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/shared/widgets/barra_superior.dart';
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/features/clientes/pagina_crear_cliente.dart'; // Permite crear un cliente y devolverlo a la reserva.
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart'; // Conserva el cliente y su contacto.
@@ -58,10 +59,7 @@ class _VistaReservasState extends State<VistaReservas> {
               surfaceTintColor:
                   Colors.transparent, // Evita tonos ajenos a la aplicación.
               insetPadding: EdgeInsets.fromLTRB(
-                24 +
-                    (MediaQuery.sizeOf(context).width >= 700
-                        ? MediaQuery.sizeOf(context).width * 0.12
-                        : 0),
+                24 + DimensionesNavegacion.anchoMenuEn(context),
                 24,
                 24,
                 24,

@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/shared/widgets/navegacion_inferior.dart';
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 // Abre el registro independiente de productos.
 import 'package:frenos_cerna/features/inventario/pagina_crear_producto.dart';
@@ -166,11 +167,9 @@ class _PaginaInventarioState extends State<PaginaInventario> {
   @override
   Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
   Widget _pagina(BuildContext context) {
-    final anchoPantalla = MediaQuery.of(context).size.width;
-
     final esPantallaGrande =
-        anchoPantalla >=
-        700; // Comparte el punto de adaptación del menú principal.
+        DimensionesNavegacion.anchoMenuEn(context) >
+        0; // Comparte el punto de adaptación del menú principal.
 
     return Scaffold(
       backgroundColor: PaletaTaller.de(context).fondo,
@@ -181,12 +180,12 @@ class _PaginaInventarioState extends State<PaginaInventario> {
       appBar: PreferredSize(
         // Comparte el diez por ciento de altura con la página principal.
         preferredSize: Size.fromHeight(
-          MediaQuery.sizeOf(context).height * 0.10,
+          DimensionesNavegacion.altoBarra(MediaQuery.sizeOf(context).width),
         ),
         child: SizedBox(
-          height:
-              MediaQuery.sizeOf(context).height *
-              0.10, // Mantiene la altura común de las barras.
+          height: DimensionesNavegacion.altoBarra(
+            MediaQuery.sizeOf(context).width,
+          ),
           child: BarraSuperior(
             tituloPagina: 'Inventario',
           ), // Reutiliza el encabezado de Inicio.
@@ -194,11 +193,13 @@ class _PaginaInventarioState extends State<PaginaInventario> {
       ),
 
       // ========================================================
-      // MENÚ LATERAL MÓVIL
+      // NAVEGACIÓN INFERIOR
       // ========================================================
-      drawer: esPantallaGrande
-          ? null
-          : const Drawer(child: MenuLateral(activo: 'Inventario')),
+      drawer: MenuLateral.desplegable(context, activo: 'Inventario'),
+      bottomNavigationBar: NavegacionInferior.para(
+        context,
+        activo: 'Inventario',
+      ),
 
       // ========================================================
       // CONTENIDO PRINCIPAL
@@ -213,7 +214,9 @@ class _PaginaInventarioState extends State<PaginaInventario> {
 
           if (esPantallaGrande)
             SizedBox(
-              width: MediaQuery.sizeOf(context).width * 0.12,
+              width: DimensionesNavegacion.anchoMenu(
+                MediaQuery.sizeOf(context).width,
+              ),
               child: MenuLateral(activo: 'Inventario'),
             ),
 
@@ -293,7 +296,7 @@ class _PaginaInventarioState extends State<PaginaInventario> {
                     Expanded(
                       child: PanelFiltros<Producto>(
                         datos: productos, // Filtra el inventario completo.
-                        textoAyuda: 'BUSCAR PRODUCTO, CÓDIGO O CATEGORÍA', // Describe la búsqueda disponible.
+                        textoAyuda: 'Buscar producto o código', // Describe la búsqueda disponible.
                         camposBusqueda: [
                           (producto) => producto.nombre, // Busca en el nombre.
                           (producto) => producto
@@ -337,7 +340,7 @@ class _PaginaInventarioState extends State<PaginaInventario> {
                                 },
                               )
                               .toList();
-                          final tabla = TablaDatos(
+                          return TablaDatos(
                             mostrarControles: false, // El panel ya muestra el buscador y las categorías.
                             // Encabezados visibles de la tabla.
                             nombresColumnas: const [
@@ -418,30 +421,6 @@ class _PaginaInventarioState extends State<PaginaInventario> {
                               },
                             },
                           ); // Finaliza la tabla construida con los productos filtrados.
-                          final plataforma = Theme.of(context).platform;
-                          final esCelular =
-                              plataforma == TargetPlatform.android ||
-                              plataforma == TargetPlatform.iOS;
-                          if (!esCelular) return tabla;
-                          return TablaDatos(
-                            mostrarControles: false,
-                            nombresColumnas: const [
-                              'PRODUCTO',
-                              'CANTIDAD',
-                              'VER',
-                            ],
-                            camposColumnas: const ['nombre', 'cantidad', ''],
-                            anchosColumnas: const [240, 100, 88],
-                            filas: filasProductos,
-                            coloresEncabezados: [
-                              for (final indice in [0, 3, 4])
-                                tabla.coloresEncabezados![indice],
-                            ],
-                            celdasPersonalizadas: {
-                              0: tabla.celdasPersonalizadas[0]!,
-                              2: tabla.celdasPersonalizadas[4]!,
-                            },
-                          );
                         }, // Finaliza la construcción del contenido.
                       ), // Finaliza el panel de filtros reutilizable.
                     ), // Finaliza el espacio restante de la página.

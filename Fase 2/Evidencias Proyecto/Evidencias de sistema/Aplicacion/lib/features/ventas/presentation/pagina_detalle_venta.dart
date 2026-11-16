@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/shared/widgets/navegacion_inferior.dart';
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart'; // Representa al cliente vinculado.
 import 'package:frenos_cerna/features/clientes/pagina_ver_cliente.dart'; // Consulta el perfil sin permitir edición.
@@ -192,9 +193,7 @@ class _PaginaDetalleVentaState extends State<PaginaDetalleVenta> {
   @override
   Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
   Widget _pagina(BuildContext context) {
-    final esPantallaGrande =
-        MediaQuery.of(context).size.width >=
-        700; // Comparte el punto de adaptación del menú principal.
+    final esPantallaGrande = DimensionesNavegacion.anchoMenuEn(context) > 0;
 
     // Título dinámico
     final tituloPagina = widget.esPendiente
@@ -210,26 +209,32 @@ class _PaginaDetalleVentaState extends State<PaginaDetalleVenta> {
       appBar: PreferredSize(
         // Comparte el diez por ciento de altura con la página principal.
         preferredSize: Size.fromHeight(
-          MediaQuery.sizeOf(context).height * 0.10,
+          DimensionesNavegacion.altoBarra(MediaQuery.sizeOf(context).width),
         ),
         child: SizedBox(
-          height:
-              MediaQuery.sizeOf(context).height *
-              0.10, // Mantiene la altura común de las barras.
+          height: DimensionesNavegacion.altoBarra(
+            MediaQuery.sizeOf(context).width,
+          ),
           child: BarraSuperior(
             tituloPagina: tituloPagina,
           ), // Reutiliza el encabezado de Inicio.
         ),
       ),
-      drawer: esPantallaGrande
-          ? null
-          : const Drawer(child: MenuLateral(activo: 'Ventas')),
+      drawer: MenuLateral.desplegable(context, activo: 'Ventas'),
+      bottomNavigationBar: NavegacionInferior.para(
+        context,
+        activo: 'Ventas',
+        esRaizSeccion: false,
+        habilitada: !widget.esPendiente,
+      ),
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (esPantallaGrande)
             SizedBox(
-              width: MediaQuery.sizeOf(context).width * 0.12,
+              width: DimensionesNavegacion.anchoMenu(
+                MediaQuery.sizeOf(context).width,
+              ),
               child: const MenuLateral(activo: 'Ventas'),
             ),
 

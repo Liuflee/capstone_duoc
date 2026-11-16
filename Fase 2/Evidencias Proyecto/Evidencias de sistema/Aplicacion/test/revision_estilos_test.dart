@@ -236,8 +236,8 @@ void main() {
         ); // Mide únicamente la ventana visible.
         expect(
           centro.dx,
-          closeTo(ancho * (ancho >= 700 ? 0.56 : 0.5), 0.01),
-        ); // Excluye el doce por ciento del menú en escritorio.
+          closeTo((ancho + DimensionesNavegacion.anchoMenu(ancho)) / 2, 0.01),
+        ); // Centra el diálogo en el área de contenido.
         expect(
           centro.dy,
           closeTo(540, 0.01),
@@ -354,9 +354,14 @@ void main() {
           ),
         ); // Reproduce la composición compartida por las vistas.
         await tester.pumpAndSettle(); // Completa la distribución.
-        final celda = find
-            .ancestor(of: find.text('CÓDIGO'), matching: find.byType(Container))
-            .first; // Localiza la cabecera visible.
+        final celda = ancho < 600
+            ? find.byType(Card).first
+            : find
+                  .ancestor(
+                    of: find.text('CÓDIGO'),
+                    matching: find.byType(Container),
+                  )
+                  .first;
         final tabla = tester.getRect(
           celda,
         ); // Excluye la reserva del desplazamiento.
@@ -418,7 +423,7 @@ void main() {
                   child: Row(
                     children: [
                       SizedBox(
-                        width: 172.8,
+                        width: 216,
                         child: MenuLateral(activo: 'Página Principal'),
                       ),
                       Expanded(child: SizedBox()),
@@ -442,14 +447,14 @@ void main() {
       ); // Extiende el blanco hasta el extremo superior izquierdo.
       expect(
         limitesMarca.width,
-        closeTo(172.8, 0.01),
+        closeTo(DimensionesNavegacion.anchoMenu(1440), 0.01),
       ); // Cubre todo el ancho de la zona del menú.
       expect(
         limitesMarca.height,
         closeTo(100, 1.01),
       ); // Cubre el alto completo salvo la línea divisoria inferior.
       expect(
-        tester.widget<Container>(marca).color,
+        tester.widget<ColoredBox>(marca).color,
         const Color(0xFFE0E0E0),
       ); // Conserva el mismo fondo gris que la barra superior.
       final decoracion =

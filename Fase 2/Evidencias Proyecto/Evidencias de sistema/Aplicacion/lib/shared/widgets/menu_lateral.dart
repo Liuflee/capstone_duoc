@@ -1,17 +1,13 @@
+import 'package:frenos_cerna/core/navigation/dimensiones_navegacion.dart';
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/features/vehiculos/pagina_vehiculos.dart'; // Recupera el listado e historial de los vehículos.
 
-import 'dart:io' show exit; // Permite cerrar el proceso de escritorio.
-
 import 'package:flutter/foundation.dart'; // Identifica la plataforma actual.
-import 'package:flutter/services.dart'; // Solicita el cierre de la actividad Android.
 import 'package:material_ui/material_ui.dart';
 import 'package:frenos_cerna/core/navigation/nav_rutas.dart';
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart';
 import 'package:frenos_cerna/features/inventario/pagina_inventario.dart';
 import 'package:frenos_cerna/features/inicio/pagina_inicio.dart';
-
-// Asegúrate de que los nombres de los archivos coincidan con los tuyos
 
 class MenuLateral extends StatelessWidget {
   // Comparte navegación, relieve y cierre en todas las páginas.
@@ -20,14 +16,10 @@ class MenuLateral extends StatelessWidget {
     super.key,
     required this.activo,
   }); // Conserva el constructor existente.
-  void _cerrarAplicacion() {
-    // Conserva la salida según la plataforma.
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
-      exit(0);
-    } else {
-      SystemNavigator.pop();
-    } // Cierra Windows o la actividad de Android.
-  } // Finaliza la acción de cierre.
+  static Drawer? desplegable(BuildContext context, {required String activo}) =>
+      DimensionesNavegacion.usaMenuDesplegable(context)
+      ? Drawer(child: MenuLateral(activo: activo))
+      : null;
 
   Widget _botonCerrar(BuildContext context, double alto) => SafeArea(
     top: false,
@@ -44,7 +36,7 @@ class MenuLateral extends StatelessWidget {
             key: const ValueKey(
               'cerrar_aplicacion',
             ), // Permite comprobar que se vea completa al abrir.
-            onTap: _cerrarAplicacion, // Conserva la acción para toda el área del botón.
+            onTap: NavegacionRutas.cerrarAplicacion, // Conserva la acción para toda el área del botón.
             borderRadius: BorderRadius.circular(
               12,
             ), // Mantiene un área de interacción cómoda.
@@ -115,6 +107,7 @@ class MenuLateral extends StatelessWidget {
             // Usa la altura disponible sin imponer los 700 píxeles anteriores.
             Expanded(
               child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(vertical: 10),
                 child: Column(children: _opciones(context)),
               ),
             ), // Desplaza las opciones sin ocultar la salida.
@@ -127,119 +120,77 @@ class MenuLateral extends StatelessWidget {
       },
     ),
   ); // Finaliza la superficie elevada.
-  List<Widget> _opciones(BuildContext context) => [
-    // Conserva el orden de navegación.
+  List<Widget> _opciones(BuildContext context) {
+    final navegador = Navigator.of(context);
+    final escritorio =
+        kIsWeb || Theme.of(context).platform != TargetPlatform.android;
+    final seccion = activo == 'Vehiculos' ? 'Vehículos' : activo;
 
-    // BOTÓN PÁGINA PRINCIPAL
-    InkWell(
-      onTap: () {
-        if (activo != 'Página Principal') {
-          Navigator.pushReplacement(
-            context,
-            NavegacionRutas.sinAnimacion(const PaginaInicio()),
-          );
-        }
-      },
-      child: _MenuItem(
-        icono: Icons.home,
-        texto: 'Página\nPrincipal',
-        activo: activo == 'Página Principal',
-      ),
-    ),
-
-    // BOTÓN CLIENTES
-    InkWell(
-      onTap: () {
-        if (activo != 'Clientes') {
-          Navigator.pushReplacement(
-            context,
-            NavegacionRutas.sinAnimacion(const PaginaClientes()),
-          );
-        }
-      },
-      child: _MenuItem(
-        icono: Icons.person_outline,
-        texto: 'Clientes',
-        activo: activo == 'Clientes',
-      ),
-    ),
-
-    InkWell(
-      onTap: () {
-        if (activo != 'Vehiculos' && activo != 'Vehículos') {
-          Navigator.pushReplacement(
-            context,
-            NavegacionRutas.sinAnimacion(const PaginaVehiculos()),
-          );
-        }
-      }, // Recupera el acceso al historial de vehículos.
-      child: _MenuItem(
-        icono: Icons.directions_car_outlined,
-        texto: 'Vehículos',
-        activo: activo == 'Vehiculos' || activo == 'Vehículos',
-      ), // Añade Vehículos debajo de Clientes.
-    ),
-    if (kIsWeb || Theme.of(context).platform != TargetPlatform.android) ...[
-      InkWell(
-        onTap: () => Navigator.pushNamed(context, '/profile'),
-        child: _MenuItem(
-          icono: Icons.sentiment_satisfied,
-          texto: 'Perfil',
-          activo: activo == 'Perfil',
-        ),
-      ), // Conecta la sección de perfiles desde todas las páginas.
-      // BOTÓN INVENTARIO
-      InkWell(
-        onTap: () {
-          if (activo != 'Inventario') {
-            Navigator.pushReplacement(
-              context,
-              NavegacionRutas.sinAnimacion(const PaginaInventario()),
-            );
+    Widget enlace(String titulo, IconData icono, VoidCallback navegar) {
+      final seleccionado = titulo == seccion;
+      return _MenuItem(
+        icono: icono,
+        texto: titulo,
+        activo: seleccionado,
+        alPulsar: () {
+          if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
+            navegador.pop();
           }
+          if (!seleccionado) navegar();
         },
-        child: _MenuItem(
-          icono: Icons.cases_outlined,
-          texto: 'Inventario',
-          activo: activo == 'Inventario',
-        ),
-      ),
+      );
+    }
 
-      InkWell(
-        onTap: () {
-          if (activo != 'Dashboard') Navigator.pushNamed(context, '/dashboard');
-        },
-        child: _MenuItem(
-          icono: Icons.dashboard_outlined,
-          texto: 'Dashboard',
-          activo: activo == 'Dashboard',
-        ),
+    void reemplazar(Widget pagina) =>
+        navegador.pushReplacement(NavegacionRutas.sinAnimacion(pagina));
+
+    return [
+      enlace(
+        'Página Principal',
+        Icons.home_outlined,
+        () => reemplazar(const PaginaInicio()),
       ),
-      // BOTÓN PAGINAS DE PRUEBA
-      InkWell(
-        onTap: () {
-          Navigator.pushNamed(
-            context,
-            '/options',
-          ); // Abre Opciones conservando el diseño del menú.
-        },
-        child: _MenuItem(
-          icono: Icons.science_outlined,
-          texto: 'Opciones',
-          activo: activo == 'Opciones',
-        ),
+      enlace(
+        'Clientes',
+        Icons.people_outline,
+        () => reemplazar(const PaginaClientes()),
       ),
-      InkWell(
-        onTap: () => Navigator.pushNamed(context, '/information'),
-        child: _MenuItem(
-          icono: Icons.info_outline,
-          texto: 'Información',
-          activo: activo == 'Información',
+      enlace(
+        'Vehículos',
+        Icons.directions_car_outlined,
+        () => reemplazar(const PaginaVehiculos()),
+      ),
+      if (escritorio)
+        enlace(
+          'Perfil',
+          Icons.person_outline,
+          () => navegador.pushNamed('/profile'),
         ),
-      ), // Conecta la página de ayuda sin cambiar el estilo.
-    ],
-  ]; // Finaliza las opciones.
-} // Finaliza el widget compartido.
+      enlace(
+        'Inventario',
+        Icons.inventory_2_outlined,
+        () => reemplazar(const PaginaInventario()),
+      ),
+      if (escritorio)
+        enlace(
+          'Dashboard',
+          Icons.dashboard_outlined,
+          () => navegador.pushNamed('/dashboard'),
+        ),
+      enlace(
+        'Opciones',
+        Icons.settings_outlined,
+        () => navegador.pushNamed('/options'),
+      ),
+      if (escritorio)
+        enlace(
+          'Información',
+          Icons.info_outline,
+          () => navegador.pushNamed('/information'),
+        ),
+    ];
+  }
+}
 
 class ContenedorMenuLateral extends StatelessWidget {
   final String activo;
@@ -262,52 +213,66 @@ class ContenedorMenuLateral extends StatelessWidget {
   }
 }
 
-// Widget interno para el diseño de cada ítem
-
 class _MenuItem extends StatelessWidget {
   final IconData icono;
   final String texto;
   final bool activo;
+  final VoidCallback alPulsar;
 
   const _MenuItem({
     required this.icono,
     required this.texto,
-    this.activo = false,
+    required this.activo,
+    required this.alPulsar,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: activo
-          ? PaletaTaller.de(context).adaptar(Color.fromARGB(255, 163, 35, 33))
-          : PaletaTaller.de(context).menu,
-      padding: const EdgeInsets.symmetric(vertical: 15),
-      child: Row(
-        children: [
-          const SizedBox(width: 10),
-
-          Icon(
-            icono,
-            color: activo
-                ? PaletaTaller.de(context).adaptar(Colors.black)
-                : Colors.white,
-          ),
-
-          const SizedBox(width: 10),
-
-          Expanded(
-            child: Text(
-              texto,
-              style: TextStyle(
-                color: activo
-                    ? PaletaTaller.de(context).adaptar(Colors.black)
-                    : Colors.white,
-                fontSize: 12,
-                fontWeight: activo ? FontWeight.bold : FontWeight.normal,
+    final paleta = PaletaTaller.de(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      child: Semantics(
+        selected: activo,
+        child: Material(
+          color: activo
+              ? Color.alphaBlend(
+                  paleta.acento.withValues(alpha: .34),
+                  paleta.menu,
+                )
+              : paleta.menu,
+          borderRadius: BorderRadius.circular(10),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: alPulsar,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 48),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 10,
+                ),
+                child: Row(
+                  children: [
+                    Icon(icono, color: Colors.white, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        texto,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: activo
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }

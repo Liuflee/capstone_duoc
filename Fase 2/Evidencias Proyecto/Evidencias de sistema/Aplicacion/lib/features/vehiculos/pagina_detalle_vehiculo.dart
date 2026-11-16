@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/shared/widgets/navegacion_inferior.dart';
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/core/data/supabase_database.dart'; // Consulta el vínculo real entre vehículo y cliente.
 import 'package:frenos_cerna/features/clientes/pagina_clientes.dart'; // Construye el cliente recuperado.
@@ -93,9 +94,7 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
   @override
   Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
   Widget _pagina(BuildContext context) {
-    final esPantallaGrande =
-        MediaQuery.of(context).size.width >=
-        700; // Comparte el punto de adaptación del menú principal.
+    final esPantallaGrande = DimensionesNavegacion.anchoMenuEn(context) > 0;
 
     // Limpiamos los saltos de línea del nombre del vehículo para el título
     final nombreVehiculoLimpio = widget.vehiculo.vehiculoNombre.replaceAll(
@@ -108,26 +107,31 @@ class _PaginaDetalleVehiculoState extends State<PaginaDetalleVehiculo> {
       appBar: PreferredSize(
         // Comparte el diez por ciento de altura con la página principal.
         preferredSize: Size.fromHeight(
-          MediaQuery.sizeOf(context).height * 0.10,
+          DimensionesNavegacion.altoBarra(MediaQuery.sizeOf(context).width),
         ),
         child: SizedBox(
-          height:
-              MediaQuery.sizeOf(context).height *
-              0.10, // Mantiene la altura común de las barras.
+          height: DimensionesNavegacion.altoBarra(
+            MediaQuery.sizeOf(context).width,
+          ),
           child: BarraSuperior(
             tituloPagina: nombreVehiculoLimpio,
           ), // Reutiliza el encabezado de Inicio.
         ),
       ),
-      drawer: esPantallaGrande
-          ? null
-          : const Drawer(child: MenuLateral(activo: 'Vehiculos')),
+      drawer: MenuLateral.desplegable(context, activo: 'Vehiculos'),
+      bottomNavigationBar: NavegacionInferior.para(
+        context,
+        activo: 'Vehiculos',
+        esRaizSeccion: false,
+      ),
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (esPantallaGrande)
             SizedBox(
-              width: MediaQuery.sizeOf(context).width * 0.12,
+              width: DimensionesNavegacion.anchoMenu(
+                MediaQuery.sizeOf(context).width,
+              ),
               child: const MenuLateral(activo: 'Vehiculos'),
             ),
 

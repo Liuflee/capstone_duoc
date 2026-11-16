@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/shared/widgets/navegacion_inferior.dart';
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 // Abre el registro conservando el listado debajo de la nueva ruta.
 import 'package:frenos_cerna/features/vehiculos/pagina_crear_vehiculo.dart';
@@ -140,35 +141,37 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
   @override
   Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
   Widget _pagina(BuildContext context) {
-    final esPantallaGrande =
-        MediaQuery.of(context).size.width >=
-        700; // Comparte el punto de adaptación del menú principal.
+    final esPantallaGrande = DimensionesNavegacion.anchoMenuEn(context) > 0;
 
     return Scaffold(
       backgroundColor: PaletaTaller.de(context).fondo,
       appBar: PreferredSize(
         // Comparte el diez por ciento de altura con la página principal.
         preferredSize: Size.fromHeight(
-          MediaQuery.sizeOf(context).height * 0.10,
+          DimensionesNavegacion.altoBarra(MediaQuery.sizeOf(context).width),
         ),
         child: SizedBox(
-          height:
-              MediaQuery.sizeOf(context).height *
-              0.10, // Mantiene la altura común de las barras.
+          height: DimensionesNavegacion.altoBarra(
+            MediaQuery.sizeOf(context).width,
+          ),
           child: BarraSuperior(
             tituloPagina: 'Vehículos',
           ), // Reutiliza el encabezado de Inicio.
         ),
       ),
-      drawer: esPantallaGrande
-          ? null
-          : const Drawer(child: MenuLateral(activo: 'Vehiculos')),
+      drawer: MenuLateral.desplegable(context, activo: 'Vehiculos'),
+      bottomNavigationBar: NavegacionInferior.para(
+        context,
+        activo: 'Vehiculos',
+      ),
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (esPantallaGrande)
             SizedBox(
-              width: MediaQuery.sizeOf(context).width * 0.12,
+              width: DimensionesNavegacion.anchoMenu(
+                MediaQuery.sizeOf(context).width,
+              ),
               child: const MenuLateral(activo: 'Vehiculos'),
             ),
           Expanded(
@@ -223,7 +226,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                     Expanded(
                       child: PanelFiltros<HistorialVehiculo>(
                         datos: historial, // Filtra todos los vehículos registrados.
-                        textoAyuda: 'BUSCAR CLIENTE, VEHÍCULO O PATENTE', // Describe la búsqueda disponible.
+                        textoAyuda: 'Buscar vehículo o patente', // Describe la búsqueda disponible.
                         camposBusqueda: [
                           (registro) =>
                               registro.clienteNombre, // Busca en el cliente.
@@ -259,7 +262,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                                 },
                               )
                               .toList();
-                          final tabla = TablaDatos(
+                          return TablaDatos(
                             mostrarControles: false, // El panel ya muestra el buscador y las categorías.
                             // Encabezados visibles de la tabla.
                             nombresColumnas: const [
@@ -357,28 +360,6 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                               },
                             },
                           ); // Finaliza la tabla construida con los vehículos filtrados.
-                          if (MediaQuery.sizeOf(context).width >= 700) {
-                            return tabla;
-                          }
-                          return TablaDatos(
-                            mostrarControles: false,
-                            nombresColumnas: const [
-                              'CLIENTE',
-                              'PATENTE',
-                              'REVISAR',
-                            ],
-                            camposColumnas: const ['cliente', 'patente', ''],
-                            anchosColumnas: const [220, 140, 88],
-                            filas: filasVehiculos,
-                            coloresEncabezados: [
-                              for (final indice in [0, 3, 4])
-                                tabla.coloresEncabezados![indice],
-                            ],
-                            celdasPersonalizadas: {
-                              0: tabla.celdasPersonalizadas[0]!,
-                              2: tabla.celdasPersonalizadas[4]!,
-                            },
-                          );
                         }, // Finaliza la construcción del contenido.
                       ), // Finaliza el panel de filtros reutilizable.
                     ), // Finaliza el espacio restante de la página.

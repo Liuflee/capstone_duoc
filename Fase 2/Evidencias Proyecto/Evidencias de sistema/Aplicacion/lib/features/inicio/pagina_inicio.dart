@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/shared/widgets/navegacion_inferior.dart';
 import 'package:frenos_cerna/features/escaner/pagina_escaner_producto.dart';
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/features/ventas/presentation/pagina_crear_ventas.dart'; // Abre directamente el registro de una venta.
@@ -6,9 +7,7 @@ import 'package:frenos_cerna/core/data/perfil_sesion.dart'; // Conserva el perfi
 // Importaciones
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:frenos_cerna/core/data/supabase_database.dart';
 import 'package:frenos_cerna/features/autenticacion/data/autenticacion_repository.dart';
 import 'package:frenos_cerna/shared/widgets/barra_superior.dart';
 import 'package:frenos_cerna/shared/widgets/menu_lateral.dart';
@@ -46,8 +45,12 @@ class PaginaInicio extends StatelessWidget {
       ); // Conserva el perfil cargado al iniciar sesión para las demás vistas.
     }
     return Scaffold(
-      // Conserva la navegación lateral en pantallas pequeñas.
-      drawer: const Drawer(child: MenuLateral(activo: 'Página Principal')),
+      // Accesos principales en pantallas pequeñas.
+      drawer: MenuLateral.desplegable(context, activo: 'Página Principal'),
+      bottomNavigationBar: NavegacionInferior.para(
+        context,
+        activo: 'Página Principal',
+      ),
       // Color de fondo de la página
       backgroundColor: PaletaTaller.de(context).fondo,
 
@@ -57,7 +60,6 @@ class PaginaInicio extends StatelessWidget {
         builder: (context, constraints) {
           // Dimensiones de la ventana
           final double ancho = constraints.maxWidth;
-          final double alto = constraints.maxHeight;
 
           // Se crea la distribución vertical de la página
           return Column(
@@ -65,7 +67,7 @@ class PaginaInicio extends StatelessWidget {
               // BARRA SUPERIOR
               SizedBox(
                 width: ancho,
-                height: alto * 0.10,
+                height: DimensionesNavegacion.altoBarra(ancho),
 
                 // Se llama el widget de barra superior
                 child: BarraSuperior(
@@ -76,11 +78,7 @@ class PaginaInicio extends StatelessWidget {
                       : perfilUsuario?.rol.etiqueta,
                   onCerrarSesion: modoPrueba
                       ? () async => onSalirModoPrueba?.call()
-                      : () async {
-                          await SupabaseDatabase.client.auth.signOut(
-                            scope: SignOutScope.local,
-                          );
-                        },
+                      : null,
                 ),
               ),
 
@@ -93,9 +91,9 @@ class PaginaInicio extends StatelessWidget {
 
                   children: [
                     // BARRA LATERAL
-                    if (ancho >= 700) // Comparte el menú de escritorio y permite usar el desplegable en móvil.
+                    if (DimensionesNavegacion.anchoMenuEn(context) > 0)
                       SizedBox(
-                        width: ancho * 0.12,
+                        width: DimensionesNavegacion.anchoMenu(ancho),
 
                         // Se llama el widget del menú lateral
                         child: const MenuLateral(activo: 'Página Principal'),

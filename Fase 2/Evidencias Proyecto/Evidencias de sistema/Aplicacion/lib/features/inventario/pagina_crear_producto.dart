@@ -522,6 +522,7 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
         ? 'Creación de producto'
         : 'Edición de producto',
     activo: 'Inventario',
+    mostrarNavegacionMovil: false,
     child: SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch, // Alinea el contenido.

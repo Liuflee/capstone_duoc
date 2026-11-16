@@ -1,3 +1,4 @@
+import 'package:frenos_cerna/shared/widgets/navegacion_inferior.dart';
 import 'package:frenos_cerna/main.dart'; // Comprueba el área segura aplicada a todas las rutas.
 import 'package:frenos_cerna/features/autenticacion/presentation/pagina_autenticacion.dart'; // Comprueba el regreso al login existente.
 import 'package:material_ui/material_ui.dart'; // Construye el marco compartido de las páginas.
@@ -118,9 +119,10 @@ void main() {
     const Size(1280, 720),
     const Size(800, 600),
     const Size(390, 844),
+    const Size(844, 390),
   ]) {
     // Comprueba ventanas grandes, pequeñas y móvil.
-    testWidgets('el título se centra con el contenido en $tamano', (
+    testWidgets('el título se adapta al espacio disponible en $tamano', (
       tester,
     ) async {
       // Distingue el centro del contenido del centro total de la ventana.
@@ -128,17 +130,22 @@ void main() {
       tester.view.devicePixelRatio = 1; // Usa coordenadas lógicas.
       addTearDown(tester.view.resetPhysicalSize); // Restablece la pantalla.
       addTearDown(tester.view.resetDevicePixelRatio); // Restablece la escala.
-      final escritorio =
-          tamano.width >=
-          700; // Comparte el punto de adaptación de las páginas.
+      final escritorio = tamano.shortestSide >= 600;
       await tester.pumpWidget(
         MaterialApp(
+          theme: ThemeData(
+            platform: escritorio
+                ? TargetPlatform.windows
+                : TargetPlatform.android,
+          ),
           home: Scaffold(
-            drawer: const Drawer(child: MenuLateral(activo: 'Clientes')),
+            bottomNavigationBar: escritorio
+                ? null
+                : const NavegacionInferior(activo: 'Página Principal'),
             body: Column(
               children: [
                 SizedBox(
-                  height: tamano.height * 0.1,
+                  height: DimensionesNavegacion.altoBarra(tamano.width),
                   child: BarraSuperior(
                     tituloPagina: 'Página Principal',
                     nombreUsuario: 'Usuario con nombre largo',
@@ -150,7 +157,7 @@ void main() {
                     children: [
                       if (escritorio)
                         SizedBox(
-                          width: tamano.width * 0.12,
+                          width: DimensionesNavegacion.anchoMenu(tamano.width),
                           child: const MenuLateral(activo: 'Página Principal'),
                         ),
                       const Expanded(
@@ -170,14 +177,15 @@ void main() {
         ),
       ); // Reproduce las mismas proporciones que Inicio.
       await tester.pumpAndSettle(); // Espera la composición completa.
-      expect(
-        tester.getCenter(find.byKey(const ValueKey('titulo_pagina'))).dx,
-        closeTo(
-          tester.getCenter(find.byKey(const ValueKey('centro_contenido'))).dx,
-          0.01,
-        ),
-      ); // Exige que el título siga el centro del contenido.
+      final titulo = find.byKey(const ValueKey('titulo_pagina'));
       if (escritorio) {
+        expect(
+          tester.getCenter(titulo).dx,
+          closeTo(
+            tester.getCenter(find.byKey(const ValueKey('centro_contenido'))).dx,
+            0.01,
+          ),
+        );
         // Comprueba el botón de salida desde el primer dibujo.
         final cierre = tester.getRect(
           find.byKey(const ValueKey('cerrar_aplicacion')),
@@ -188,24 +196,21 @@ void main() {
         ); // Evita que aparezca cortado debajo de la ventana.
         expect(
           cierre.top,
-          greaterThan(tamano.height * 0.1),
+          greaterThan(DimensionesNavegacion.altoBarra(tamano.width)),
         ); // Mantiene el cierre dentro del menú.
       } else {
-        // Comprueba que el menú móvil conserva su apertura.
-        await tester.tap(
-          find.byTooltip('Abrir menú'),
-        ); // Abre el menú desde la barra.
-        await tester.pumpAndSettle(); // Espera el desplegado del Drawer.
+        expect(find.byTooltip('Abrir menú'), findsNothing);
+        expect(find.byType(Drawer), findsNothing);
+        expect(find.byType(MenuLateral), findsNothing);
+        expect(find.byType(NavigationDestination), findsNWidgets(5));
+        final barraInferior = tester.getRect(find.byType(NavegacionInferior));
+        expect(barraInferior.bottom, closeTo(tamano.height, 0.01));
         expect(
-          find.text('Vehículos'),
-          findsOneWidget,
-        ); // Conserva el nuevo acceso en Android.
-        expect(
-          tester
-              .getRect(find.byKey(const ValueKey('cerrar_aplicacion')))
-              .bottom,
-          lessThanOrEqualTo(tamano.height),
-        ); // Mantiene visible la salida móvil.
+          tester.getRect(titulo).right,
+          lessThanOrEqualTo(
+            tester.getRect(find.byTooltip('Cerrar sesión')).left,
+          ),
+        );
       } // Finaliza las comprobaciones de plataforma.
       expect(
         tester.takeException(),

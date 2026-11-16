@@ -188,43 +188,6 @@ class PaginaTematica extends StatelessWidget {
   );
 }
 
-class SelectorPaletas extends StatelessWidget {
-  final bool compacto;
-  const SelectorPaletas({super.key, required this.compacto});
-  @override
-  Widget build(BuildContext context) {
-    final actual = PaletaTaller.de(context);
-    if (compacto) {
-      return PopupMenuButton<PaletaTaller>(
-        tooltip: 'Cambiar paleta',
-        icon: const Icon(Icons.palette_outlined),
-        initialValue: actual,
-        onSelected: (p) => p.activar(),
-        itemBuilder: (_) => [
-          for (final p in PaletaTaller.values)
-            PopupMenuItem(value: p, child: Text(p.nombre)),
-        ],
-      );
-    }
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (final p in PaletaTaller.values)
-          IconButton(
-            tooltip: p.nombre,
-            style: IconButton.styleFrom(
-              backgroundColor: p.barra,
-              foregroundColor: p.acento,
-              side: BorderSide(color: p == actual ? p.texto : p.acento),
-            ),
-            onPressed: p.activar,
-            icon: Icon(p == actual ? Icons.check : Icons.palette, size: 19),
-          ),
-      ],
-    );
-  }
-}
-
 // Aplica la paleta también cuando el diálogo se abre desde el State de la página.
 Future<T?> mostrarDialogoConTema<T>({
   required BuildContext context,
