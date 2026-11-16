@@ -23,6 +23,7 @@ class PaginaCrearProducto extends StatefulWidget {
 } // Finaliza la página pública.
 
 class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
+  final _sku = TextEditingController();
   final _codigo = TextEditingController(); // Conserva la clave requerida por la base actual.
   final _nombre =
       TextEditingController(); // Conserva el nombre o código de barra.
@@ -49,6 +50,7 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
     final producto =
         widget.productoInicial; // Conserva el registro que se va a editar.
     if (producto != null) {
+      _sku.text = producto['sku']?.toString() ?? '';
       _codigo.text = producto['codigo_producto']
           .toString(); // Muestra su identificador real.
       _nombre.text =
@@ -341,6 +343,7 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
   @override // Libera los recursos.
   void dispose() {
     _codigo.dispose();
+    _sku.dispose();
     _nombre.dispose();
     _precio.dispose();
     _stock.dispose();
@@ -358,6 +361,7 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
     setState(() => _guardando = true); // Indica el guardado.
     try {
       final datos = <String, dynamic>{
+        'sku': _sku.text.trim(),
         'cod_barra': _nombre.text.trim().isEmpty
             ? null
             : _nombre.text.trim(), // Conserva la columna existente.
@@ -562,6 +566,15 @@ class _PaginaCrearProductoState extends State<PaginaCrearProducto> {
                         : null, // Exige un identificador alfanumérico.
                     habilitado: !_guardando && widget.productoInicial == null, // Conserva la clave utilizada por las ventas existentes.
                   ), // Conserva el código obligatorio.
+                  CampoFormularioDatos(
+                    controlador: _sku,
+                    etiqueta: 'SKU:',
+                    textoAyuda: 'Ej.: SKU-00123',
+                    validador: (valor) => valor == null || valor.trim().isEmpty
+                        ? 'Ingresa el SKU del producto'
+                        : null,
+                    habilitado: !_guardando,
+                  ),
                   CampoFormularioDatos(
                     controlador: _precio,
                     etiqueta: widget.productoInicial == null

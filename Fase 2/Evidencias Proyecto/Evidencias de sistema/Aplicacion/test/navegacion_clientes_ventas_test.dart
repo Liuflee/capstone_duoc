@@ -349,7 +349,10 @@ void main() {
         tabla.nombresColumnas,
         isNot(contains('CLIENTE')),
       ); // Oculta la columna redundante al filtrar por cliente.
-      expect(tabla.filas.single['estado'], 'cerrada');
+      expect(
+        tabla.filas.map((fila) => fila['estado']),
+        unorderedEquals(['cerrada', 'pendiente']),
+      );
       expect(
         tabla.filas.every((fila) => fila['rut'].toString() == cliente.id),
         isTrue,
@@ -438,7 +441,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('SELECCIONAR CLIENTE'));
+    await tester.tap(find.text('Seleccionar cliente'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Cliente consultado · RUT: 123'));
     await tester.pumpAndSettle();
@@ -478,7 +481,9 @@ void main() {
           productosResumen: 'Freno',
           total: 1000,
           fecha: 'No registrada',
-          items: [],
+          items: [
+            {'nombre': 'Freno', 'codigo': 'FRE01', 'total': 1000},
+          ],
         ); // Conserva la relación con el cliente.
         await tester.pumpWidget(
           MaterialApp(
@@ -499,8 +504,22 @@ void main() {
           ),
         ); // Abre la composición real del historial.
         await tester.pumpAndSettle(); // Espera la carga del detalle.
+        expect(find.text('Cliente y vehículo'), findsOneWidget);
+        expect(find.text('RUT 123'), findsOneWidget);
+        expect(find.text(r'Subtotal $1.000'), findsOneWidget);
+        expect(find.text(r'Total $1.000'), findsOneWidget);
+        expect(find.text('Confirmar pago'), findsNothing);
+        final buscador = find.byType(TextField);
+        await tester.enterText(buscador, 'no-existe');
+        await tester.pumpAndSettle();
+        expect(find.text('No hay productos que coincidan.'), findsOneWidget);
+        expect(find.text(r'Total $1.000'), findsOneWidget);
+        await tester.enterText(buscador, 'fre01');
+        FocusManager.instance.primaryFocus?.unfocus();
+        await tester.pumpAndSettle();
+        expect(find.text('Freno'), findsOneWidget);
         await tester.tap(
-          find.text('VER CLIENTE'),
+          find.text('Ver cliente'),
         ); // Consulta el perfil desde el historial.
         await tester.pumpAndSettle(); // Espera la navegación.
         expect(
@@ -608,10 +627,17 @@ void main() {
       await tester.pumpAndSettle(); // Recupera el catálogo completo.
       expect(
         tester.widget<TablaDatos>(find.byType(TablaDatos)).filas,
-        hasLength(3),
-      ); // Incluye las cerradas de hoy, de ayer y sin fecha.
+        hasLength(5),
+      ); // Incluye las cerradas y las pendientes de cualquier fecha.
       await tester.tap(find.byTooltip('ESTADO'));
       await tester.pumpAndSettle();
+      expect(
+        find.descendant(
+          of: find.widgetWithText(MenuItemButton, 'TODAS'),
+          matching: find.byIcon(Icons.radio_button_checked),
+        ),
+        findsOneWidget,
+      );
       await tester.tap(find.text('VENTAS PENDIENTES'));
       await tester.pumpAndSettle();
       expect(
@@ -620,6 +646,26 @@ void main() {
             .filas
             .map((fila) => fila['fecha']),
         unorderedEquals([hoy, ayer]),
+      );
+      await tester.tap(find.text('TODAS'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<TablaDatos>(find.byType(TablaDatos)).filas,
+        hasLength(5),
+      );
+      await tester.tap(find.text('VENTAS CERRADAS'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<TablaDatos>(find.byType(TablaDatos)).filas,
+        hasLength(3),
+      );
+      await tester.tapAt(const Offset(1430, 990));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('LIMPIAR'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<TablaDatos>(find.byType(TablaDatos)).filas,
+        hasLength(5),
       );
       expect(
         find.text('REGISTRAR\nVENTA NUEVA'),
@@ -703,6 +749,65 @@ void main() {
     },
   ); // Finaliza la regresión del formato de fecha.
 
+  testWidgets('Inicio actualiza el total de ventas del día', (tester) async {
+    tester.view.physicalSize = const Size(1440, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final navegador = GlobalKey<NavigatorState>();
+    final pendientes = VentasPendientesRepository(clave: 'conteo-inicio');
+    final hoy = DateTime.now();
+    final ayer = DateTime(hoy.year, hoy.month, hoy.day - 1);
+    Future<void> guardar(String id, DateTime fecha) => pendientes.guardar(
+      VentaPendiente(
+        id: id,
+        rutCliente: '123',
+        nombreCliente: 'Cliente',
+        fonoCliente: '456',
+        patente: '',
+        fechaCreacion: fecha,
+        articulos: const [
+          ArticuloVentaPendiente(
+            codigo: '10',
+            nombre: 'Freno',
+            categoria: '',
+            precio: 1000,
+            cantidad: 1,
+            stock: 5,
+          ),
+        ],
+      ),
+    );
+    await guardar('de-ayer', ayer);
+    await guardar('de-hoy', hoy);
+
+    var cerradas = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        navigatorKey: navegador,
+        theme: ThemeData(platform: TargetPlatform.windows),
+        home: PaginaInicio(
+          repositorioPendientes: pendientes,
+          contarVentasCerradas: (_) async => cerradas,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('1'), findsOneWidget);
+
+    await guardar('otra-de-hoy', hoy);
+    await tester.pumpAndSettle();
+    expect(find.text('2'), findsOneWidget);
+
+    await tester.tap(find.text('VENTAS DEL\nDÍA'));
+    await tester.pumpAndSettle();
+    expect(find.byType(PaginaVentas), findsOneWidget);
+    cerradas = 1;
+    navegador.currentState!.pop();
+    await tester.pumpAndSettle();
+    expect(find.text('3'), findsOneWidget);
+  });
+
   for (final historial in [true, false]) {
     // Comprueba las dos tarjetas modificadas de Inicio.
     testWidgets(
@@ -741,30 +846,22 @@ void main() {
     ); // Finaliza la comprobación de una tarjeta.
   } // Finaliza las tarjetas de Inicio.
 
-  testWidgets(
-    'el desplegable de cliente utiliza gris y elimina el tinte rosado',
-    (tester) async {
-      // Verifica el estilo del campo y del menú.
-      await tester.pumpWidget(
-        MaterialApp(
-          home: PaginaCrearVenta(
-            cargarClientes: () async => [],
-            cargarProductos: () async => [],
-          ),
-        ),
-      ); // Abre el registro sin conexión.
-      await tester.pumpAndSettle(); // Espera los catálogos.
-      final menu = tester
-          .widgetList<MenuAnchor>(find.byType(MenuAnchor))
-          .first; // Obtiene el selector de cliente.
-      expect(
-        menu.style!.backgroundColor!.resolve({}),
-        const Color(0xFFE0E0E0),
-      ); // Conserva el gris del proyecto.
-      expect(
-        menu.style!.surfaceTintColor!.resolve({}),
-        Colors.transparent,
-      ); // Elimina el tinte rosado del tema.
-    },
-  ); // Finaliza el estilo de selección.
+  testWidgets('El selector de cliente se abre y cierra en móvil', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      MaterialApp(home: PaginaCrearVenta(cargarClientes: () async => [])),
+    );
+    await tester.tap(find.text('Seleccionar cliente'));
+    await tester.pumpAndSettle();
+    expect(find.text('No se encontraron clientes.'), findsOneWidget);
+    await tester.tap(find.byTooltip('Cerrar selección'));
+    await tester.pumpAndSettle();
+    expect(find.byType(Dialog), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 } // Finaliza las verificaciones de navegación y presentación.

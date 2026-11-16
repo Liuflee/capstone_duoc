@@ -1,199 +1,203 @@
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
-import 'package:frenos_cerna/features/clientes/pagina_clientes.dart'; // Muestra el cliente local asociado a la pendiente.
-import 'package:material_ui/material_ui.dart'; // Presenta las acciones de la venta pendiente.
-import 'package:frenos_cerna/features/ventas/data/ventas_pendientes_repository.dart'; // Recupera y confirma los borradores locales.
-import 'package:frenos_cerna/features/ventas/presentation/pagina_crear_ventas.dart'; // Reutiliza el formulario para editar la venta.
-import 'package:frenos_cerna/features/ventas/presentation/pagina_detalle_venta.dart'; // Conserva el mismo diseño del historial.
-import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart'; // Conserva los botones del proyecto.
+import 'package:frenos_cerna/features/clientes/pagina_clientes.dart';
+import 'package:frenos_cerna/features/clientes/pagina_ver_cliente.dart';
+import 'package:frenos_cerna/features/ventas/data/ventas_pendientes_repository.dart';
+import 'package:frenos_cerna/features/ventas/presentation/formato_venta.dart';
+import 'package:frenos_cerna/features/ventas/presentation/pagina_crear_ventas.dart';
+import 'package:frenos_cerna/features/ventas/presentation/pagina_detalle_venta.dart';
+import 'package:frenos_cerna/features/ventas/presentation/widgets/panel_venta.dart';
+import 'package:frenos_cerna/features/ventas/presentation/widgets/tema_venta.dart';
+import 'package:frenos_cerna/features/ventas/presentation/widgets/detalle_venta_vista.dart';
+import 'package:material_ui/material_ui.dart';
 
 class PaginaDetalleVentaPendiente extends StatefulWidget {
-  // Muestra el historial de una venta sin pago confirmado.
-  final VentaPendiente venta; // Recibe la venta seleccionada mediante la lupa.
-  final VentasPendientesRepository?
-  repositorio; // Permite verificar el flujo con almacenamiento controlado.
+  final VentaPendiente venta;
+  final VentasPendientesRepository? repositorio;
+
   const PaginaDetalleVentaPendiente({
     super.key,
     required this.venta,
     this.repositorio,
-  }); // Conserva el origen de la venta.
-  @override // Crea el estado de edición y confirmación.
+  });
+
+  @override
   State<PaginaDetalleVentaPendiente> createState() =>
-      _PaginaDetalleVentaPendienteState(); // Administra los cambios sin reconstruir el historial remoto.
-} // Finaliza la página pública.
+      _PaginaDetalleVentaPendienteState();
+}
+
+enum _EstadoPendiente { disponible, revision, ausente, sinVerificar }
 
 class _PaginaDetalleVentaPendienteState
     extends State<PaginaDetalleVentaPendiente> {
-  // Conserva el detalle local actualizado.
-  late VentaPendiente _venta; // Mantiene la última versión guardada.
-  bool _ocupado = true; // Bloquea acciones hasta comprobar el estado local.
-  bool _requiereRevision =
-      false; // Impide repetir una confirmación de resultado desconocido.
-  String? _error; // Conserva los errores visibles de carga o pago.
-  VentasPendientesRepository get _repositorio =>
-      widget.repositorio ??
-      VentasPendientesRepository
-          .instancia; // Utiliza el almacenamiento del usuario.
-  @override // Recupera el estado persistido al abrir la lupa.
-  void initState() {
-    // Conserva una vista disponible mientras carga.
-    super.initState(); // Inicializa el ciclo de vida.
-    _venta = widget.venta; // Muestra los datos recibidos.
-    _actualizar(); // Comprueba que la venta siga pendiente.
-  } // Finaliza la inicialización.
+  late VentaPendiente _venta = widget.venta;
+  _EstadoPendiente _estado = _EstadoPendiente.sinVerificar;
+  bool _ocupado = true;
+  String? _error;
 
-  Future<void> _actualizar() async {
-    // Refresca el historial después de editar o fallar un pago.
+  VentasPendientesRepository get _repositorio =>
+      widget.repositorio ?? VentasPendientesRepository.instancia;
+
+  @override
+  void initState() {
+    super.initState();
+    _actualizar();
+  }
+
+  Future<void> _actualizar({String? errorPago}) async {
     try {
-      // Conserva la última vista ante errores locales.
-      final ventas = await _repositorio
-          .obtenerTodas(); // Consulta únicamente este dispositivo.
-      final revision = await _repositorio.requiereRevision(
-        _venta.id,
-      ); // Detecta confirmaciones interrumpidas.
-      final errorConfirmacion = await _repositorio.errorConfirmacion(
-        _venta.id,
-      ); // Recupera el detalle del último intento.
-      if (!mounted) return; // Evita actualizar una página cerrada.
-      final encontrada = ventas.where(
-        (venta) => venta.id == _venta.id,
-      ); // Localiza la versión actual.
+      final id = _venta.id;
+      final ventas = await _repositorio.obtenerTodas();
+      final actual = ventas.where((venta) => venta.id == id).firstOrNull;
+      final revision =
+          actual != null && await _repositorio.requiereRevision(id);
+      final motivo = revision ? await _repositorio.errorConfirmacion(id) : null;
+      if (!mounted) return;
       setState(() {
-        // Actualiza el detalle y sus acciones.
-        if (encontrada.isNotEmpty) {
-          _venta = encontrada.first; // Conserva las modificaciones guardadas.
-        }
-        _requiereRevision = revision || encontrada.isEmpty; // Deshabilita acciones si el resultado es incierto o la venta ya no está pendiente.
-        if (encontrada.isEmpty) _error = 'La venta ya no está pendiente. Vuelve a Ventas para consultar su historial.'; // Evita editar una copia local desactualizada.
-        if (revision && errorConfirmacion != null) {
-          _error =
-              'Confirmación pendiente de revisión. Detalle del intento: $errorConfirmacion'; // Muestra el motivo real sin desbloquear una venta incierta.
-        }
-        _ocupado = false; // Permite continuar después de la lectura.
-      }); // Finaliza la actualización.
+        if (actual != null) _venta = actual;
+        _estado = actual == null
+            ? _EstadoPendiente.ausente
+            : revision
+            ? _EstadoPendiente.revision
+            : _EstadoPendiente.disponible;
+        _error = motivo ?? errorPago;
+        _ocupado = false;
+      });
     } catch (error) {
-      // Conserva la venta si el almacenamiento falla.
-      if (mounted) {
-        setState(() {
-          _error = error.toString();
-          _ocupado = false;
-          _requiereRevision = true;
-        }); // Informa el fallo e impide confirmar datos no verificados.
-      }
-    } // Finaliza la recuperación local.
-  } // Finaliza la actualización.
+      if (!mounted) return;
+      setState(() {
+        _estado = _EstadoPendiente.sinVerificar;
+        _error = 'No se pudo comprobar el estado de la venta. $error';
+        _ocupado = false;
+      });
+    }
+  }
 
   Future<void> _recuperar() async {
-    final confirmado = await mostrarDialogoConTema<bool>(
+    if (_ocupado || _estado != _EstadoPendiente.revision) return;
+    setState(() => _ocupado = true);
+    final confirmado = await mostrarDialogoVenta<bool>(
       context: context,
       builder: (dialogo) => AlertDialog(
-        actionsOverflowButtonSpacing: 12,
-        buttonPadding: const EdgeInsets.symmetric(horizontal: 6),
-        title: const Text(
-          'REVISAR VENTA',
-        ), // Exige verificar el resultado antes de reintentar.
+        scrollable: true,
+        title: const Text('Revisar venta'),
         content: const Text(
-          'Antes de continuar, comprueba en el historial completo y en Supabase que esta venta no fue guardada. Si ya existe, no la recuperes: podrías duplicar la venta y descontar el stock otra vez. ¿Confirmas que no fue registrada y que ya corregiste el problema?',
+          'Comprueba en el historial y en Supabase si la venta ya se registró. '
+          'Recuperarla solo es seguro si comprobaste que el intento anterior '
+          'falló. Una confirmación duplicada puede descontar el stock dos veces.',
         ),
         actions: [
-          CartaNavegacion.accion(
+          TextButton(
             onPressed: () => Navigator.pop(dialogo, false),
-            child: const Text('CANCELAR'),
-          ), // Mantiene el bloqueo.
-          CartaNavegacion.accion(
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
             onPressed: () => Navigator.pop(dialogo, true),
-            child: const Text('NO FUE REGISTRADA'),
-          ), // Confirma la revisión manual.
+            child: const Text('Verifiqué que no se registró'),
+          ),
         ],
       ),
     );
-    if (confirmado != true || !mounted) {
-      return; // Conserva el estado si se cancela.
+    if (!mounted) return;
+    if (confirmado != true) {
+      setState(() => _ocupado = false);
+      return;
     }
-    setState(
-      () => _ocupado = true,
-    ); // Bloquea acciones durante la recuperación local.
     try {
-      await _repositorio.recuperarTrasRevision(
-        _venta.id,
-      ); // Recupera sin enviar el pago.
-      if (!mounted) return;
-      setState(() => _error = null); // Limpia el mensaje revisado.
-      await _actualizar(); // Recarga los datos y habilita el intento posterior.
+      await _repositorio.recuperarTrasRevision(_venta.id);
+      if (mounted) await _actualizar();
     } catch (error) {
-      if (mounted) {
-        setState(() {
-          _error = error.toString();
-          _ocupado = false;
-        }); // Conserva el bloqueo si no pudo recuperar.
-      }
+      if (!mounted) return;
+      setState(() {
+        _error = 'No se pudo recuperar la venta. $error';
+        _ocupado = false;
+      });
     }
   }
 
   Future<void> _editar() async {
-    // Abre la edición conservando este detalle debajo.
+    if (_ocupado || _estado != _EstadoPendiente.disponible) return;
+    setState(() => _ocupado = true);
     final modificada = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         settings: const RouteSettings(name: '/sales/pending/edit'),
-        builder: (context) => PaginaCrearVenta(
+        builder: (_) => PaginaCrearVenta(
           pendiente: _venta,
           repositorioPendientes: _repositorio,
         ),
       ),
-    ); // Devuelve la venta al mismo registro local.
-    if (modificada == true && mounted) {
-      setState(() => _ocupado = true);
+    );
+    if (!mounted) return;
+    if (modificada == true) {
       await _actualizar();
-    } // Refresca artículos, cliente y total.
-  } // Finaliza la edición.
+    } else {
+      setState(() => _ocupado = false);
+    }
+  }
+
+  Future<void> _verCliente() async {
+    if (_ocupado) return;
+    setState(() => _ocupado = true);
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        settings: const RouteSettings(name: '/clients/view'),
+        builder: (_) => PaginaVerCliente(
+          cliente: Cliente(
+            id: _venta.rutCliente,
+            nombre: _venta.nombreCliente,
+            numero: _venta.fonoCliente,
+            ultimaVenta: '',
+            vehiculo: _venta.patente,
+          ),
+        ),
+      ),
+    );
+    if (mounted) setState(() => _ocupado = false);
+  }
 
   Future<void> _confirmarPago() async {
-    // Envía la venta únicamente tras confirmar su pago.
-    if (_ocupado || _requiereRevision) {
-      return; // Impide confirmaciones repetidas o inseguras.
-    }
-    final confirmar = await mostrarDialogoConTema<bool>(
+    if (_ocupado || _estado != _EstadoPendiente.disponible) return;
+    setState(() => _ocupado = true);
+    final confirmado = await mostrarDialogoVenta<bool>(
       context: context,
       builder: (dialogo) => AlertDialog(
-        actionsOverflowButtonSpacing: 12,
-        buttonPadding: const EdgeInsets.symmetric(horizontal: 6),
-        title: const Text('CONFIRMAR PAGO'),
-        content: const Text(
-          '¿Confirmas que se recibió el pago? La venta se guardará en el historial y se descontará el stock. El servidor comprobará precios y disponibilidad actuales.',
+        scrollable: true,
+        title: const Text('Confirmar pago'),
+        content: Text(
+          'Total del borrador ${precioVenta(_venta.total)}\n\n'
+          'Confirma solo después de recibir el pago. El servidor verificará '
+          'los precios y la disponibilidad antes de registrar la venta y descontar el stock.',
         ),
         actions: [
-          CartaNavegacion.accion(
+          TextButton(
             onPressed: () => Navigator.pop(dialogo, false),
-            child: const Text('CANCELAR'),
+            child: const Text('Cancelar'),
           ),
-          CartaNavegacion.accion(
+          FilledButton(
+            style: estiloAccionPrincipalVenta(dialogo),
             onPressed: () => Navigator.pop(dialogo, true),
-            child: const Text('CONFIRMAR PAGO'),
+            child: const Text('Confirmar pago'),
           ),
         ],
       ),
-    ); // Explica la transición definitiva al historial.
-    if (confirmar != true || !mounted) {
-      return; // Cancela sin escrituras remotas.
+    );
+    if (!mounted) return;
+    if (confirmado != true) {
+      setState(() => _ocupado = false);
+      return;
     }
-    setState(() {
-      _ocupado = true;
-      _error = null;
-    }); // Bloquea la edición durante el cierre.
+    setState(() => _error = null);
     try {
-      // Conserva la venta pendiente si el servidor rechaza el registro.
-      final id = await _repositorio.confirmarPago(
-        _venta.id,
-      ); // Usa la transacción existente de stock y detalles.
-      if (!mounted) return; // Evita navegar si se cerró la vista.
+      final id = await _repositorio.confirmarPago(_venta.id);
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           settings: const RouteSettings(name: '/sales/closed'),
-          builder: (context) => PaginaDetalleVenta(
+          builder: (_) => PaginaDetalleVenta(
             idVenta: id,
-            rutCliente: _venta
-                .rutCliente, // Transfiere la relación al historial cerrado.
+            rutCliente: _venta.rutCliente,
             clienteNombre: _venta.nombreCliente,
             vehiculoNombre: _venta.patente.isEmpty
                 ? 'Sin vehículo'
@@ -203,94 +207,114 @@ class _PaginaDetalleVentaPendienteState
           ),
         ),
         result: true,
-      ); // Abre el historial cerrado y permite refrescar la lista de Ventas.
+      );
     } catch (error) {
-      // Mantiene los datos locales para corregir errores o revisar el resultado.
-      if (!mounted) return; // Evita cambiar una página cerrada.
-      final detalle = error
-          .toString(); // Conserva el diagnóstico para otros errores.
+      if (!mounted) return;
+      final detalle = error.toString();
       final contadorVentas =
           detalle.contains('23505') &&
           (detalle.contains('venta_pkey') ||
               detalle.contains('detalle_venta_producto_pkey') ||
-              detalle.contains(
-                'detalle_venta_servicio_pkey',
-              )); // Reconoce una colisión del ID automático.
-      setState(
-        () => _error = contadorVentas
-            ? 'El contador de IDs de ventas o sus detalles está desactualizado. La transacción fue rechazada y el borrador sigue local. Ejecuta supabase/reparar_secuencias_ventas.sql en Supabase y vuelve a confirmar el pago.'
+              detalle.contains('detalle_venta_servicio_pkey'));
+      await _actualizar(
+        errorPago: contadorVentas
+            ? 'La secuencia de IDs de ventas o sus detalles está desactualizada. '
+                  'La transacción fue rechazada y la venta sigue pendiente. Ejecuta '
+                  'supabase/reparar_secuencias_ventas.sql en Supabase antes de reintentar.'
             : detalle,
-      ); // Explica la reparación sin afirmar que la venta ya existe.
-      await _actualizar(); // Comprueba si se puede reintentar o debe revisarse el historial.
-    } // Finaliza la confirmación.
-  } // Finaliza el cierre de la venta.
+      );
+    }
+  }
 
-  @override // Conserva el mismo contenido y las mismas proporciones del historial.
-  Widget build(BuildContext context) => PopScope(
-    canPop: !_ocupado,
-    child: PaginaDetalleVenta(
-      key: ValueKey(_venta.revision),
-      idVenta: _venta.id,
-      clienteNombre: _venta.nombreCliente,
-      vehiculoNombre: _venta.patente.isEmpty ? 'Sin vehículo' : _venta.patente,
-      total: _venta.total,
-      desdeHistorial: false,
-      rutCliente: _venta.rutCliente, // Conserva la relación del cliente local.
-      clienteInicial: Cliente(
-        id: _venta.rutCliente,
-        nombre: _venta.nombreCliente,
-        numero: _venta.fonoCliente,
-        ultimaVenta: '',
-        vehiculo: _venta.patente,
-      ), // Permite ver el perfil del borrador incluso sin conexión.
-      ventaInicial: _venta.registro,
-      esPendiente: true,
-      acciones: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Añade únicamente las acciones propias de una pendiente.
-          if (_error != null)
-            Text(
-              _error!,
-            ), // Mantiene visible el error de almacenamiento o pago.
-          if (_requiereRevision)
-            const Text(
-              'Confirmación pendiente de revisión. Comprueba el historial antes de volver a registrar esta venta.',
-            ), // Impide duplicados ante resultados inciertos.
-          const SizedBox(height: 20), // Separa el detalle de las acciones.
-          Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            children: [
-              if (_requiereRevision)
-                CartaNavegacion.accion(
-                  onPressed: _ocupado ? null : _recuperar,
-                  icon: const Icon(Icons.fact_check_outlined),
-                  label: const Text('REVISAR VENTA'),
-                ), // Recupera solo después de confirmar que no se guardó.
-              // Conserva los botones en escritorio y móvil.
-              CartaNavegacion.accion(
-                onPressed: _ocupado || _requiereRevision ? null : _editar,
-                icon: const Icon(Icons.edit),
-                label: const Text('EDITAR VENTA'),
-              ), // Permite modificar únicamente ventas abiertas.
-              CartaNavegacion.accion(
-                onPressed: _ocupado || _requiereRevision
-                    ? null
-                    : _confirmarPago,
-                icon: const Icon(Icons.check_circle_outline),
-                label: Text(_ocupado ? 'ESPERA...' : 'CONFIRMAR PAGO'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: PaletaTaller.de(context)
-                      .adaptar(Color(0xFFD96363)),
-                  foregroundColor: PaletaTaller.de(context)
-                      .adaptar(Colors.black, tinta: true),
-                ), // Distingue la confirmación con el rojo existente.
-              ), // Cierra la venta después de recibir el pago.
-            ],
-          ), // Finaliza las acciones específicas.
+  @override
+  Widget build(BuildContext context) => PaginaTematica(
+    builder: (context) => PopScope(
+      canPop: !_ocupado,
+      child: DetalleVentaVista(
+        titulo: 'Venta pendiente',
+        estado: switch (_estado) {
+          _EstadoPendiente.disponible => 'Pendiente de pago',
+          _EstadoPendiente.revision => 'Requiere revisión',
+          _EstadoPendiente.ausente => 'Fuera de pendientes',
+          _EstadoPendiente.sinVerificar => 'Estado sin verificar',
+        },
+        total: _venta.total,
+        cliente: _venta.nombreCliente,
+        rut: _venta.rutCliente,
+        vehiculo: _venta.patente.isEmpty
+            ? 'Sin vehículo asociado'
+            : 'Patente ${_venta.patente}',
+        lineas: [
+          for (final articulo in _venta.articulos)
+            LineaDetalleVenta(
+              nombre: articulo.nombre,
+              codigo: articulo.codigo,
+              categoria: articulo.categoria,
+              unidades:
+                  '${articulo.cantidad} × ${precioVenta(articulo.precio)}',
+              subtotal: articulo.cantidad * articulo.precio,
+            ),
         ],
+        verCliente: _ocupado ? null : _verCliente,
+        aviso: _estado != _EstadoPendiente.disponible || _error != null
+            ? Builder(builder: _avisoEstado)
+            : null,
+        acciones: _acciones(context),
+        mostrarProgreso: _ocupado,
       ),
     ),
-  ); // Finaliza la vista del historial pendiente.
-} // Finaliza el estado de la página.
+  );
+
+  Widget _avisoEstado(BuildContext context) {
+    final mensaje = switch (_estado) {
+      _EstadoPendiente.revision =>
+        'Revisa el historial antes de volver a confirmar el pago.',
+      _EstadoPendiente.ausente => 'Esta venta ya salió de pendientes. Puedes consultar el historial desde Ventas.',
+      _EstadoPendiente.sinVerificar when _ocupado =>
+        'Comprobando el estado de la venta…',
+      _EstadoPendiente.sinVerificar => 'Estado de la venta sin verificar.',
+      _EstadoPendiente.disponible => 'El pago sigue pendiente.',
+    };
+    return PanelVenta(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(mensaje, style: Theme.of(context).textTheme.titleSmall),
+          if (_error case final error?)
+            Padding(padding: const EdgeInsets.only(top: 6), child: Text(error)),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _acciones(BuildContext context) => [
+    if (_estado == _EstadoPendiente.disponible) ...[
+      OutlinedButton.icon(
+        onPressed: _ocupado ? null : _editar,
+        icon: const Icon(Icons.edit_outlined),
+        label: const Text('Editar venta'),
+      ),
+      FilledButton.icon(
+        style: estiloAccionPrincipalVenta(context),
+        onPressed: _ocupado ? null : _confirmarPago,
+        icon: const Icon(Icons.check_circle_outline),
+        label: const Text('Confirmar pago'),
+      ),
+    ] else if (_estado == _EstadoPendiente.revision)
+      FilledButton.icon(
+        style: estiloAccionPrincipalVenta(context),
+        onPressed: _ocupado ? null : _recuperar,
+        icon: const Icon(Icons.fact_check_outlined),
+        label: const Text('Revisar venta'),
+      )
+    else if (_estado == _EstadoPendiente.sinVerificar && !_ocupado)
+      OutlinedButton.icon(
+        onPressed: () {
+          setState(() => _ocupado = true);
+          _actualizar();
+        },
+        icon: const Icon(Icons.refresh),
+        label: const Text('Reintentar'),
+      ),
+  ];
+}

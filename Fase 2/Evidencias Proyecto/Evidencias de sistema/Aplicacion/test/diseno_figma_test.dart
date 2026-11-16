@@ -175,7 +175,7 @@ void main() {
       'ABCD12',
     ); // Conserva una patente antes de navegar.
     await tester.tap(
-      find.text('SELECCIONAR CLIENTE'),
+      find.text('Seleccionar cliente'),
     ); // Abre el campo desplegable.
     await tester.pumpAndSettle(); // Espera el menú.
     await tester.enterText(
@@ -196,7 +196,7 @@ void main() {
     ); // Vuelve a abrir las opciones.
     await tester.pumpAndSettle(); // Espera las opciones.
     await tester.tap(
-      find.text('CREAR CLIENTE'),
+      find.text('Crear cliente'),
     ); // Abre el registro de clientes.
     await tester.pumpAndSettle(); // Espera la navegación.
     expect(
@@ -470,6 +470,10 @@ void main() {
   testWidgets('selección de productos se superpone y conserva el carrito', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       MaterialApp(
         home: PaginaCrearVenta(
@@ -487,16 +491,26 @@ void main() {
     ); // Carga un producto sin consultar Supabase.
     await tester.pumpAndSettle(); // Espera la interfaz de venta.
     await tester.ensureVisible(
-      find.text('AÑADIR NUEVO PRODUCTO'),
+      find.text('Añadir productos'),
     ); // Desplaza hasta la acción.
-    await tester.tap(find.text('AÑADIR NUEVO PRODUCTO'));
+    await tester.tap(find.text('Añadir productos'));
     await tester.pumpAndSettle(); // Abre el menú superpuesto.
     expect(
       find.byType(Dialog),
       findsOneWidget,
     ); // Comprueba que no se sustituyó la página.
-    await tester.tap(find.byTooltip('Añadir al carrito'));
-    await tester.pumpAndSettle(); // Añade una unidad.
+    for (final cantidad in [1, 2]) {
+      await tester.tap(
+        find.descendant(
+          of: find.byType(Dialog),
+          matching: find.text('Producto de prueba'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Añadir al carrito'));
+      await tester.pumpAndSettle();
+      expect(find.text('En el carrito: $cantidad'), findsOneWidget);
+    }
     expect(
       find.byType(Dialog),
       findsOneWidget,
@@ -508,6 +522,8 @@ void main() {
       find.text('Producto de prueba'),
       findsOneWidget,
     ); // Conserva el producto seleccionado.
+    expect(find.text(r'Subtotal $2.000'), findsOneWidget);
+    expect(find.text(r'Total $2.000'), findsOneWidget);
     expect(tester.takeException(), isNull); // Exige ausencia de errores.
   }); // Finaliza la comprobación del menú de venta.
 

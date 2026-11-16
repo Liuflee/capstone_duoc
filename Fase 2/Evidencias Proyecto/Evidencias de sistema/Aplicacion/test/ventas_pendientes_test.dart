@@ -232,60 +232,36 @@ void main() {
     ); // Abre el formulario real con datos controlados.
     await tester.tap(find.text('ABRIR')); // Inicia la venta.
     await tester.pumpAndSettle(); // Espera los catálogos.
-    await tester.tap(find.text('SELECCIONAR CLIENTE')); // Abre el desplegable.
+    await tester.tap(find.text('Seleccionar cliente')); // Abre el desplegable.
     await tester.pumpAndSettle(); // Espera los resultados.
     await tester.tap(
       find.text('Cliente pendiente · RUT: 123'),
     ); // Selecciona el cliente real del catálogo.
     await tester.pumpAndSettle(); // Cierra el menú.
-    final botonAgregar = find
-        .ancestor(
-          of: find.text('AÑADIR NUEVO PRODUCTO'),
-          matching: find.byType(ElevatedButton),
-        )
-        .first; // Localiza el borde real del botón.
-    final ultimaCabecera = find
-        .ancestor(of: find.text('REMOVER'), matching: find.byType(Container))
-        .first; // Localiza el borde derecho de la tabla.
-    expect(
-      tester.getRect(botonAgregar).right,
-      closeTo(tester.getRect(ultimaCabecera).right, 0.01),
-    ); // Comprueba la alineación antes de abrir el selector.
-    final botonVolver = find
-        .ancestor(
-          of: find.text('VOLVER A VENTAS'),
-          matching: find.byType(ElevatedButton),
-        )
-        .first; // Compara las acciones superiores de ambas columnas.
-    expect(
-      tester.getRect(botonAgregar).top,
-      closeTo(tester.getRect(botonVolver).top, 0.01),
-    ); // Mantiene los botones a la misma altura.
-    final campoCliente = find
-        .ancestor(
-          of: find.text('CLIENTE'),
-          matching: find.byType(InputDecorator),
-        )
-        .first; // Obtiene el selector de cliente.
-    expect(
-      tester.getRect(campoCliente).top,
-      closeTo(tester.getRect(find.byType(CampoBusqueda)).top, 0.01),
-    ); // Alinea el cliente con la búsqueda de productos.
-    await tester.tap(find.text('AÑADIR NUEVO PRODUCTO')); // Abre el inventario.
-    await tester.pumpAndSettle(); // Espera la tabla superpuesta.
-    await tester.tap(
-      find.byTooltip('Añadir al carrito'),
-    ); // Selecciona una unidad.
-    await tester.pumpAndSettle(); // Actualiza el carrito.
+    final agregar = find.text('Añadir productos');
+    await tester.ensureVisible(agregar);
+    await tester.tap(agregar);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Freno'));
+    await tester.pumpAndSettle();
+    final cantidad = find.widgetWithText(TextFormField, 'Cantidad');
+    await tester.enterText(cantidad, '6');
+    await tester.tap(find.text('Añadir al carrito'));
+    await tester.pumpAndSettle();
+    expect(find.text('Ingresa entre 1 y 5 unidades'), findsOneWidget);
+    await tester.enterText(cantidad, '3');
+    await tester.tap(find.text('Añadir al carrito'));
+    await tester.pumpAndSettle();
+    expect(find.text('En el carrito: 3'), findsOneWidget);
     await tester.tap(find.byTooltip('Cerrar selección')); // Regresa a la venta.
     await tester.pumpAndSettle(); // Espera el cierre.
     await tester.tap(
-      find.text('REGISTRAR VENTA'),
+      find.text('Guardar como pendiente'),
     ); // Guarda el borrador con el botón existente.
     await tester.pumpAndSettle(); // Espera la persistencia y el regreso.
     final venta =
         (await repositorio.obtenerTodas()).single; // Recupera la venta local.
-    expect(venta.articulos.single.cantidad, 1); // Conserva los artículos.
+    expect(venta.articulos.single.cantidad, 3);
     expect(venta.rutCliente, '123'); // Conserva el cliente.
     expect(envios, 0); // No crea venta ni descuenta stock en Supabase.
     expect(find.text('ABRIR'), findsOneWidget); // Regresa a la vista anterior.
@@ -321,12 +297,27 @@ void main() {
         ),
       ); // Abre el historial pendiente.
       await tester.pumpAndSettle(); // Comprueba el estado persistido.
+      expect(find.text('Patente ABCD12'), findsOneWidget);
+      expect(find.text(r'2 × $1.000'), findsOneWidget);
+      expect(find.text(r'Subtotal $2.000'), findsOneWidget);
+      expect(find.text(r'Total $2.000'), findsOneWidget);
+
+      final buscador = find.byType(TextField);
+      await tester.enterText(buscador, 'no-existe');
+      await tester.pumpAndSettle();
+      expect(find.text('No hay productos que coincidan.'), findsOneWidget);
+      expect(find.text(r'Total $2.000'), findsOneWidget);
+      await tester.enterText(buscador, '10');
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+      expect(find.text('Freno'), findsOneWidget);
+
       await tester.ensureVisible(
-        find.text('CONFIRMAR PAGO'),
+        find.text('Confirmar pago'),
       ); // Hace visible la acción.
-      await tester.tap(find.text('CONFIRMAR PAGO')); // Solicita concretar.
+      await tester.tap(find.text('Confirmar pago')); // Solicita concretar.
       await tester.pumpAndSettle(); // Espera la confirmación.
-      await tester.tap(find.text('CANCELAR')); // Cancela el cierre.
+      await tester.tap(find.text('Cancelar')); // Cancela el cierre.
       await tester.pumpAndSettle(); // Vuelve al detalle local.
       expect(envios, 0); // No envía la venta al cancelar.
       expect(
@@ -334,14 +325,14 @@ void main() {
         hasLength(1),
       ); // Mantiene la pendiente.
       await tester.tap(
-        find.text('CONFIRMAR PAGO'),
+        find.text('Confirmar pago'),
       ); // Solicita concretar de nuevo.
       await tester.pumpAndSettle(); // Espera el diálogo.
       await tester.tap(
         find
             .descendant(
               of: find.byType(AlertDialog),
-              matching: find.text('CONFIRMAR PAGO'),
+              matching: find.text('Confirmar pago'),
             )
             .last,
       ); // Confirma explícitamente el pago.
@@ -362,16 +353,52 @@ void main() {
         '99',
       ); // Abre el registro real devuelto por el servidor.
       expect(
-        find.text('EDITAR VENTA'),
+        find.text('Editar venta'),
         findsNothing,
       ); // Impide editar la venta ya concretada.
       expect(
-        find.text('CONFIRMAR PAGO'),
+        find.text('Confirmar pago'),
         findsNothing,
       ); // Impide repetir el pago desde el historial.
       expect(tester.takeException(), isNull); // Comprueba la transición visual.
     },
   ); // Finaliza la confirmación de pago.
+
+  testWidgets('Un pago de resultado incierto requiere revisión en móvil', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final repositorio = VentasPendientesRepository(
+      clave: 'revision-detalle',
+      registrar: (_) async => throw TimeoutException('Respuesta perdida'),
+    );
+    await repositorio.guardar(borrador());
+    final venta = (await repositorio.obtenerTodas()).single;
+    await expectLater(repositorio.confirmarPago(venta.id), throwsStateError);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(platform: TargetPlatform.android),
+        home: PaginaDetalleVentaPendiente(
+          venta: venta,
+          repositorio: repositorio,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Requiere revisión'), findsOneWidget);
+    expect(find.text('Editar venta'), findsNothing);
+    expect(find.text('Confirmar pago'), findsNothing);
+    await tester.tap(find.text('Revisar venta'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancelar'));
+    await tester.pumpAndSettle();
+    expect(await repositorio.requiereRevision(venta.id), isTrue);
+    expect(tester.takeException(), isNull);
+  });
 
   test(
     'guardar persiste localmente y editar conserva la identidad sin enviar',
@@ -641,11 +668,11 @@ void main() {
           findsOneWidget,
         ); // Usa el historial pendiente.
         expect(
-          find.text('EDITAR VENTA'),
+          find.text('Editar venta'),
           findsOneWidget,
         ); // Ofrece edición local.
         expect(
-          find.text('CONFIRMAR PAGO'),
+          find.text('Confirmar pago'),
           findsOneWidget,
         ); // Ofrece concretar la venta.
         expect(
@@ -689,11 +716,11 @@ void main() {
           findsOneWidget,
         ); // Usa el historial existente.
         expect(
-          find.text('EDITAR VENTA'),
+          find.text('Editar venta'),
           findsNothing,
         ); // Conserva la venta cerrada sin edición.
         expect(
-          find.text('CONFIRMAR PAGO'),
+          find.text('Confirmar pago'),
           findsNothing,
         ); // No permite confirmar dos veces desde el historial.
         expect(
@@ -764,11 +791,11 @@ void main() {
         'ABCD12',
       ); // Conserva la patente.
       await tester.tap(
-        find.byIcon(Icons.cancel_outlined).first,
+        find.byTooltip('Disminuir cantidad de Freno'),
       ); // Quita una unidad de la venta abierta.
       await tester.pumpAndSettle(); // Actualiza el carrito.
       await tester.tap(
-        find.text('GUARDAR CAMBIOS'),
+        find.text('Guardar cambios'),
       ); // Persiste la edición local.
       await tester.pumpAndSettle(); // Regresa a la ruta anterior.
       final editada = (await repositorio.obtenerTodas())

@@ -93,6 +93,14 @@ class VentaRegistro {
     );
   }
 
+  static Future<int> contarDelDia(DateTime dia) async {
+    final fecha = dia.toLocal().toIso8601String().split('T').first;
+    return await SupabaseDatabase.client
+        .from(SupabaseTables.ventas)
+        .count()
+        .eq('fecha_registro', fecha);
+  }
+
   static Future<List<VentaRegistro>> obtenerTodas() async {
     final data = await SupabaseDatabase.client
         .from(SupabaseTables.ventas)

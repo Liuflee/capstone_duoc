@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:frenos_cerna/shared/widgets/navegacion_inferior.dart';
 import 'package:frenos_cerna/features/escaner/pagina_escaner_producto.dart';
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
@@ -16,12 +18,15 @@ import 'package:frenos_cerna/shared/widgets/carta_navegacion.dart';
 import 'package:frenos_cerna/features/inventario/pagina_inventario.dart';
 import 'package:frenos_cerna/features/notificaciones/pagina_notificaciones.dart';
 import 'package:frenos_cerna/features/ventas/presentation/pagina_ventas.dart';
+import 'package:frenos_cerna/features/ventas/data/ventas_pendientes_repository.dart';
+import 'package:frenos_cerna/features/ventas/data/ventas_repository.dart';
 
-// Se crea la clase PaginaInicio que extiende StatelessWidget
-class PaginaInicio extends StatelessWidget {
+class PaginaInicio extends StatefulWidget {
   final PerfilUsuario? perfilUsuario;
   final bool modoPrueba;
   final VoidCallback? onSalirModoPrueba;
+  final VentasPendientesRepository? repositorioPendientes;
+  final Future<int> Function(DateTime)? contarVentasCerradas;
 
   // Constructor de la clase PaginaInicio
   const PaginaInicio({
@@ -29,11 +34,70 @@ class PaginaInicio extends StatelessWidget {
     this.perfilUsuario,
     this.modoPrueba = false,
     this.onSalirModoPrueba,
+    this.repositorioPendientes,
+    this.contarVentasCerradas,
   });
+
+  @override
+  State<PaginaInicio> createState() => _PaginaInicioState();
+}
+
+class _PaginaInicioState extends State<PaginaInicio> {
+  late final VentasPendientesRepository _pendientes;
+  StreamSubscription<void>? _cambiosPendientes;
+  Future<int?>? _totalVentasDelDia;
+  bool _inicioVisible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _pendientes =
+        widget.repositorioPendientes ?? VentasPendientesRepository.instancia;
+    _cambiosPendientes = _pendientes.cambios.listen((_) {
+      if (_inicioVisible) setState(() => _totalVentasDelDia = _contarVentas());
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // También detecta el regreso mediante la barra inferior de Android.
+    final visible = ModalRoute.isCurrentOf(context) ?? true;
+    if (visible && !_inicioVisible) _totalVentasDelDia = _contarVentas();
+    _inicioVisible = visible;
+  }
+
+  Future<int?> _contarVentas() async {
+    final hoy = DateTime.now();
+    final contarCerradas =
+        widget.contarVentasCerradas ??
+        (widget.modoPrueba ? null : VentaRegistro.contarDelDia);
+    try {
+      final pendientes = await _pendientes.obtenerTodas();
+      final cerradas = await contarCerradas?.call(hoy) ?? 0;
+      return cerradas +
+          pendientes
+              .where(
+                (venta) =>
+                    DateUtils.isSameDay(venta.fechaCreacion?.toLocal(), hoy),
+              )
+              .length;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  void dispose() {
+    unawaited(_cambiosPendientes?.cancel());
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
   Widget _pagina(BuildContext context) {
+    final perfilUsuario = widget.perfilUsuario;
+    final modoPrueba = widget.modoPrueba;
     final plataforma = Theme.of(context).platform; // Identifica el dispositivo sin depender del tamaño de la ventana.
     final esAndroid = !kIsWeb && plataforma == TargetPlatform.android;
     final esMovil =
@@ -41,7 +105,7 @@ class PaginaInicio extends StatelessWidget {
         plataforma == TargetPlatform.iOS; // Reserva el escaneo para celulares.
     if (perfilUsuario != null && !modoPrueba) {
       PerfilSesion.conservar(
-        perfilUsuario!,
+        perfilUsuario,
       ); // Conserva el perfil cargado al iniciar sesión para las demás vistas.
     }
     return Scaffold(
@@ -77,7 +141,7 @@ class PaginaInicio extends StatelessWidget {
                       ? 'Sin sesión'
                       : perfilUsuario?.rol.etiqueta,
                   onCerrarSesion: modoPrueba
-                      ? () async => onSalirModoPrueba?.call()
+                      ? () async => widget.onSalirModoPrueba?.call()
                       : null,
                 ),
               ),
@@ -208,20 +272,33 @@ class PaginaInicio extends StatelessWidget {
                                     alignment: WrapAlignment.center,
 
                                     children: [
-                                      // Tarjeta ventas del día
-                                      CartaNavegacion(
-                                        ancho: anchoImportante,
-                                        alto: altoImportante,
-                                        icono: Icons.people_outline,
-                                        numero: '2',
-                                        texto: 'VENTAS DEL\nDÍA',
-
-                                        // Color opcional
-                                        // color: Colors.red[100],
-
-                                        // Navega a ventas
-                                        alPresionar: () {
-                                          abrirPagina(const PaginaVentas());
+                                      FutureBuilder<int?>(
+                                        future: _totalVentasDelDia,
+                                        builder: (context, estado) {
+                                          final cargado =
+                                              estado.connectionState ==
+                                              ConnectionState.done;
+                                          final tarjeta = CartaNavegacion(
+                                            ancho: anchoImportante,
+                                            alto: altoImportante,
+                                            icono: Icons.people_outline,
+                                            numero: cargado
+                                                ? estado.data?.toString() ?? '—'
+                                                : '…',
+                                            texto: 'VENTAS DEL\nDÍA',
+                                            alPresionar: () => abrirPagina(
+                                              PaginaVentas(
+                                                repositorioPendientes:
+                                                    _pendientes,
+                                              ),
+                                            ),
+                                          );
+                                          return cargado && !estado.hasData
+                                              ? Tooltip(
+                                                  message: 'No se pudo cargar el total de ventas del día',
+                                                  child: tarjeta,
+                                                )
+                                              : tarjeta;
                                         },
                                       ),
 
