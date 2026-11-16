@@ -1,4 +1,5 @@
 import 'package:frenos_cerna/shared/widgets/navegacion_inferior.dart';
+import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 import 'package:frenos_cerna/main.dart'; // Comprueba el área segura aplicada a todas las rutas.
 import 'package:frenos_cerna/features/autenticacion/presentation/pagina_autenticacion.dart'; // Comprueba el regreso al login existente.
 import 'package:material_ui/material_ui.dart'; // Construye el marco compartido de las páginas.
@@ -281,6 +282,60 @@ void main() {
       ); // Exige ausencia de errores de distribución.
     }); // Finaliza una altura de menú.
   } // Finaliza las alturas.
+
+  testWidgets(
+    'Página Principal y Clientes mantienen el mismo estilo seleccionado',
+    (tester) async {
+      Color? colorSeleccionado;
+      for (final seccion in ['Página Principal', 'Clientes']) {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SizedBox(width: 180, child: MenuLateral(activo: seccion)),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final texto = tester.widget<Text>(find.text(seccion));
+        expect(texto.style?.color, Colors.white);
+
+        final icono = tester.widget<Icon>(
+          find
+              .descendant(
+                of: find
+                    .ancestor(
+                      of: find.text(seccion),
+                      matching: find.byType(Material),
+                    )
+                    .first,
+                matching: find.byType(Icon),
+              )
+              .first,
+        );
+        expect(icono.color, Colors.white);
+
+        final material = tester.widget<Material>(
+          find
+              .ancestor(of: find.text(seccion), matching: find.byType(Material))
+              .first,
+        );
+        colorSeleccionado ??= material.color;
+        expect(material.color, colorSeleccionado);
+        expect(material.color, PaletaTaller.original.acento);
+
+        final inkWell = tester.widget<InkWell>(
+          find
+              .ancestor(of: find.text(seccion), matching: find.byType(InkWell))
+              .first,
+        );
+        expect(
+          inkWell.overlayColor?.resolve({WidgetState.hovered}),
+          Colors.transparent,
+        );
+      }
+    },
+  );
 
   testWidgets(
     'Vehículos aparece debajo de Clientes y abre el historial existente',

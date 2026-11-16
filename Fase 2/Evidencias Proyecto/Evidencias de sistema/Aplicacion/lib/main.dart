@@ -98,26 +98,18 @@ class MiAplicacion extends StatelessWidget {
           animation: PreferenciasVisuales.instancia,
           builder: (context, _) {
             final ajustes = PreferenciasVisuales.instancia;
-            final entorno = MediaQuery.of(context);
 
             return ColorFiltered(
               colorFilter: ColorFilter.matrix(ajustes.matriz),
-              child: MediaQuery(
-                data: entorno.copyWith(
-                  textScaler: TextScaler.linear(
-                    entorno.textScaler.scale(1) * ajustes.texto,
-                  ),
-                ),
-                child: ColoredBox(
-                  color: paleta.fondo,
-                  child: SafeArea(
-                    bottom: false,
-                    child: ColoredBox(
-                      color: paleta.fondo,
-                      child: AsistenteGlobal.disponible
-                          ? AsistenteGlobal(paleta: paleta, child: child!)
-                          : child!,
-                    ),
+              child: ColoredBox(
+                color: paleta.fondo,
+                child: SafeArea(
+                  bottom: false,
+                  child: ColoredBox(
+                    color: paleta.fondo,
+                    child: AsistenteGlobal.disponible
+                        ? AsistenteGlobal(paleta: paleta, child: child!)
+                        : child!,
                   ),
                 ),
               ),

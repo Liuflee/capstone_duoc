@@ -235,14 +235,19 @@ class _MenuItem extends StatelessWidget {
         selected: activo,
         child: Material(
           color: activo
-              ? Color.alphaBlend(
-                  paleta.acento.withValues(alpha: .34),
-                  paleta.menu,
-                )
+              ? paleta == PaletaTaller.original
+                    ? paleta.acento
+                    : Color.alphaBlend(
+                        paleta.acento.withValues(alpha: .34),
+                        paleta.menu,
+                      )
               : paleta.menu,
           borderRadius: BorderRadius.circular(10),
           child: InkWell(
             borderRadius: BorderRadius.circular(10),
+            overlayColor: activo
+                ? const WidgetStatePropertyAll(Colors.transparent)
+                : null,
             onTap: alPulsar,
             child: ConstrainedBox(
               constraints: const BoxConstraints(minHeight: 48),

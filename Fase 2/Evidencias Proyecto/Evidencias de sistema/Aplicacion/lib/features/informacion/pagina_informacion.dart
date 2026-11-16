@@ -1,21 +1,12 @@
 import 'package:frenos_cerna/core/tema/paleta_taller.dart';
 
 // Importa Flutter y los widgets compartidos de la aplicación.
-import 'dart:math' as math; // Limita el ancho del buscador en pantallas anchas.
-
 import 'package:material_ui/material_ui.dart';
 import 'package:frenos_cerna/shared/widgets/estructura_pagina.dart';
-import 'package:frenos_cerna/shared/widgets/panel_filtros.dart';
 
 // Presenta las preguntas de ayuda con la distribución vertical de Figma.
-class PaginaInformacion extends StatefulWidget {
+class PaginaInformacion extends StatelessWidget {
   const PaginaInformacion({super.key}); // Crea la página de ayuda.
-  @override // Crea el estado de búsqueda.
-  State<PaginaInformacion> createState() => _PaginaInformacionState();
-} // Finaliza la página pública.
-
-class _PaginaInformacionState extends State<PaginaInformacion> {
-  final _busqueda = TextEditingController(); // Administra el texto de búsqueda.
   static const _preguntas = <String, String>{
     '¿Qué hace la ventana “Clientes”?': 'Permite consultar, registrar y editar clientes. El buscador y los filtros actúan sobre los datos mostrados en la tabla.',
     '¿Qué hace la ventana “Perfil”?': 'Permite ver tu perfil y consultar los perfiles de dueño y mecánico disponibles. Solo el dueño puede crear, editar o retirar perfiles; no puede retirar su propio perfil.',
@@ -24,67 +15,29 @@ class _PaginaInformacionState extends State<PaginaInformacion> {
     '¿Qué hace la ventana “Inventario”?': 'Permite consultar productos en bodega o sin stock, registrar productos y editar los datos de un producto.',
     '¿Cómo registro una venta?': 'Abre Nueva venta desde Inicio, selecciona o crea un cliente y añade productos. Registrar venta conserva la venta pendiente en este dispositivo. Desde Ventas abre su detalle y confirma el pago para guardarla en el historial.',
   }; // Define información de las funciones reales del proyecto.
-  @override // Libera los recursos de búsqueda.
-  void dispose() {
-    _busqueda.dispose();
-    super.dispose();
-  }
 
   @override // Construye las preguntas desplegables.
   Widget build(BuildContext context) => PaginaTematica(builder: _pagina);
   Widget _pagina(BuildContext context) => EstructuraPagina(
     titulo: 'Información',
     activo: 'Información', // Identifica la sección.
-    child: LayoutBuilder(
-      builder: (context, espacio) => Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.stretch, // Alinea preguntas y respuestas.
-        children: [
-          Align(
-            alignment: Alignment.centerRight,
-            child: SizedBox(
-              width: math.min(
-                420,
-                espacio.maxWidth,
-              ), // Limita el buscador sin desaprovechar pantallas angostas.
-              child: CampoBusqueda(
-                controlador: _busqueda,
-                textoAyuda: 'BUSCAR PREGUNTA',
-                alCambiar: (_) => setState(() {}),
-              ),
+    child: ListView(
+      children: [
+        for (final pregunta in _preguntas.entries)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 24),
+            child: ExpansionTile(
+              key: PageStorageKey(pregunta.key),
+              backgroundColor: PaletaTaller.de(context)
+                  .adaptar(Color(0xFFD9D9D9)),
+              collapsedBackgroundColor: PaletaTaller.de(context)
+                  .adaptar(Color(0xFFD9D9D9)),
+              title: Text(pregunta.key),
+              childrenPadding: const EdgeInsets.all(20),
+              children: [Text(pregunta.value, textAlign: TextAlign.left)],
             ),
-          ), // Reutiliza el buscador del panel de filtros.
-          const SizedBox(height: 32), // Separa la búsqueda de las preguntas.
-          Expanded(
-            child: ListView(
-              children: [
-                for (final pregunta in _preguntas.entries.where(
-                  (entrada) =>
-                      normalizarFiltro(entrada.key + entrada.value)
-                          .contains(normalizarFiltro(_busqueda.text.trim())),
-                )) // Busca en preguntas y respuestas sin distinguir tildes.
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 24),
-                    child: ExpansionTile(
-                      key: PageStorageKey(pregunta.key),
-                      backgroundColor: PaletaTaller.de(context)
-                          .adaptar(Color(0xFFD9D9D9)),
-                      collapsedBackgroundColor: PaletaTaller.de(context)
-                          .adaptar(
-                            Color(0xFFD9D9D9),
-                          ), // Conserva los bloques grises de Figma.
-                      title: Text(pregunta.key),
-                      childrenPadding: const EdgeInsets.all(20),
-                      children: [
-                        Text(pregunta.value),
-                      ], // Permite abrir y cerrar cada respuesta.
-                    ),
-                  ), // Finaliza una pregunta.
-              ], // Finaliza las preguntas filtradas.
-            ),
-          ), // Permite desplazar las preguntas.
-        ], // Finaliza los elementos de la página.
-      ),
-    ), // Finaliza el cálculo del ancho.
-  ); // Finaliza el diseño de ayuda.
-} // Finaliza el estado de la página.
+          ),
+      ],
+    ),
+  );
+}

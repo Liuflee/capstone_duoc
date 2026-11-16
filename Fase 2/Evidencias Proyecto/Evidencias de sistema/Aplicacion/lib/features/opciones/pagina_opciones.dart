@@ -10,15 +10,12 @@ class PreferenciasVisuales extends ChangeNotifier {
       PreferenciasVisuales._(); // Comparte los ajustes entre páginas.
   PreferenciasVisuales._(); // Evita crear ajustes independientes.
   double brillo = 1; // Usa el brillo original por defecto.
-  double texto = 1; // Usa la escala de texto original por defecto.
   double saturacion = 1; // Usa los colores originales por defecto.
   void actualizar({
     double? nuevoBrillo,
-    double? nuevoTexto,
     double? nuevaSaturacion,
   }) {
     brillo = nuevoBrillo ?? brillo;
-    texto = nuevoTexto ?? texto;
     saturacion =
         nuevaSaturacion ?? saturacion; // Actualiza solo los valores indicados.
     notifyListeners(); // Aplica los cambios a la aplicación.
@@ -67,7 +64,6 @@ class PaginaOpciones extends StatelessWidget {
     return EstructuraPagina(
       titulo: 'Opciones',
       activo: 'Opciones',
-      mostrarVolver: true,
       child: ListView(
         padding: const EdgeInsets.only(bottom: 80),
         children: [
@@ -131,14 +127,6 @@ class PaginaOpciones extends StatelessWidget {
                               max: 1.15,
                               alCambiar: (valor) =>
                                   preferencias.actualizar(nuevoBrillo: valor),
-                            ),
-                            _AjusteVisual(
-                              titulo: 'Tamaño de texto',
-                              valor: preferencias.texto,
-                              min: .8,
-                              max: 1.3,
-                              alCambiar: (valor) =>
-                                  preferencias.actualizar(nuevoTexto: valor),
                             ),
                             _AjusteVisual(
                               titulo: 'Saturación de color',
